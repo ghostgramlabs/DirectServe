@@ -30,3 +30,10 @@ out/
 .DS_Store
 *.tmp
 .graphify-out/
+# Generated analysis, scratch work and AI tool settings
+graphify-out/
+**/graphify-out/
+scratch/
+.gemini/
+.claude/
+__pycache__/
