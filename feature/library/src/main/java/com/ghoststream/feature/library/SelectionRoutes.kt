@@ -1,6 +1,9 @@
 package com.ghoststream.feature.library
 
+import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
 import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
@@ -20,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -363,8 +368,12 @@ private fun SelectionRouteScaffold(
 @Composable
 private fun SelectionUriCard(
     uri: Uri,
-    title: String = uri.lastPathSegment ?: "",
+    title: String? = null,
 ) {
+    val context = LocalContext.current
+    val isFolder = remember(uri) { DocumentsContract.isTreeUri(uri) }
+    // Show "Download/Demo" or the file name rather than the raw content:// URI.
+    val location = remember(uri) { readableLocation(context, uri) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -384,19 +393,37 @@ private fun SelectionUriCard(
                     .padding(10.dp),
             ) {
                 Icon(
-                    Icons.Outlined.InsertDriveFile,
+                    if (isFolder) Icons.Outlined.Folder else Icons.Outlined.InsertDriveFile,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text(title.ifBlank { stringResource(R.string.selection_selected_item) }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(uri.toString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    title ?: location.ifBlank { stringResource(R.string.selection_selected_item) },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                )
+                if (title != null && location.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
+}
+
+private fun readableLocation(context: Context, uri: Uri): String {
+    if (DocumentsContract.isTreeUri(uri)) {
+        // Tree ids look like "primary:Download/Demo" or "1A2B-3C4D:DCIM".
+        return DocumentsContract.getTreeDocumentId(uri).substringAfter(':').ifBlank { uri.lastPathSegment.orEmpty() }
+    }
+    return runCatching {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        }
+    }.getOrNull() ?: uri.lastPathSegment.orEmpty()
 }
 
 @Composable

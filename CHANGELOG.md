@@ -7,12 +7,20 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 
 - A simpler app: choose what to share, tap Start, and scan the QR code. Settings are grouped,
   with expert options under Advanced.
-- New teal look and app icon.
+- New ice-blue look and app icon.
 - Select all when adding from your phone library or removing shared items.
 - DirectServe may ask for a rating after a couple of successful shares (at most once every few
   months).
 - Redesigned browser pages: clearer cards with one Play button, a dark video and photo viewer,
   and simpler Live Screen and Send text pages.
+- Fixed: a video picked from two Phone Library groups was shared twice.
+- Fixed: shared folders and picked files showed 0 items after the app restarted.
+- Videos that need converting start as soon as you press Play, without a second "Prepare" tap.
+- Fixed: some MKV videos with Dolby (AC-3) sound played silently, and Ogg/Theora videos played
+  sound with a blank picture.
+- Converted videos keep their original size instead of being enlarged to 1080p, so they are ready
+  sooner.
+- Music the browser can't play now says so, with a download option.
 - Fixed: reloading the Send or Folders page in the browser showed "not found".
 - Shorter welcome tour (3 pages instead of 8), and simpler Mirror screen, Send text and History
   screens.

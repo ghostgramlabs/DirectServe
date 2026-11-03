@@ -476,19 +476,29 @@ class AndroidStorageRepository(
         return runCatching {
             val uris = mutableListOf<String>()
             var totalBytes = 0L
+            val isFilesCollection = collection == MediaStore.Files.getContentUri("external")
             querySmartGroupCursor(
                 collection = collection,
                 selection = selection,
                 args = args,
                 sortColumn = sortColumn,
+                includeMediaType = isFilesCollection,
             )?.use { cursor ->
                 val idIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
                 val sizeIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
                 val mimeIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
+                val mediaTypeIndex = cursor.getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE)
                 while (cursor.moveToNext()) {
                     val itemMime = cursor.getString(mimeIndex)
                     if (mimePrefix != null && itemMime?.startsWith(mimePrefix) != true) continue
-                    val contentUri = ContentUris.withAppendedId(collection, cursor.getLong(idIndex))
+                    // Rows from the Files collection are addressed through their typed collection
+                    // (same _ID), so a video picked from two groups gets one URI and isn't shared twice.
+                    val itemCollection = if (mediaTypeIndex >= 0) {
+                        typedCollectionFor(cursor.getInt(mediaTypeIndex)) ?: collection
+                    } else {
+                        collection
+                    }
+                    val contentUri = ContentUris.withAppendedId(itemCollection, cursor.getLong(idIndex))
                     uris += contentUri.toString()
                     totalBytes += cursor.getLong(sizeIndex)
                 }
@@ -513,12 +523,14 @@ class AndroidStorageRepository(
         selection: String,
         args: Array<String>,
         sortColumn: String,
+        includeMediaType: Boolean,
     ): Cursor? {
-        val projection = arrayOf(
+        val projection = listOfNotNull(
             MediaStore.MediaColumns._ID,
             MediaStore.MediaColumns.SIZE,
             MediaStore.MediaColumns.MIME_TYPE,
-        )
+            MediaStore.Files.FileColumns.MEDIA_TYPE.takeIf { includeMediaType },
+        ).toTypedArray()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val queryArgs = Bundle().apply {
                 putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection)
@@ -542,6 +554,13 @@ class AndroidStorageRepository(
         }
     }
 
+    private fun typedCollectionFor(mediaType: Int): Uri? = when (mediaType) {
+        MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO -> MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        else -> null
+    }
+
     private fun isUriAvailable(uri: Uri): Boolean {
         return runCatching {
             // Use openFileDescriptor specifically to check for actual file accessibility
@@ -555,20 +574,19 @@ class AndroidStorageRepository(
         }.getOrDefault(false)
     }
 
+    // takePersistableUriPermission accepts only READ/WRITE flags; adding
+    // FLAG_GRANT_PERSISTABLE_URI_PERMISSION makes it throw, which runCatching hid, so picked
+    // folders and files lost access (0 items) after every app restart.
     private fun takeTreePermission(treeUri: Uri) {
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
         runCatching {
-            context.contentResolver.takePersistableUriPermission(treeUri, flags)
-        }
+            context.contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }.onFailure { android.util.Log.w("GhostLibrary", "Could not keep access to $treeUri", it) }
     }
 
     private fun takeDocumentPermission(uri: Uri) {
-        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
         runCatching {
-            context.contentResolver.takePersistableUriPermission(uri, flags)
-        }
+            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }.onFailure { android.util.Log.w("GhostLibrary", "Could not keep access to $uri", it) }
     }
 
     private fun determineCategory(mimeType: String?, displayName: String): MediaCategory {
