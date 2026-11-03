@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">Nom de cet appareil (30 caractères maximum) :</string>
     <string name="web_rename_device_too_long">Ce nom est trop long. Utilisez 30 caractères au maximum.</string>
     <string name="web_music_unsupported">Ce navigateur ne peut pas lire ce morceau. Téléchargez-le pour l\'écouter.</string>
+    <string name="home_add">Ajouter</string>
+    <string name="home_adding">Ajout en cours…</string>
+    <string name="library_added_nothing_new">Tout ce que vous avez choisi est déjà partagé.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">%d élément ajouté</item>
+        <item quantity="other">%d éléments ajoutés</item>
+    </plurals>
 </resources>

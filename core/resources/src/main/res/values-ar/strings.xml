@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">اكتب اسمًا لهذا الجهاز (حتى 30 حرفًا):</string>
     <string name="web_rename_device_too_long">هذا الاسم طويل جدًا. استخدم 30 حرفًا أو أقل.</string>
     <string name="web_music_unsupported">لا يمكن لهذا المتصفح تشغيل هذا المقطع. نزّله للاستماع إليه.</string>
+    <string name="home_add">إضافة</string>
+    <string name="home_adding">جارٍ الإضافة…</string>
+    <string name="library_added_nothing_new">كل ما اخترته تتم مشاركته بالفعل.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">تمت إضافة عنصر واحد</item>
+        <item quantity="other">تمت إضافة %d عنصر</item>
+    </plurals>
 </resources>

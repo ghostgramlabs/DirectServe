@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Add
@@ -106,9 +107,10 @@ fun SharedLibraryScreen(
     onClearAll: () -> Unit,
     onRemoveItem: (String) -> Unit,
     onRemoveFolder: (String) -> Unit,
-    onOpenAddFiles: () -> Unit,
-    onOpenAddFolder: () -> Unit,
+    onPickFiles: () -> Unit,
+    onPickFolder: () -> Unit,
     onOpenBatchSelect: () -> Unit,
+    onImportAllMedia: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
@@ -372,7 +374,7 @@ fun SharedLibraryScreen(
                         leadingIcon = { Icon(Icons.Outlined.NoteAdd, contentDescription = null) },
                         onClick = {
                             addMenuExpanded = false
-                            onOpenAddFiles()
+                            onPickFiles()
                         },
                     )
                     DropdownMenuItem(
@@ -380,7 +382,15 @@ fun SharedLibraryScreen(
                         leadingIcon = { Icon(Icons.Outlined.CreateNewFolder, contentDescription = null) },
                         onClick = {
                             addMenuExpanded = false
-                            onOpenAddFolder()
+                            onPickFolder()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.home_add_everything)) },
+                        leadingIcon = { Icon(Icons.Outlined.Collections, contentDescription = null) },
+                        onClick = {
+                            addMenuExpanded = false
+                            onImportAllMedia()
                         },
                     )
                 }

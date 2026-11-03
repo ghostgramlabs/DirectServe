@@ -20,6 +20,13 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.remember
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.outlined.NoteAdd
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Collections
 import androidx.compose.material.icons.outlined.Description
@@ -112,7 +119,9 @@ fun HomeScreen(
     onOpenDlna: () -> Unit,
     libraryImportingCount: Int,
     onImportAllMedia: () -> Unit,
-    onClearAllMedia: () -> Unit,
+    onPickFiles: () -> Unit,
+    onPickFolder: () -> Unit,
+    onOpenBatchSelect: () -> Unit,
     onRequestAllFilesAccess: () -> Unit,
     onResolveUploadRequest: (String, Boolean) -> Unit,
     onToggleShareVideos: (Boolean) -> Unit,
@@ -157,12 +166,13 @@ fun HomeScreen(
                 libraryState = libraryState,
                 settings = settings,
                 hasLibraryContent = hasLibraryContent,
-                mediaServerModeActive = settings.mediaServerMode && hasLibraryContent,
                 libraryImportingCount = libraryImportingCount,
                 enabled = !isLiveScreenActive,
                 onAddEverything = addEverything,
+                onPickFiles = onPickFiles,
+                onPickFolder = onPickFolder,
+                onOpenBatchSelect = onOpenBatchSelect,
                 onOpenLibrary = onOpenLibrary,
-                onClearAllMedia = onClearAllMedia,
                 onToggleVideos = onToggleShareVideos,
                 onToggleMusic = onToggleShareMusic,
                 onTogglePhotos = onToggleSharePhotos,
@@ -380,17 +390,77 @@ private fun NetworkStatusCard(
     }
 }
 
+/** "+ Add" with every way to add in one menu, so no option hides behind another screen. */
+@Composable
+private fun AddContentButton(
+    enabled: Boolean,
+    onPickFiles: () -> Unit,
+    onPickFolder: () -> Unit,
+    onOpenBatchSelect: () -> Unit,
+    onAddEverything: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        Button(
+            onClick = { expanded = true },
+            enabled = enabled,
+            modifier = Modifier.heightIn(min = 48.dp),
+            shape = GhostUi.buttonShape,
+        ) {
+            Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(stringResource(R.string.home_add), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.library_add_files)) },
+                leadingIcon = { Icon(Icons.Outlined.NoteAdd, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onPickFiles()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.library_add_whole_folder)) },
+                leadingIcon = { Icon(Icons.Outlined.CreateNewFolder, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onPickFolder()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.library_add_from_suggestions)) },
+                leadingIcon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onOpenBatchSelect()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.home_add_everything)) },
+                leadingIcon = { Icon(Icons.Outlined.Collections, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onAddEverything()
+                },
+            )
+        }
+    }
+}
+
 @Composable
 private fun ChooseStepCard(
     libraryState: LibraryState,
     settings: AppSettings,
     hasLibraryContent: Boolean,
-    mediaServerModeActive: Boolean,
     libraryImportingCount: Int,
     enabled: Boolean,
     onAddEverything: () -> Unit,
+    onPickFiles: () -> Unit,
+    onPickFolder: () -> Unit,
+    onOpenBatchSelect: () -> Unit,
     onOpenLibrary: () -> Unit,
-    onClearAllMedia: () -> Unit,
     onToggleVideos: (Boolean) -> Unit,
     onToggleMusic: (Boolean) -> Unit,
     onTogglePhotos: (Boolean) -> Unit,
@@ -406,7 +476,7 @@ private fun ChooseStepCard(
             ) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 Text(
-                    stringResource(R.string.home_button_adding_all),
+                    stringResource(R.string.home_adding),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -424,14 +494,30 @@ private fun ChooseStepCard(
             ) {
                 Text(stringResource(R.string.home_add_everything), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(
-                onClick = onOpenLibrary,
-                enabled = enabled,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                shape = GhostUi.buttonShape,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-            ) {
-                Text(stringResource(R.string.home_pick_files), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // The system pickers open straight from here, and whatever is picked is added at once.
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onPickFiles,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                    shape = GhostUi.buttonShape,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                ) {
+                    Icon(Icons.Outlined.NoteAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.library_add_files), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                OutlinedButton(
+                    onClick = onPickFolder,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                    shape = GhostUi.buttonShape,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                ) {
+                    Icon(Icons.Outlined.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(R.string.library_add_whole_folder), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -493,24 +579,13 @@ private fun ChooseStepCard(
                 ) {
                     Text(stringResource(R.string.home_change_selection), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                if (mediaServerModeActive) {
-                    TextButton(
-                        onClick = onClearAllMedia,
-                        enabled = enabled,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    ) {
-                        Text(stringResource(R.string.home_remove_all))
-                    }
-                } else {
-                    TextButton(
-                        onClick = onAddEverything,
-                        enabled = enabled,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Text(stringResource(R.string.home_button_add_more))
-                    }
-                }
+                AddContentButton(
+                    enabled = enabled,
+                    onPickFiles = onPickFiles,
+                    onPickFolder = onPickFolder,
+                    onOpenBatchSelect = onOpenBatchSelect,
+                    onAddEverything = onAddEverything,
+                )
             }
         }
     }

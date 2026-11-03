@@ -1024,4 +1024,10 @@
     <string name="web_rename_device_prompt">為這部裝置命名（最多 30 個字元）：</string>
     <string name="web_rename_device_too_long">名稱太長，請勿超過 30 個字元。</string>
     <string name="web_music_unsupported">這個瀏覽器無法播放這首曲目。請下載後收聽。</string>
+    <string name="home_add">新增</string>
+    <string name="home_adding">正在新增…</string>
+    <string name="library_added_nothing_new">你選擇的內容都已在分享中。</string>
+    <plurals name="library_added_items">
+        <item quantity="other">已新增 %d 個項目</item>
+    </plurals>
 </resources>

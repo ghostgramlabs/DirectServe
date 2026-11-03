@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">Namn på den här enheten (högst 30 tecken):</string>
     <string name="web_rename_device_too_long">Namnet är för långt. Använd högst 30 tecken.</string>
     <string name="web_music_unsupported">Den här webbläsaren kan inte spela upp spåret. Ladda ned det för att lyssna.</string>
+    <string name="home_add">Lägg till</string>
+    <string name="home_adding">Lägger till…</string>
+    <string name="library_added_nothing_new">Allt du valde delas redan.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">%d objekt har lagts till</item>
+        <item quantity="other">%d objekt har lagts till</item>
+    </plurals>
 </resources>

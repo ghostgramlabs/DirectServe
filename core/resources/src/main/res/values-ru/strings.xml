@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">Имя этого устройства (до 30 символов):</string>
     <string name="web_rename_device_too_long">Слишком длинное имя. Используйте не более 30 символов.</string>
     <string name="web_music_unsupported">Этот браузер не может воспроизвести этот трек. Скачайте его, чтобы послушать.</string>
+    <string name="home_add">Добавить</string>
+    <string name="home_adding">Добавление…</string>
+    <string name="library_added_nothing_new">Всё, что вы выбрали, уже доступно.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">Добавлен %d элемент</item>
+        <item quantity="other">Добавлено элементов: %d</item>
+    </plurals>
 </resources>

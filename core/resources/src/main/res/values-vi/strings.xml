@@ -1024,4 +1024,10 @@
     <string name="web_rename_device_prompt">Tên thiết bị này (tối đa 30 ký tự):</string>
     <string name="web_rename_device_too_long">Tên quá dài. Hãy dùng tối đa 30 ký tự.</string>
     <string name="web_music_unsupported">Trình duyệt này không phát được bản nhạc này. Hãy tải xuống để nghe.</string>
+    <string name="home_add">Thêm</string>
+    <string name="home_adding">Đang thêm…</string>
+    <string name="library_added_nothing_new">Mọi thứ bạn chọn đã được chia sẻ.</string>
+    <plurals name="library_added_items">
+        <item quantity="other">Đã thêm %d mục</item>
+    </plurals>
 </resources>

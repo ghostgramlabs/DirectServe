@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">ഈ ഉപകരണത്തിന് ഒരു പേര് നൽകുക (പരമാവധി 30 അക്ഷരങ്ങൾ):</string>
     <string name="web_rename_device_too_long">ആ പേര് വളരെ നീളമുള്ളതാണ്. 30 അക്ഷരങ്ങളോ അതിൽ കുറവോ ഉപയോഗിക്കുക.</string>
     <string name="web_music_unsupported">ഈ ബ്രൗസറിന് ഈ ട്രാക്ക് പ്ലേ ചെയ്യാനാകില്ല. കേൾക്കാൻ ഇത് ഡൗൺലോഡ് ചെയ്യുക.</string>
+    <string name="home_add">ചേർക്കുക</string>
+    <string name="home_adding">ചേർക്കുന്നു…</string>
+    <string name="library_added_nothing_new">നിങ്ങൾ തിരഞ്ഞെടുത്തതെല്ലാം ഇതിനകം പങ്കിടുന്നു.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">%d ഇനം ചേർത്തു</item>
+        <item quantity="other">%d ഇനങ്ങൾ ചേർത്തു</item>
+    </plurals>
 </resources>

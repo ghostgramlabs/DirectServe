@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">ఈ పరికరానికి పేరు (గరిష్టంగా 30 అక్షరాలు):</string>
     <string name="web_rename_device_too_long">ఆ పేరు చాలా పొడవుగా ఉంది. 30 లేదా అంతకంటే తక్కువ అక్షరాలు ఉపయోగించండి.</string>
     <string name="web_music_unsupported">ఈ బ్రౌజర్ ఈ ట్రాక్‌ను ప్లే చేయలేదు. వినడానికి దీన్ని డౌన్‌లోడ్ చేయండి.</string>
+    <string name="home_add">జోడించు</string>
+    <string name="home_adding">జోడిస్తోంది…</string>
+    <string name="library_added_nothing_new">మీరు ఎంచుకున్నవన్నీ ఇప్పటికే షేర్ అవుతున్నాయి.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">%d అంశం జోడించబడింది</item>
+        <item quantity="other">%d అంశాలు జోడించబడ్డాయి</item>
+    </plurals>
 </resources>

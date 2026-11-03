@@ -1024,4 +1024,10 @@
     <string name="web_rename_device_prompt">このデバイスの名前（30 文字以内）:</string>
     <string name="web_rename_device_too_long">名前が長すぎます。30 文字以内にしてください。</string>
     <string name="web_music_unsupported">このブラウザではこの曲を再生できません。ダウンロードして聴いてください。</string>
+    <string name="home_add">追加</string>
+    <string name="home_adding">追加しています…</string>
+    <string name="library_added_nothing_new">選んだものはすべて共有済みです。</string>
+    <plurals name="library_added_items">
+        <item quantity="other">%d 件追加しました</item>
+    </plurals>
 </resources>

@@ -13,6 +13,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
+import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
@@ -73,8 +75,6 @@ import com.ghostgramlabs.directserve.ui.theme.GhostStreamTheme
 import com.ghoststream.core.model.resolvedAccessUrl
 import com.ghoststream.core.model.ThemeMode
 import com.ghoststream.feature.home.HomeScreen
-import com.ghoststream.feature.library.AddFilesRoute
-import com.ghoststream.feature.library.AddFolderRoute
 import com.ghoststream.feature.library.BatchSelectRoute
 import com.ghoststream.feature.library.SharedLibraryScreen
 import com.ghoststream.feature.networksetup.NetworkSetupScreen
@@ -190,6 +190,15 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
             batchMediaPermissionLauncher.launch(requiredBatchSelectionPermissions())
         }
     }
+    // The system pickers are the only confirmation: whatever is picked is added straight away.
+    val pickFilesLauncher = rememberLauncherForActivityResult(OpenMultipleDocuments()) { uris ->
+        viewModel.addFiles(uris)
+    }
+    val pickFolderLauncher = rememberLauncherForActivityResult(OpenDocumentTree()) { uri ->
+        uri?.let(viewModel::addFolder)
+    }
+    val pickFiles = { pickFilesLauncher.launch(arrayOf("*/*")) }
+    val pickFolder = { pickFolderLauncher.launch(null) }
     val mediaServerPermissionLauncher = rememberLauncherForActivityResult(RequestMultiplePermissions()) { results ->
         if (results.values.all { it }) {
             viewModel.importAllMedia()
@@ -565,7 +574,9 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                     onOpenHistory = viewModel::navigateToHistory,
                     onOpenDlna = { navController.navigate(Routes.Dlna) },
                     onImportAllMedia = startMediaServerWithPermission,
-                    onClearAllMedia = viewModel::clearAllMedia,
+                    onPickFiles = pickFiles,
+                    onPickFolder = pickFolder,
+                    onOpenBatchSelect = openBatchSelect,
                     onRequestAllFilesAccess = viewModel::requestAllFilesAccess,
                     libraryImportingCount = uiState.libraryImportingCount,
                     onResolveUploadRequest = viewModel::resolveUploadRequest,
@@ -587,23 +598,10 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                     onClearAll = viewModel::clearLibrarySelection,
                     onRemoveItem = viewModel::removeItem,
                     onRemoveFolder = viewModel::removeFolder,
-                    onOpenAddFiles = { navController.navigate(Routes.AddFiles) },
-                    onOpenAddFolder = { navController.navigate(Routes.AddFolder) },
+                    onPickFiles = pickFiles,
+                    onPickFolder = pickFolder,
                     onOpenBatchSelect = openBatchSelect,
-                    modifier = Modifier.padding(innerPadding),
-                )
-            }
-            composable(Routes.AddFiles) {
-                AddFilesRoute(
-                    onBack = { navController.popBackStack() },
-                    onAddSelected = viewModel::addFiles,
-                    modifier = Modifier.padding(innerPadding),
-                )
-            }
-            composable(Routes.AddFolder) {
-                AddFolderRoute(
-                    onBack = { navController.popBackStack() },
-                    onAddFolder = viewModel::addFolder,
+                    onImportAllMedia = startMediaServerWithPermission,
                     modifier = Modifier.padding(innerPadding),
                 )
             }
@@ -678,14 +676,8 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                     job?.status == com.ghoststream.core.media.CompatibilityStatus.READY || job?.preparedAsset?.isComplete == true
                 }
                 val browserPrepPendingCount = (browserPrepCandidates.size - browserPrepReadyCount).coerceAtLeast(0)
-                val liveLibraryItemIds = uiState.sessionState.selectedItems.mapTo(mutableSetOf()) { it.id }
-                val liveLibraryFolderIds = uiState.sessionState.selectedFolders.mapTo(mutableSetOf()) { it.id }
-                val pendingLibraryItemCount = uiState.libraryState.items.count { it.id !in liveLibraryItemIds }
-                val pendingLibraryFolderCount = uiState.libraryState.folders.count { it.id !in liveLibraryFolderIds }
                 ActiveSessionScreen(
                     sessionState = uiState.sessionState,
-                    pendingLibraryItemCount = pendingLibraryItemCount,
-                    pendingLibraryFolderCount = pendingLibraryFolderCount,
                     browserPrepTargetCount = browserPrepCandidates.size,
                     browserPrepQueuedCount = browserPrepQueuedCount,
                     browserPrepReadyCount = browserPrepReadyCount,
@@ -724,7 +716,6 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                     onTogglePinProtection = viewModel::updateSessionPinProtection,
                     onPrepareBrowserFiles = viewModel::prepareLiveBrowserFiles,
                     onStopBrowserFiles = viewModel::stopLiveBrowserFiles,
-                    onRefreshLibrary = viewModel::refreshLiveLibrary,
                     onBack = { navController.popBackStack() },
                     onStopSharing = viewModel::requestStopSharing,
                     onBlockClient = viewModel::blockClient,
@@ -987,8 +978,6 @@ private object Routes {
     const val OnboardingPreview = "onboarding_preview"
     const val Home = "home"
     const val Library = "library"
-    const val AddFiles = "add_files"
-    const val AddFolder = "add_folder"
     const val BatchSelect = "batch_select"
     const val NetworkSetup = "network_setup"
     const val Session = "session"

@@ -104,27 +104,27 @@ const routes = {
   "/": () => {
     const e = state.bootstrap?.enabledCategories;
     if (e && !e.videos && !e.photos && !e.music && e.files) {
-      renderLibrary("files", titleForPath("/files"));
+      return renderLibrary("files", titleForPath("/files"));
     } else {
-      renderLibrary("media", titleForPath("/"));
+      return renderLibrary("media", titleForPath("/"));
     }
   },
   "/login": () => renderLogin(),
   "/videos": () => {
     if (!isCategoryEnabled("videos")) { navigate("/", true); return; }
-    renderLibrary("videos", titleForPath("/videos"));
+    return renderLibrary("videos", titleForPath("/videos"));
   },
   "/photos": () => {
     if (!isCategoryEnabled("photos")) { navigate("/", true); return; }
-    renderLibrary("photos", titleForPath("/photos"));
+    return renderLibrary("photos", titleForPath("/photos"));
   },
   "/music": () => {
     if (!isCategoryEnabled("music")) { navigate("/", true); return; }
-    renderLibrary("music", titleForPath("/music"));
+    return renderLibrary("music", titleForPath("/music"));
   },
   "/files": () => {
     if (!isCategoryEnabled("files")) { navigate("/", true); return; }
-    renderLibrary("files", titleForPath("/files"));
+    return renderLibrary("files", titleForPath("/files"));
   },
   "/live": renderLiveScreen,
   "/quick-text": () => {
@@ -429,6 +429,8 @@ async function boot() {
     } else if (!state.quickTextNotifyTimer) {
       startQuickTextNotifications();
     }
+    state.libraryVersion = null;
+    startLibraryWatch();
     if (path.startsWith("/player/video/")) {
       renderVideoPlayer(path.split("/").pop());
       return;
@@ -446,6 +448,46 @@ async function boot() {
     }
     renderError(error.message || gsStr("web_error_load_failed", "Unable to load DirectServe."));
   }
+}
+
+const LIST_ROUTES = new Set(["/", "/videos", "/photos", "/music", "/files", "/folders"]);
+
+/**
+ * Files added or removed on the phone show up here without a manual reload: a cheap version
+ * check every few seconds re-renders the open list. It waits while the viewer is selecting,
+ * typing a search or playing something on the page, so nothing is interrupted.
+ */
+function startLibraryWatch() {
+  if (state.libraryWatchTimer) return;
+  state.libraryWatchTimer = window.setInterval(async () => {
+    if (document.visibilityState !== "visible" || location.pathname === "/login") return;
+    let version;
+    try {
+      version = (await api("/api/library/version")).version;
+    } catch (_) {
+      return;
+    }
+    if (!state.libraryVersion) {
+      state.libraryVersion = version;
+      return;
+    }
+    if (version === state.libraryVersion || !LIST_ROUTES.has(location.pathname)) return;
+    const busy = state.selectMode ||
+      document.activeElement?.matches?.("input, textarea") ||
+      [...document.querySelectorAll("audio, video")].some((m) => !m.paused && !m.ended);
+    if (busy) return;
+    state.libraryVersion = version;
+    const scrollY = window.scrollY;
+    try {
+      // Category counts in the navigation come from bootstrap, so refresh it too.
+      state.bootstrap = await api("/api/bootstrap");
+      applyBootstrapUi();
+      destroyMusicPlayers();
+      resetThumbnailLoader();
+      await (routes[location.pathname] || routes["/"])();
+      window.scrollTo(0, scrollY);
+    } catch (_) {}
+  }, 5000);
 }
 
 function applyBootstrapUi() {

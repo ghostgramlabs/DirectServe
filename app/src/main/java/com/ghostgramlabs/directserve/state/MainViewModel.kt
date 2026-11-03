@@ -44,9 +44,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
@@ -198,6 +200,15 @@ class MainViewModel(
             syncDlnaAnnouncer(settings.dlnaEnabled, session)
         }.launchIn(viewModelScope)
 
+        // While sharing, the server follows the library: files added or removed on the phone
+        // show up (or disappear) in the browser without a manual "refresh live share" step.
+        combine(
+            container.storageRepository.libraryState,
+            container.sessionManager.sessionState.map { it.isSharing }.distinctUntilChanged(),
+        ) { library, isSharing ->
+            if (isSharing) container.sessionManager.refreshSelection(library.items, library.folders)
+        }.launchIn(viewModelScope)
+
         // Surface the battery optimization prompt at launch (after onboarding) so it
         // isn't lost behind the Active Session screen when the user taps Start Sharing.
         // Re-prompts every cold launch until the OS reports the exemption is granted.
@@ -292,39 +303,52 @@ class MainViewModel(
     }
 
     fun addFiles(uris: List<Uri>) {
+        if (uris.isEmpty()) return
         viewModelScope.launch {
-            libraryImportingCount.value += uris.size
-            try {
-                container.storageRepository.addFiles(uris)
-            } finally {
-                libraryImportingCount.value = (libraryImportingCount.value - uris.size).coerceAtLeast(0)
-            }
+            addAndReport(uris.size) { container.storageRepository.addFiles(uris) }
         }
     }
 
     fun addFolder(uri: Uri) {
         viewModelScope.launch {
-            libraryImportingCount.value += 1
-            try {
+            addAndReport(1) {
                 val result = container.storageRepository.addFolder(uri)
-                result.exceptionOrNull()?.let {
+                if (result.isFailure) {
                     _events.emit(AppEvent.ShowMessage(application.getString(R.string.message_unable_add_folder)))
                 }
-            } finally {
-                libraryImportingCount.value = (libraryImportingCount.value - 1).coerceAtLeast(0)
+                result.isSuccess
             }
         }
     }
 
     fun addSmartSelection(uris: List<Uri>) {
+        if (uris.isEmpty()) return
         viewModelScope.launch {
-            libraryImportingCount.value += uris.size
-            try {
-                container.storageRepository.addSmartSelection(uris)
-            } finally {
-                libraryImportingCount.value = (libraryImportingCount.value - uris.size).coerceAtLeast(0)
-            }
+            addAndReport(uris.size) { container.storageRepository.addSmartSelection(uris) }
         }
+    }
+
+    /**
+     * Runs an add with the "Adding…" indicator, then says how many items it actually added, so
+     * the person sees the result even when the picks were already shared. [block] returns false
+     * when it already reported its own failure.
+     */
+    private suspend fun addAndReport(pendingCount: Int, block: suspend () -> Any?) {
+        val before = container.storageRepository.libraryState.value.items.mapTo(hashSetOf()) { it.id }
+        libraryImportingCount.value += pendingCount
+        val reported = try {
+            block() == false
+        } finally {
+            libraryImportingCount.value = (libraryImportingCount.value - pendingCount).coerceAtLeast(0)
+        }
+        if (reported) return
+        val added = container.storageRepository.libraryState.value.items.count { it.id !in before }
+        val message = if (added > 0) {
+            application.resources.getQuantityString(R.plurals.library_added_items, added, added)
+        } else {
+            application.getString(R.string.library_added_nothing_new)
+        }
+        _events.emit(AppEvent.ShowMessage(message))
     }
 
     fun removeItem(itemId: String) {
@@ -350,27 +374,14 @@ class MainViewModel(
 
     fun importAllMedia() {
         viewModelScope.launch {
-            try {
-                libraryImportingCount.value += 1
+            addAndReport(1) {
                 container.storageRepository.loadAllDeviceMedia()
                 container.settingsRepository.update { current ->
                     current.copy(mediaServerMode = true)
                 }
-            } finally {
-                libraryImportingCount.value = (libraryImportingCount.value - 1).coerceAtLeast(0)
             }
         }
     }
-
-    fun clearAllMedia() {
-        viewModelScope.launch {
-            container.settingsRepository.update { current ->
-                current.copy(mediaServerMode = false)
-            }
-            container.storageRepository.clearSelection()
-        }
-    }
-
 
     fun requestStartSharing() {
         viewModelScope.launch {
@@ -918,35 +929,6 @@ class MainViewModel(
             _browserPrepManuallyTriggered.value = false
             container.compatibilityPipeline.cancelPendingPreparations()
             _events.emit(AppEvent.ShowMessage(application.getString(R.string.message_browser_playback_stopped)))
-        }
-    }
-
-    fun refreshLiveLibrary() {
-        viewModelScope.launch {
-            val session = container.sessionManager.sessionState.value
-            if (!session.isSharing) {
-                _events.emit(AppEvent.ShowMessage(application.getString(R.string.main_not_sharing)))
-                return@launch
-            }
-
-            val library = container.storageRepository.libraryState.value
-            val previousItemIds = session.selectedItems.mapTo(mutableSetOf()) { it.id }
-            val previousFolderIds = session.selectedFolders.mapTo(mutableSetOf()) { it.id }
-            val newItemCount = library.items.count { it.id !in previousItemIds }
-            val newFolderCount = library.folders.count { it.id !in previousFolderIds }
-
-            container.sessionManager.refreshSelection(library.items, library.folders)
-
-            val message = if (newItemCount > 0 || newFolderCount > 0) {
-                application.getString(
-                    R.string.message_live_library_refreshed_updates,
-                    newItemCount,
-                    newFolderCount,
-                )
-            } else {
-                application.getString(R.string.message_live_library_refreshed_current)
-            }
-            _events.emit(AppEvent.ShowMessage(message))
         }
     }
 

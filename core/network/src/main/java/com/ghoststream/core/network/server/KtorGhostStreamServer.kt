@@ -713,6 +713,18 @@ class KtorGhostStreamServer(
                 }
             }
 
+            // A cheap fingerprint of what this share shows, so open browser pages can notice files
+            // added or removed on the phone and reload their list. Reads in-memory state only.
+            get("/api/library/version") {
+                if (!call.authorizeBrowserCall()) return@get
+                val settings = settingsRepository.settings.first()
+                val state = sessionManager.sessionState.value
+                val itemIds = state.selectedItems.filter { it.isEnabledBySettings(settings) }.map { it.id }.sorted()
+                val folderIds = state.selectedFolders.map { it.id }.sorted()
+                val version = (itemIds + "|" + folderIds).hashCode().toString(16) + "-" + itemIds.size
+                call.respond(LibraryVersionPayload(version = version))
+            }
+
             get("/api/folders") {
                 if (!call.authorizeBrowserCall()) return@get
                 val state = sessionManager.sessionState.value
@@ -3400,6 +3412,11 @@ class KtorGhostStreamServer(
     @Serializable
     private data class ErrorPayload(
         val message: String,
+    )
+
+    @Serializable
+    private data class LibraryVersionPayload(
+        val version: String,
     )
 
     @Serializable

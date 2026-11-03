@@ -1024,4 +1024,10 @@
     <string name="web_rename_device_prompt">Bu cihazın adı (en fazla 30 karakter):</string>
     <string name="web_rename_device_too_long">Bu ad çok uzun. En fazla 30 karakter kullan.</string>
     <string name="web_music_unsupported">Bu tarayıcı bu parçayı çalamıyor. Dinlemek için indir.</string>
+    <string name="home_add">Ekle</string>
+    <string name="home_adding">Ekleniyor…</string>
+    <string name="library_added_nothing_new">Seçtiğin her şey zaten paylaşılıyor.</string>
+    <plurals name="library_added_items">
+        <item quantity="other">%d öğe eklendi</item>
+    </plurals>
 </resources>

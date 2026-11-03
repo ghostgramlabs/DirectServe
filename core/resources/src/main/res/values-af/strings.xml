@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">Noem hierdie toestel (tot 30 karakters):</string>
     <string name="web_rename_device_too_long">Daardie naam is te lank. Gebruik 30 karakters of minder.</string>
     <string name="web_music_unsupported">Hierdie blaaier kan nie hierdie snit speel nie. Laai dit af om te luister.</string>
+    <string name="home_add">Voeg by</string>
+    <string name="home_adding">Voeg tans by…</string>
+    <string name="library_added_nothing_new">Alles wat jy gekies het, word reeds gedeel.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">%d item bygevoeg</item>
+        <item quantity="other">%d items bygevoeg</item>
+    </plurals>
 </resources>

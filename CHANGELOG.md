@@ -9,6 +9,10 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
   with expert options under Advanced.
 - New ice-blue look and app icon.
 - Select all when adding from your phone library or removing shared items.
+- Simpler adding: Pick Files and Pick Folder open the picker straight away and add what you
+  choose, with no extra confirm screen. "+ Add" lists every way to add, and you see how many
+  items were added.
+- While sharing, files you add or remove on the phone update in the browser on their own.
 - DirectServe may ask for a rating after a couple of successful shares (at most once every few
   months).
 - Redesigned browser pages: clearer cards with one Play button, a dark video and photo viewer,

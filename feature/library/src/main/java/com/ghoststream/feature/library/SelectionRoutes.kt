@@ -1,45 +1,26 @@
 package com.ghoststream.feature.library
 
-import android.content.Context
 import android.net.Uri
-import android.provider.DocumentsContract
-import android.provider.OpenableColumns
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
-import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.InsertDriveFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,87 +32,6 @@ import com.ghostgramlabs.directserve.core.resources.util.LocalizationUtils
 import com.ghostgramlabs.directserve.core.resources.R as SharedR
 import com.ghostgramlabs.directserve.core.resources.R
 import com.ghoststream.core.model.SmartSelectionGroup
-
-@Composable
-fun AddFilesRoute(
-    onBack: () -> Unit,
-    onAddSelected: (List<Uri>) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val selectedUris = remember { mutableStateListOf<Uri>() }
-    val launcher = rememberLauncherForActivityResult(OpenMultipleDocuments()) { uris ->
-        selectedUris.clear()
-        selectedUris.addAll(uris)
-    }
-
-    LaunchedEffect(Unit) {
-        launcher.launch(arrayOf("*/*"))
-    }
-
-    SelectionRouteScaffold(
-        modifier = modifier,
-        title = stringResource(R.string.selection_add_files_title),
-        subtitle = stringResource(R.string.selection_add_files_body),
-        primaryLabel = stringResource(R.string.selection_add_selected),
-        onPrimary = {
-            onAddSelected(selectedUris.toList())
-            onBack()
-        },
-        onSecondary = { launcher.launch(arrayOf("*/*")) },
-        secondaryLabel = stringResource(R.string.selection_pick_files_again),
-        onBack = onBack,
-    ) {
-        if (selectedUris.isEmpty()) {
-            LibraryEmptyState(
-                title = stringResource(R.string.selection_nothing_selected_title),
-                description = stringResource(R.string.selection_nothing_selected_body),
-            )
-        } else {
-            selectedUris.forEach { uri ->
-                SelectionUriCard(uri = uri)
-            }
-        }
-    }
-}
-
-@Composable
-fun AddFolderRoute(
-    onBack: () -> Unit,
-    onAddFolder: (Uri) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var selectedTreeUri by remember { mutableStateOf<Uri?>(null) }
-    val launcher = rememberLauncherForActivityResult(OpenDocumentTree()) { uri ->
-        selectedTreeUri = uri
-    }
-
-    LaunchedEffect(Unit) {
-        launcher.launch(null)
-    }
-
-    SelectionRouteScaffold(
-        modifier = modifier,
-        title = stringResource(R.string.selection_add_folder_title),
-        subtitle = stringResource(R.string.selection_add_folder_body),
-        primaryLabel = stringResource(R.string.selection_add_folder),
-        onPrimary = {
-            selectedTreeUri?.let(onAddFolder)
-            onBack()
-        },
-        onSecondary = { launcher.launch(null) },
-        secondaryLabel = stringResource(R.string.selection_choose_another_folder),
-        onBack = onBack,
-    ) {
-        if (selectedTreeUri == null) {
-            LibraryEmptyState(
-                title = stringResource(R.string.selection_no_folder_title),
-                description = stringResource(R.string.selection_no_folder_body),
-            )
-        } else {
-            SelectionUriCard(uri = selectedTreeUri!!, title = stringResource(R.string.selection_selected_folder))
-        }
-    }
-}
 
 @Composable
 fun BatchSelectRoute(
@@ -290,147 +190,7 @@ fun BatchSelectRoute(
 }
 
 @Composable
-private fun SelectionRouteScaffold(
-    title: String,
-    subtitle: String,
-    primaryLabel: String,
-    secondaryLabel: String,
-    onPrimary: () -> Unit,
-    onSecondary: () -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
-                Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        item {
-            Card(
-                modifier = Modifier
-                    .padding(horizontal = 20.dp)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = selectionPanelColor()),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    content = content,
-                )
-            }
-        }
-        item {
-            Row(modifier = Modifier.padding(horizontal = 20.dp)) {
-                OutlinedButton(
-                    onClick = onBack,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = selectionSecondaryButtonColors(),
-                ) {
-                    Text(stringResource(R.string.common_back))
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                OutlinedButton(
-                    onClick = onSecondary,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = selectionSecondaryButtonColors(),
-                ) {
-                    Text(secondaryLabel)
-                }
-            }
-        }
-        item {
-            Button(
-                onClick = onPrimary,
-                modifier = Modifier
-                    .padding(horizontal = 20.dp)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = selectionPrimaryButtonColors(),
-            ) {
-                Text(primaryLabel)
-            }
-        }
-        item { Spacer(modifier = Modifier.height(18.dp)) }
-    }
-}
-
-@Composable
-private fun SelectionUriCard(
-    uri: Uri,
-    title: String? = null,
-) {
-    val context = LocalContext.current
-    val isFolder = remember(uri) { DocumentsContract.isTreeUri(uri) }
-    // Show "Download/Demo" or the file name rather than the raw content:// URI.
-    val location = remember(uri) { readableLocation(context, uri) }
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = selectionRaisedColor()),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                        shape = RoundedCornerShape(14.dp),
-                    )
-                    .padding(10.dp),
-            ) {
-                Icon(
-                    if (isFolder) Icons.Outlined.Folder else Icons.Outlined.InsertDriveFile,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    title ?: location.ifBlank { stringResource(R.string.selection_selected_item) },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                )
-                if (title != null && location.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(location, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
-}
-
-private fun readableLocation(context: Context, uri: Uri): String {
-    if (DocumentsContract.isTreeUri(uri)) {
-        // Tree ids look like "primary:Download/Demo" or "1A2B-3C4D:DCIM".
-        return DocumentsContract.getTreeDocumentId(uri).substringAfter(':').ifBlank { uri.lastPathSegment.orEmpty() }
-    }
-    return runCatching {
-        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) cursor.getString(0) else null
-        }
-    }.getOrNull() ?: uri.lastPathSegment.orEmpty()
-}
-
-@Composable
 private fun selectionPanelColor() = MaterialTheme.colorScheme.surface
-
-@Composable
-private fun selectionRaisedColor() = MaterialTheme.colorScheme.surfaceVariant
 
 @Composable
 private fun selectionPrimaryButtonColors() = ButtonDefaults.buttonColors(

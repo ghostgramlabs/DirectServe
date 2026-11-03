@@ -90,8 +90,6 @@ import com.google.zxing.qrcode.QRCodeWriter
 @Composable
 fun ActiveSessionScreen(
     sessionState: SessionState,
-    pendingLibraryItemCount: Int,
-    pendingLibraryFolderCount: Int,
     browserPrepTargetCount: Int,
     browserPrepQueuedCount: Int,
     browserPrepReadyCount: Int,
@@ -106,7 +104,6 @@ fun ActiveSessionScreen(
     onTogglePinProtection: (Boolean) -> Unit,
     onPrepareBrowserFiles: () -> Unit,
     onStopBrowserFiles: () -> Unit,
-    onRefreshLibrary: () -> Unit,
     onStopSharing: () -> Unit,
     onBlockClient: (String) -> Unit,
     onUnblockClient: (String) -> Unit,
@@ -154,15 +151,6 @@ fun ActiveSessionScreen(
                     onTogglePinProtection = onTogglePinProtection,
                     onRegeneratePin = onRegeneratePin,
                 )
-            }
-            if (pendingLibraryItemCount > 0 || pendingLibraryFolderCount > 0) {
-                item {
-                    PendingChangesCard(
-                        pendingItemCount = pendingLibraryItemCount,
-                        pendingFolderCount = pendingLibraryFolderCount,
-                        onRefreshLibrary = onRefreshLibrary,
-                    )
-                }
             }
             item {
                 ConnectedDevicesCard(
@@ -452,34 +440,6 @@ internal fun PinSwitchCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.session_new_pin))
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PendingChangesCard(
-    pendingItemCount: Int,
-    pendingFolderCount: Int,
-    onRefreshLibrary: () -> Unit,
-) {
-    Surface(
-        shape = GhostUi.cardShape,
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                stringResource(R.string.session_library_refresh_pending, pendingItemCount, pendingFolderCount),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f),
-            )
-            Button(onClick = onRefreshLibrary, shape = GhostUi.buttonShape) {
-                Text(stringResource(R.string.session_refresh_library))
             }
         }
     }

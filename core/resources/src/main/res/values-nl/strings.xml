@@ -1024,4 +1024,11 @@
     <string name="web_rename_device_prompt">Naam voor dit apparaat (maximaal 30 tekens):</string>
     <string name="web_rename_device_too_long">Die naam is te lang. Gebruik maximaal 30 tekens.</string>
     <string name="web_music_unsupported">Deze browser kan dit nummer niet afspelen. Download het om te luisteren.</string>
+    <string name="home_add">Toevoegen</string>
+    <string name="home_adding">Bezig met toevoegen…</string>
+    <string name="library_added_nothing_new">Alles wat je hebt gekozen, wordt al gedeeld.</string>
+    <plurals name="library_added_items">
+        <item quantity="one">%d item toegevoegd</item>
+        <item quantity="other">%d items toegevoegd</item>
+    </plurals>
 </resources>
