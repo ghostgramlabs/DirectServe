@@ -12,8 +12,8 @@
     <string name="common_dismiss">Dismiss</string>
     <string name="common_remove">Remove</string>
     <string name="common_search">Search</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_title">Direct streaming and file sharing</string>
     <string name="onboarding_subtitle">Turn your phone into a private local hub for TV, laptop, phone, tablet, and browser access.</string>
@@ -1006,5 +1006,44 @@
 
     <string name="history_clear_title">Clear Transfer History</string>
     <string name="history_clear_message">Are you sure you want to permanently delete all transfer history records? This action cannot be undone.</string>
-
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Ready to share</string>
+    <string name="home_step_choose">Choose what to share</string>
+    <string name="home_step_choose_empty">Nothing added yet.</string>
+    <string name="home_add_everything">Add everything on this phone</string>
+    <string name="home_pick_files">Pick files or folders</string>
+    <string name="home_change_selection">Change selection</string>
+    <string name="home_types_hint">Tap a type to include or skip it.</string>
+    <string name="home_step_start">Start sharing</string>
+    <string name="home_step_start_hint">You\'ll get a QR code. Anyone on the same Wi-Fi can scan it to open your files in a browser. No app needed.</string>
+    <string name="home_sharing_on">Sharing is on</string>
+    <string name="home_show_qr">Show QR code</string>
+    <string name="home_more">More</string>
+    <string name="home_tool_mirror">Mirror screen</string>
+    <string name="home_tool_send_text">Send text</string>
+    <string name="home_tool_history">History</string>
+    <string name="home_tool_tv">TV &amp; players</string>
+    <string name="home_remove_all">Remove all</string>
+    <string name="session_waiting_connect">Waiting for someone to connect</string>
+    <string name="session_stop_short">Stop</string>
+    <string name="session_scan_title">Scan with the other device</string>
+    <string name="session_or_type">Or type this address in any browser on the same Wi-Fi:</string>
+    <string name="session_copy_short">Copy</string>
+    <string name="session_pin_switch">Ask for a PIN</string>
+    <string name="session_pin_switch_desc">Visitors must enter a code first</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">Change what\'s shared</string>
+    <string name="library_title_simple">What you\'re sharing</string>
+    <string name="library_add_files_or_folders">Add files or folders</string>
+    <string name="settings_group_while_sharing">While sharing</string>
+    <string name="settings_group_app">App</string>
+    <string name="settings_show_advanced">Show advanced settings</string>
+    <string name="settings_hide_advanced">Hide advanced settings</string>
+    <string name="settings_advanced_desc">TV &amp; DLNA, port, browser look, storage</string>
+    <string name="settings_allow_downloads">Allow downloads</string>
+    <string name="settings_allow_downloads_desc">Visitors can save files, not just view them</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d device connected</item>
+        <item quantity="other">%d devices connected</item>
+    </plurals>
 </resources>

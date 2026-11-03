@@ -12,8 +12,8 @@
     <string name="common_dismiss">Ignorar</string>
     <string name="common_remove">Remover</string>
     <string name="common_search">Pesquisar</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Pular</string>
     <string name="onboarding_title">Streaming direto e compartilhamento de arquivos</string>
     <string name="onboarding_subtitle">Transforme seu celular em um centro privado para TV, computador, tablet e acesso via navegador.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">1 item</item>
         <item quantity="other">%1$d itens</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Pronto para partilhar</string>
+    <string name="home_step_choose">Escolha o que partilhar</string>
+    <string name="home_step_choose_empty">Ainda não adicionou nada.</string>
+    <string name="home_add_everything">Adicionar tudo deste telemóvel</string>
+    <string name="home_pick_files">Escolher ficheiros ou pastas</string>
+    <string name="home_change_selection">Alterar seleção</string>
+    <string name="home_types_hint">Toque num tipo para o incluir ou ignorar.</string>
+    <string name="home_step_start">Começar a partilhar</string>
+    <string name="home_step_start_hint">Vai receber um código QR. Qualquer pessoa na mesma rede Wi-Fi pode lê-lo para abrir os seus ficheiros num navegador. Não é preciso nenhuma app.</string>
+    <string name="home_sharing_on">Partilha ativa</string>
+    <string name="home_show_qr">Mostrar código QR</string>
+    <string name="home_more">Mais</string>
+    <string name="home_tool_mirror">Espelhar ecrã</string>
+    <string name="home_tool_send_text">Enviar texto</string>
+    <string name="home_tool_history">Histórico</string>
+    <string name="home_tool_tv">TV e leitores</string>
+    <string name="home_remove_all">Remover tudo</string>
+    <string name="session_waiting_connect">À espera de que alguém se ligue</string>
+    <string name="session_stop_short">Parar</string>
+    <string name="session_scan_title">Leia com o outro dispositivo</string>
+    <string name="session_or_type">Ou escreva este endereço em qualquer navegador na mesma rede Wi-Fi:</string>
+    <string name="session_copy_short">Copiar</string>
+    <string name="session_pin_switch">Pedir um PIN</string>
+    <string name="session_pin_switch_desc">Os visitantes têm de introduzir um código primeiro</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">Alterar o que é partilhado</string>
+    <string name="library_title_simple">O que está a partilhar</string>
+    <string name="library_add_files_or_folders">Adicionar ficheiros ou pastas</string>
+    <string name="settings_group_while_sharing">Durante a partilha</string>
+    <string name="settings_group_app">App</string>
+    <string name="settings_show_advanced">Mostrar definições avançadas</string>
+    <string name="settings_hide_advanced">Ocultar definições avançadas</string>
+    <string name="settings_advanced_desc">TV e DLNA, porta, aspeto do navegador, armazenamento</string>
+    <string name="settings_allow_downloads">Permitir transferências</string>
+    <string name="settings_allow_downloads_desc">Os visitantes podem guardar ficheiros, não apenas vê-los</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d dispositivo ligado</item>
+        <item quantity="other">%d dispositivos ligados</item>
     </plurals>
 </resources>

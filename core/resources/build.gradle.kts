@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -9,6 +10,10 @@ android {
 
     defaultConfig {
         minSdk = 26
+    }
+
+    buildFeatures {
+        compose = true
     }
 
     compileOptions {
@@ -24,4 +29,6 @@ android {
 dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
 }

@@ -12,8 +12,8 @@
     <string name="common_dismiss">बंद करें</string>
     <string name="common_remove">हटाएं</string>
     <string name="common_search">खोजें</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">स्किप</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">अपने फ़ोन को स्थानीय हब में बदलें।</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d item</item>
         <item quantity="other">%1$d items</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">शेयर करने के लिए तैयार</string>
+    <string name="home_step_choose">चुनें कि क्या शेयर करना है</string>
+    <string name="home_step_choose_empty">अभी तक कुछ नहीं जोड़ा गया।</string>
+    <string name="home_add_everything">इस फ़ोन पर सब कुछ जोड़ें</string>
+    <string name="home_pick_files">फ़ाइलें या फ़ोल्डर चुनें</string>
+    <string name="home_change_selection">चुनाव बदलें</string>
+    <string name="home_types_hint">किसी प्रकार को शामिल करने या छोड़ने के लिए उस पर टैप करें।</string>
+    <string name="home_step_start">शेयर करना शुरू करें</string>
+    <string name="home_step_start_hint">आपको एक QR कोड मिलेगा। उसी Wi-Fi पर कोई भी इसे स्कैन करके आपकी फ़ाइलें ब्राउज़र में खोल सकता है। किसी ऐप की ज़रूरत नहीं।</string>
+    <string name="home_sharing_on">शेयरिंग चालू है</string>
+    <string name="home_show_qr">QR कोड दिखाएँ</string>
+    <string name="home_more">और</string>
+    <string name="home_tool_mirror">स्क्रीन मिरर करें</string>
+    <string name="home_tool_send_text">टेक्स्ट भेजें</string>
+    <string name="home_tool_history">इतिहास</string>
+    <string name="home_tool_tv">TV और प्लेयर</string>
+    <string name="home_remove_all">सब हटाएँ</string>
+    <string name="session_waiting_connect">किसी के कनेक्ट होने का इंतज़ार</string>
+    <string name="session_stop_short">रोकें</string>
+    <string name="session_scan_title">दूसरे डिवाइस से स्कैन करें</string>
+    <string name="session_or_type">या उसी Wi-Fi पर किसी भी ब्राउज़र में यह पता टाइप करें:</string>
+    <string name="session_copy_short">कॉपी करें</string>
+    <string name="session_pin_switch">PIN माँगें</string>
+    <string name="session_pin_switch_desc">आने वालों को पहले एक कोड डालना होगा</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">शेयर की गई चीज़ें बदलें</string>
+    <string name="library_title_simple">आप क्या शेयर कर रहे हैं</string>
+    <string name="library_add_files_or_folders">फ़ाइलें या फ़ोल्डर जोड़ें</string>
+    <string name="settings_group_while_sharing">शेयर करते समय</string>
+    <string name="settings_group_app">ऐप</string>
+    <string name="settings_show_advanced">उन्नत सेटिंग दिखाएँ</string>
+    <string name="settings_hide_advanced">उन्नत सेटिंग छिपाएँ</string>
+    <string name="settings_advanced_desc">TV और DLNA, पोर्ट, ब्राउज़र का रूप, स्टोरेज</string>
+    <string name="settings_allow_downloads">डाउनलोड की अनुमति दें</string>
+    <string name="settings_allow_downloads_desc">आने वाले फ़ाइलें सेव कर सकते हैं, सिर्फ़ देख नहीं</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d डिवाइस कनेक्ट है</item>
+        <item quantity="other">%d डिवाइस कनेक्ट हैं</item>
     </plurals>
 </resources>

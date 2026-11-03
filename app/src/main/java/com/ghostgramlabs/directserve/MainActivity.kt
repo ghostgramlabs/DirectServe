@@ -19,6 +19,8 @@ import androidx.activity.result.contract.ActivityResultContracts.StartActivityFo
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -929,11 +931,17 @@ private fun SplashRoute() {
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Image(
-                painter = painterResource(id = R.drawable.directserve_logo_fixed),
-                contentDescription = null,
-                modifier = Modifier.size(88.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .background(Color(0xFF0369A1), RoundedCornerShape(22.dp)),
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             Spacer(modifier = Modifier.height(18.dp))
             Text(stringResource(SharedR.string.splash_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))

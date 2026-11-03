@@ -12,8 +12,8 @@
     <string name="common_dismiss">ปิด</string>
     <string name="common_remove">เอาออก</string>
     <string name="common_search">ค้นหา</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">ข้าม</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">การแชร์ไฟล์ในเครื่อง.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d รายการ</item>
         <item quantity="other">%1$d รายการ</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">พร้อมแชร์</string>
+    <string name="home_step_choose">เลือกสิ่งที่จะแชร์</string>
+    <string name="home_step_choose_empty">ยังไม่ได้เพิ่มอะไร</string>
+    <string name="home_add_everything">เพิ่มทุกอย่างในโทรศัพท์นี้</string>
+    <string name="home_pick_files">เลือกไฟล์หรือโฟลเดอร์</string>
+    <string name="home_change_selection">เปลี่ยนการเลือก</string>
+    <string name="home_types_hint">แตะประเภทเพื่อรวมหรือข้าม</string>
+    <string name="home_step_start">เริ่มแชร์</string>
+    <string name="home_step_start_hint">คุณจะได้รับ QR code ใครก็ตามที่อยู่ใน Wi-Fi เดียวกันสามารถสแกนเพื่อเปิดไฟล์ของคุณในเบราว์เซอร์ได้ ไม่ต้องใช้แอป</string>
+    <string name="home_sharing_on">กำลังแชร์</string>
+    <string name="home_show_qr">แสดง QR code</string>
+    <string name="home_more">เพิ่มเติม</string>
+    <string name="home_tool_mirror">สะท้อนหน้าจอ</string>
+    <string name="home_tool_send_text">ส่งข้อความ</string>
+    <string name="home_tool_history">ประวัติ</string>
+    <string name="home_tool_tv">ทีวีและเครื่องเล่น</string>
+    <string name="home_remove_all">ลบทั้งหมด</string>
+    <string name="session_waiting_connect">กำลังรอให้มีคนเชื่อมต่อ</string>
+    <string name="session_stop_short">หยุด</string>
+    <string name="session_scan_title">สแกนด้วยอุปกรณ์อีกเครื่อง</string>
+    <string name="session_or_type">หรือพิมพ์ที่อยู่นี้ในเบราว์เซอร์ใดก็ได้บน Wi-Fi เดียวกัน:</string>
+    <string name="session_copy_short">คัดลอก</string>
+    <string name="session_pin_switch">ขอ PIN</string>
+    <string name="session_pin_switch_desc">ผู้เยี่ยมชมต้องใส่รหัสก่อน</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">เปลี่ยนสิ่งที่แชร์</string>
+    <string name="library_title_simple">สิ่งที่คุณกำลังแชร์</string>
+    <string name="library_add_files_or_folders">เพิ่มไฟล์หรือโฟลเดอร์</string>
+    <string name="settings_group_while_sharing">ขณะแชร์</string>
+    <string name="settings_group_app">แอป</string>
+    <string name="settings_show_advanced">แสดงการตั้งค่าขั้นสูง</string>
+    <string name="settings_hide_advanced">ซ่อนการตั้งค่าขั้นสูง</string>
+    <string name="settings_advanced_desc">ทีวีและ DLNA, พอร์ต, รูปแบบเบราว์เซอร์, พื้นที่จัดเก็บ</string>
+    <string name="settings_allow_downloads">อนุญาตให้ดาวน์โหลด</string>
+    <string name="settings_allow_downloads_desc">ผู้เยี่ยมชมบันทึกไฟล์ได้ ไม่ใช่แค่ดู</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">เชื่อมต่อ %d อุปกรณ์</item>
+        <item quantity="other">เชื่อมต่อ %d อุปกรณ์</item>
     </plurals>
 </resources>

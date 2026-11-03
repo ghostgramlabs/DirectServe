@@ -23,31 +23,46 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ghostgramlabs.directserve.core.resources.R
+import com.ghostgramlabs.directserve.core.resources.ui.GhostSectionLabel
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
+import com.ghostgramlabs.directserve.core.resources.ui.GhostUi
+import com.ghostgramlabs.directserve.core.resources.ui.ghostSwitchColors
 import com.ghoststream.core.model.AppSettings
 import com.ghoststream.core.model.AutoStopOption
 import com.ghoststream.core.model.RecentSession
 import com.ghoststream.core.model.ThemeMode
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
@@ -90,76 +105,45 @@ fun SettingsScreen(
     onClearDebugLog: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var showAdvanced by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(vertical = GhostSpacing.screenVertical),
-        verticalArrangement = Arrangement.spacedBy(32.dp),
+        contentPadding = PaddingValues(bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         item {
             Row(
-                modifier = Modifier.padding(
-                    horizontal = GhostSpacing.screenHorizontal,
-                    vertical = GhostSpacing.headerVertical,
-                ),
+                modifier = Modifier.padding(start = 4.dp, end = GhostSpacing.screenHorizontal, top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
-                Spacer(modifier = Modifier.width(4.dp))
-                Column {
-                Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        item {
+            SettingsGroup(title = stringResource(R.string.settings_group_privacy)) {
+                SettingsToggleRow(stringResource(R.string.session_pin_switch), stringResource(R.string.session_pin_switch_desc), settings.requireSessionPin, onToggleRequirePin)
+                if (settings.requireSessionPin) {
+                    SettingsToggleRow(stringResource(R.string.settings_new_pin_each_time), stringResource(R.string.settings_new_pin_each_time_desc), settings.autoGeneratePin, onToggleAutoGeneratePin)
+                    if (!settings.autoGeneratePin) {
+                        ManualPinRow(currentPin = settings.manualPin, onPinChanged = onManualPinChanged)
+                    }
+                }
+                SettingsToggleRow(stringResource(R.string.settings_approve_file_uploads), stringResource(R.string.settings_approve_file_uploads_desc), settings.requireUploadApproval, onToggleRequireUploadApproval)
+                // Stored as "prevent downloads"; shown the positive way round so On means allowed.
+                SettingsToggleRow(stringResource(R.string.settings_allow_downloads), stringResource(R.string.settings_allow_downloads_desc), !settings.preventDownload) { allowed ->
+                    onTogglePreventDownload(!allowed)
                 }
             }
         }
 
         item {
-            SettingsGroup(title = stringResource(R.string.settings_group_general)) {
-                SettingsChoiceRow(stringResource(R.string.settings_language), currentLanguageLabel, onOpenLanguage)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = GhostSpacing.listItem, vertical = 12.dp),
-                ) {
-                    Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                    Text(stringResource(R.string.settings_theme_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        listOf(ThemeMode.SYSTEM, ThemeMode.DARK, ThemeMode.LIGHT).forEach { mode ->
-                            val isSelected = settings.themeMode == mode
-                            if (isSelected) {
-                                Button(
-                                    onClick = { onThemeModeSelected(mode) },
-                                    modifier = Modifier.heightIn(min = 48.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = settingsPrimaryButtonColors(),
-                                ) {
-                                    Text(mode.label(), style = MaterialTheme.typography.labelMedium)
-                                }
-                            } else {
-                                OutlinedButton(
-                                    onClick = { onThemeModeSelected(mode) },
-                                    modifier = Modifier.heightIn(min = 48.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = settingsSecondaryButtonColors(),
-                                ) {
-                                    Text(mode.label(), style = MaterialTheme.typography.labelMedium)
-                                }
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                SettingsToggleRow(stringResource(R.string.settings_keep_screen_awake), stringResource(R.string.settings_keep_screen_awake_desc), settings.keepScreenAwake, onToggleKeepScreenAwake)
-                SettingsToggleRow(stringResource(R.string.settings_vibrate_on_connect), stringResource(R.string.settings_vibrate_on_connect_desc), settings.hapticOnDeviceConnect, onToggleHaptics)
-                SettingsToggleRow(stringResource(R.string.settings_show_recent_shares), stringResource(R.string.settings_show_recent_shares_desc), settings.showRecentSessions, onToggleRecentSessions)
+            SettingsGroup(title = stringResource(R.string.settings_group_while_sharing)) {
                 SettingsChoiceRow(
                     title = stringResource(R.string.settings_auto_stop),
                     value = when (settings.autoStop) {
@@ -178,6 +162,9 @@ fun SettingsScreen(
                         onAutoStopSelected(next)
                     },
                 )
+                SettingsToggleRow(stringResource(R.string.settings_keep_screen_awake), stringResource(R.string.settings_keep_screen_awake_desc), settings.keepScreenAwake, onToggleKeepScreenAwake)
+                SettingsToggleRow(stringResource(R.string.settings_vibrate_on_connect), stringResource(R.string.settings_vibrate_on_connect_desc), settings.hapticOnDeviceConnect, onToggleHaptics)
+                SettingsToggleRow(stringResource(R.string.settings_quick_text_enabled), stringResource(R.string.settings_quick_text_enabled_desc), settings.quickTextEnabled, onToggleQuickTextEnabled)
             }
         }
 
@@ -185,7 +172,6 @@ fun SettingsScreen(
             SettingsGroup(title = stringResource(R.string.settings_group_notifications)) {
                 SettingsToggleRow(stringResource(R.string.settings_connection_alerts), stringResource(R.string.settings_connection_alerts_desc), settings.notifyOnDeviceConnect, onToggleNotifyOnDeviceConnect)
                 SettingsToggleRow(stringResource(R.string.settings_upload_requests), stringResource(R.string.settings_upload_requests_desc), settings.notifyOnUploadRequest, onToggleNotifyOnUploadRequest)
-                SettingsToggleRow(stringResource(R.string.settings_quick_text_enabled), stringResource(R.string.settings_quick_text_enabled_desc), settings.quickTextEnabled, onToggleQuickTextEnabled)
                 if (settings.quickTextEnabled) {
                     SettingsToggleRow(stringResource(R.string.settings_quick_text_alerts), stringResource(R.string.settings_quick_text_alerts_desc), settings.notifyOnQuickText, onToggleNotifyOnQuickText)
                 }
@@ -193,74 +179,88 @@ fun SettingsScreen(
         }
 
         item {
-            SettingsGroup(title = stringResource(R.string.settings_group_privacy)) {
-                SettingsToggleRow(stringResource(R.string.settings_use_pin), stringResource(R.string.settings_use_pin_desc), settings.requireSessionPin, onToggleRequirePin)
-                if (settings.requireSessionPin) {
-                    SettingsToggleRow(stringResource(R.string.settings_new_pin_each_time), stringResource(R.string.settings_new_pin_each_time_desc), settings.autoGeneratePin, onToggleAutoGeneratePin)
-                    if (!settings.autoGeneratePin) {
-                        ManualPinRow(currentPin = settings.manualPin, onPinChanged = onManualPinChanged)
+            SettingsGroup(title = stringResource(R.string.settings_group_app)) {
+                SettingsChoiceRow(stringResource(R.string.settings_language), currentLanguageLabel, onOpenLanguage)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = GhostSpacing.listItem, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge)
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        val modes = listOf(ThemeMode.SYSTEM, ThemeMode.LIGHT, ThemeMode.DARK)
+                        modes.forEachIndexed { index, mode ->
+                            SegmentedButton(
+                                selected = settings.themeMode == mode,
+                                onClick = { onThemeModeSelected(mode) },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
+                            ) {
+                                Text(mode.label())
+                            }
+                        }
                     }
                 }
-                SettingsToggleRow(stringResource(R.string.settings_approve_file_uploads), stringResource(R.string.settings_approve_file_uploads_desc), settings.requireUploadApproval, onToggleRequireUploadApproval)
-                SettingsChoiceRow(
-                    stringResource(R.string.settings_received_files_location),
-                    stringResource(R.string.settings_received_files_location_value),
-                    onOpenReceivedFilesLocation,
-                )
-            }
-        }
-
-        item {
-            SettingsGroup(title = stringResource(R.string.settings_group_browser)) {
-                SettingsToggleRow(stringResource(R.string.settings_show_thumbnails), stringResource(R.string.settings_show_thumbnails_desc), settings.showThumbnails, onToggleShowThumbnails)
-                SettingsToggleRow(stringResource(R.string.settings_large_tv_layout), stringResource(R.string.settings_large_tv_layout_desc), settings.largeTvCards, onToggleLargeTvCards)
-                SettingsToggleRow(stringResource(R.string.settings_highlight_downloads), stringResource(R.string.settings_highlight_downloads_desc), settings.prominentDownloadButton, onToggleProminentDownloads)
+                SettingsChoiceRow(stringResource(R.string.settings_how_it_works), stringResource(R.string.settings_how_it_works_desc), onOpenHelp)
+                SettingsChoiceRow(stringResource(R.string.settings_view_onboarding), stringResource(R.string.settings_view_onboarding_desc), onViewOnboarding)
             }
         }
 
         item {
             SettingsGroup(title = stringResource(R.string.settings_group_advanced)) {
-                SettingsToggleRow(stringResource(R.string.settings_sign_out_on_stop), stringResource(R.string.settings_sign_out_on_stop_desc), settings.clearAuthOnStop, onToggleClearAuthOnStop)
-                SettingsToggleRow(stringResource(R.string.settings_clear_temporary_files), stringResource(R.string.settings_clear_temporary_files_desc), settings.ghostMode, onToggleGhostMode)
-                SettingsToggleRow(stringResource(R.string.settings_prevent_downloads), stringResource(R.string.settings_prevent_downloads_desc), settings.preventDownload, onTogglePreventDownload)
-                ManualPortRow(currentPort = settings.preferredPort.toString(), onPortChanged = onPreferredPortChanged)
+                SettingsToggleRow(
+                    stringResource(R.string.settings_show_advanced),
+                    stringResource(R.string.settings_advanced_desc),
+                    showAdvanced,
+                ) { showAdvanced = it }
             }
         }
 
-        item {
-            SettingsGroup(title = stringResource(R.string.settings_group_network)) {
-                SettingsToggleRow(stringResource(R.string.settings_dlna), stringResource(R.string.settings_dlna_desc), settings.dlnaEnabled, onToggleDlna)
-                SettingsChoiceRow(stringResource(R.string.settings_wifi_settings), stringResource(R.string.settings_wifi_settings_desc), onOpenWifiSettings)
-                SettingsChoiceRow(stringResource(R.string.settings_hotspot_settings), stringResource(R.string.settings_hotspot_settings_desc), onOpenHotspotSettings)
+        if (showAdvanced) {
+            item {
+                SettingsGroup(title = stringResource(R.string.settings_group_network)) {
+                    SettingsToggleRow(stringResource(R.string.settings_dlna), stringResource(R.string.settings_dlna_desc), settings.dlnaEnabled, onToggleDlna)
+                    SettingsChoiceRow(stringResource(R.string.settings_wifi_settings), stringResource(R.string.settings_wifi_settings_desc), onOpenWifiSettings)
+                    SettingsChoiceRow(stringResource(R.string.settings_hotspot_settings), stringResource(R.string.settings_hotspot_settings_desc), onOpenHotspotSettings)
+                    ManualPortRow(currentPort = settings.preferredPort.toString(), onPortChanged = onPreferredPortChanged)
+                }
+            }
+            item {
+                SettingsGroup(title = stringResource(R.string.settings_group_browser)) {
+                    SettingsToggleRow(stringResource(R.string.settings_show_thumbnails), stringResource(R.string.settings_show_thumbnails_desc), settings.showThumbnails, onToggleShowThumbnails)
+                    SettingsToggleRow(stringResource(R.string.settings_large_tv_layout), stringResource(R.string.settings_large_tv_layout_desc), settings.largeTvCards, onToggleLargeTvCards)
+                    SettingsToggleRow(stringResource(R.string.settings_highlight_downloads), stringResource(R.string.settings_highlight_downloads_desc), settings.prominentDownloadButton, onToggleProminentDownloads)
+                }
+            }
+            item {
+                SettingsGroup(title = stringResource(R.string.settings_group_general)) {
+                    SettingsToggleRow(stringResource(R.string.settings_sign_out_on_stop), stringResource(R.string.settings_sign_out_on_stop_desc), settings.clearAuthOnStop, onToggleClearAuthOnStop)
+                    SettingsToggleRow(stringResource(R.string.settings_clear_temporary_files), stringResource(R.string.settings_clear_temporary_files_desc), settings.ghostMode, onToggleGhostMode)
+                    SettingsToggleRow(stringResource(R.string.settings_show_recent_shares), stringResource(R.string.settings_show_recent_shares_desc), settings.showRecentSessions, onToggleRecentSessions)
+                    SettingsChoiceRow(
+                        stringResource(R.string.settings_received_files_location),
+                        stringResource(R.string.settings_received_files_location_value),
+                        onOpenReceivedFilesLocation,
+                    )
+                }
+            }
+            if (showDebugTools) {
+                item {
+                    SettingsGroup(title = stringResource(R.string.settings_group_debug)) {
+                        SettingsChoiceRow(stringResource(R.string.settings_share_debug_log), stringResource(R.string.settings_share_debug_log_desc), onShareDebugLog)
+                        SettingsChoiceRow(stringResource(R.string.settings_clear_debug_log), debugLogLocation, onClearDebugLog)
+                    }
+                }
             }
         }
 
         item {
             SettingsGroup(title = stringResource(R.string.settings_group_help)) {
-                SettingsChoiceRow(stringResource(R.string.settings_view_onboarding), stringResource(R.string.settings_view_onboarding_desc), onViewOnboarding)
-                SettingsChoiceRow(stringResource(R.string.settings_how_it_works), stringResource(R.string.settings_how_it_works_desc), onOpenHelp)
                 SettingsChoiceRow(stringResource(R.string.settings_privacy_policy), stringResource(R.string.settings_privacy_policy_desc), onOpenPrivacyPolicy)
                 SettingsChoiceRow(stringResource(R.string.settings_rate_app), stringResource(R.string.settings_rate_app_desc), onRateApp)
                 SettingsChoiceRow(stringResource(R.string.settings_app_version), appVersionLabel, onClick = {})
-                Text(
-                    text = stringResource(R.string.settings_recent_shares_count, recentSessions.size),
-                    modifier = Modifier.padding(horizontal = GhostSpacing.listItem, vertical = 12.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
             }
         }
-
-        if (showDebugTools) {
-            item {
-                SettingsGroup(title = stringResource(R.string.settings_group_debug)) {
-                    SettingsChoiceRow(stringResource(R.string.settings_share_debug_log), stringResource(R.string.settings_share_debug_log_desc), onShareDebugLog)
-                    SettingsChoiceRow(stringResource(R.string.settings_clear_debug_log), debugLogLocation, onClearDebugLog)
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(GhostSpacing.section)) }
     }
 }
 
@@ -572,16 +572,18 @@ private fun SettingsGroup(title: String, content: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = GhostSpacing.screenHorizontal)
+            .padding(horizontal = GhostSpacing.screenHorizontal),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = title,
-            modifier = Modifier.padding(horizontal = GhostSpacing.listItem, vertical = 8.dp),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        content()
+        GhostSectionLabel(title)
+        Surface(
+            shape = GhostUi.cardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column { content() }
+        }
     }
 }
 
@@ -590,17 +592,18 @@ private fun SettingsToggleRow(title: String, description: String, checked: Boole
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
             .heightIn(min = 64.dp) // Gives the label and switch breathing room while keeping taps accessible.
             .padding(horizontal = GhostSpacing.listItem, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Spacer(modifier = Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = null, colors = ghostSwitchColors())
     }
 }
 
@@ -658,10 +661,15 @@ private fun SettingsChoiceRow(title: String, value: String, onClick: () -> Unit)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title)
-            Spacer(modifier = Modifier.height(4.dp))
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(2.dp))
             Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
+        Icon(
+            Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

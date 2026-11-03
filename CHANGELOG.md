@@ -5,6 +5,10 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 
 ## 1.0.27 - 2026-11-03
 
+- A simpler app: choose what to share, tap Start, and scan the QR code. Settings are grouped,
+  with expert options under Advanced.
+- New app icon.
+- Fixed: Live Screen could crash when a viewer refreshed the page.
 - DirectServe is now open source under the Apache License 2.0.
 - Long sharing sessions no longer stop or crash after a few hours on Android 15 and newer.
 - Fixed: a crash when another app was already using DirectServe's port. Sharing now picks a

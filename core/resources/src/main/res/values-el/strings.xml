@@ -12,8 +12,8 @@
     <string name="common_dismiss">Απολύω</string>
     <string name="common_remove">Αφαιρώ</string>
     <string name="common_search">Ερευνα</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Παραλείπω</string>
     <string name="onboarding_title">Άμεση ροή και κοινή χρήση αρχείων</string>
     <string name="onboarding_subtitle">Μετατρέψτε το τηλέφωνό σας σε ιδιωτικό τοπικό κέντρο για πρόσβαση TV, φορητό υπολογιστή, τηλέφωνο, tablet και πρόγραμμα περιήγησης.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d στοιχείο</item>
         <item quantity="other">%1$d στοιχεία</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Έτοιμο για κοινή χρήση</string>
+    <string name="home_step_choose">Επιλέξτε τι θα μοιραστείτε</string>
+    <string name="home_step_choose_empty">Δεν έχει προστεθεί τίποτα ακόμη.</string>
+    <string name="home_add_everything">Προσθήκη όλων από αυτό το τηλέφωνο</string>
+    <string name="home_pick_files">Επιλογή αρχείων ή φακέλων</string>
+    <string name="home_change_selection">Αλλαγή επιλογής</string>
+    <string name="home_types_hint">Πατήστε έναν τύπο για να τον συμπεριλάβετε ή να τον παραλείψετε.</string>
+    <string name="home_step_start">Έναρξη κοινής χρήσης</string>
+    <string name="home_step_start_hint">Θα λάβετε έναν κωδικό QR. Όποιος είναι στο ίδιο Wi-Fi μπορεί να τον σαρώσει για να ανοίξει τα αρχεία σας σε πρόγραμμα περιήγησης. Δεν χρειάζεται εφαρμογή.</string>
+    <string name="home_sharing_on">Η κοινή χρήση είναι ενεργή</string>
+    <string name="home_show_qr">Εμφάνιση κωδικού QR</string>
+    <string name="home_more">Περισσότερα</string>
+    <string name="home_tool_mirror">Κατοπτρισμός οθόνης</string>
+    <string name="home_tool_send_text">Αποστολή κειμένου</string>
+    <string name="home_tool_history">Ιστορικό</string>
+    <string name="home_tool_tv">TV και συσκευές αναπαραγωγής</string>
+    <string name="home_remove_all">Αφαίρεση όλων</string>
+    <string name="session_waiting_connect">Αναμονή για σύνδεση</string>
+    <string name="session_stop_short">Διακοπή</string>
+    <string name="session_scan_title">Σαρώστε με την άλλη συσκευή</string>
+    <string name="session_or_type">Ή πληκτρολογήστε αυτή τη διεύθυνση σε οποιοδήποτε πρόγραμμα περιήγησης στο ίδιο Wi-Fi:</string>
+    <string name="session_copy_short">Αντιγραφή</string>
+    <string name="session_pin_switch">Ζήτηση PIN</string>
+    <string name="session_pin_switch_desc">Οι επισκέπτες πρέπει πρώτα να εισάγουν κωδικό</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">Αλλαγή κοινόχρηστων</string>
+    <string name="library_title_simple">Τι μοιράζεστε</string>
+    <string name="library_add_files_or_folders">Προσθήκη αρχείων ή φακέλων</string>
+    <string name="settings_group_while_sharing">Κατά την κοινή χρήση</string>
+    <string name="settings_group_app">Εφαρμογή</string>
+    <string name="settings_show_advanced">Εμφάνιση σύνθετων ρυθμίσεων</string>
+    <string name="settings_hide_advanced">Απόκρυψη σύνθετων ρυθμίσεων</string>
+    <string name="settings_advanced_desc">TV και DLNA, θύρα, εμφάνιση περιήγησης, αποθήκευση</string>
+    <string name="settings_allow_downloads">Να επιτρέπονται οι λήψεις</string>
+    <string name="settings_allow_downloads_desc">Οι επισκέπτες μπορούν να αποθηκεύουν αρχεία, όχι μόνο να τα βλέπουν</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d συσκευή συνδεδεμένη</item>
+        <item quantity="other">%d συσκευές συνδεδεμένες</item>
     </plurals>
 </resources>

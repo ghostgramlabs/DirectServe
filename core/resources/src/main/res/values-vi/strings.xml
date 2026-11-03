@@ -12,8 +12,8 @@
     <string name="common_dismiss">Đóng</string>
     <string name="common_remove">Gỡ bỏ</string>
     <string name="common_search">Tìm kiếm</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Bỏ qua</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">Biến điện thoại của bạn thành trung tâm chia sẻ cục bộ.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d mục</item>
         <item quantity="other">%1$d</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Sẵn sàng chia sẻ</string>
+    <string name="home_step_choose">Chọn nội dung để chia sẻ</string>
+    <string name="home_step_choose_empty">Chưa thêm gì.</string>
+    <string name="home_add_everything">Thêm mọi thứ trên điện thoại này</string>
+    <string name="home_pick_files">Chọn tệp hoặc thư mục</string>
+    <string name="home_change_selection">Thay đổi lựa chọn</string>
+    <string name="home_types_hint">Nhấn vào một loại để thêm hoặc bỏ qua.</string>
+    <string name="home_step_start">Bắt đầu chia sẻ</string>
+    <string name="home_step_start_hint">Bạn sẽ nhận được mã QR. Bất kỳ ai trên cùng Wi-Fi đều có thể quét để mở tệp của bạn trong trình duyệt. Không cần ứng dụng.</string>
+    <string name="home_sharing_on">Đang chia sẻ</string>
+    <string name="home_show_qr">Hiện mã QR</string>
+    <string name="home_more">Thêm</string>
+    <string name="home_tool_mirror">Phản chiếu màn hình</string>
+    <string name="home_tool_send_text">Gửi văn bản</string>
+    <string name="home_tool_history">Lịch sử</string>
+    <string name="home_tool_tv">TV và trình phát</string>
+    <string name="home_remove_all">Xóa tất cả</string>
+    <string name="session_waiting_connect">Đang chờ người kết nối</string>
+    <string name="session_stop_short">Dừng</string>
+    <string name="session_scan_title">Quét bằng thiết bị khác</string>
+    <string name="session_or_type">Hoặc nhập địa chỉ này vào trình duyệt bất kỳ trên cùng Wi-Fi:</string>
+    <string name="session_copy_short">Sao chép</string>
+    <string name="session_pin_switch">Yêu cầu mã PIN</string>
+    <string name="session_pin_switch_desc">Khách phải nhập mã trước</string>
+    <string name="session_pin_value">Mã PIN: %1$s</string>
+    <string name="session_change_shared">Thay đổi nội dung chia sẻ</string>
+    <string name="library_title_simple">Nội dung bạn đang chia sẻ</string>
+    <string name="library_add_files_or_folders">Thêm tệp hoặc thư mục</string>
+    <string name="settings_group_while_sharing">Khi chia sẻ</string>
+    <string name="settings_group_app">Ứng dụng</string>
+    <string name="settings_show_advanced">Hiện cài đặt nâng cao</string>
+    <string name="settings_hide_advanced">Ẩn cài đặt nâng cao</string>
+    <string name="settings_advanced_desc">TV và DLNA, cổng, giao diện trình duyệt, bộ nhớ</string>
+    <string name="settings_allow_downloads">Cho phép tải xuống</string>
+    <string name="settings_allow_downloads_desc">Khách có thể lưu tệp, không chỉ xem</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d thiết bị đã kết nối</item>
+        <item quantity="other">%d thiết bị đã kết nối</item>
     </plurals>
 </resources>

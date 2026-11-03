@@ -12,8 +12,8 @@
     <string name="common_dismiss">Kapat</string>
     <string name="common_remove">Kaldır</string>
     <string name="common_search">Ara</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Atla</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">Cihazınızı yerel bir hub\'a dönüştürün.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d öğe</item>
         <item quantity="other">%1$d</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Paylaşmaya hazır</string>
+    <string name="home_step_choose">Ne paylaşacağını seç</string>
+    <string name="home_step_choose_empty">Henüz bir şey eklenmedi.</string>
+    <string name="home_add_everything">Bu telefondaki her şeyi ekle</string>
+    <string name="home_pick_files">Dosya veya klasör seç</string>
+    <string name="home_change_selection">Seçimi değiştir</string>
+    <string name="home_types_hint">Dahil etmek veya atlamak için bir türe dokun.</string>
+    <string name="home_step_start">Paylaşmaya başla</string>
+    <string name="home_step_start_hint">Bir QR kodu alacaksın. Aynı Wi-Fi\'deki herkes onu tarayarak dosyalarını tarayıcıda açabilir. Uygulama gerekmez.</string>
+    <string name="home_sharing_on">Paylaşım açık</string>
+    <string name="home_show_qr">QR kodunu göster</string>
+    <string name="home_more">Daha fazla</string>
+    <string name="home_tool_mirror">Ekranı yansıt</string>
+    <string name="home_tool_send_text">Metin gönder</string>
+    <string name="home_tool_history">Geçmiş</string>
+    <string name="home_tool_tv">TV ve oynatıcılar</string>
+    <string name="home_remove_all">Tümünü kaldır</string>
+    <string name="session_waiting_connect">Birinin bağlanması bekleniyor</string>
+    <string name="session_stop_short">Durdur</string>
+    <string name="session_scan_title">Diğer cihazla tara</string>
+    <string name="session_or_type">Ya da bu adresi aynı Wi-Fi\'deki herhangi bir tarayıcıya yaz:</string>
+    <string name="session_copy_short">Kopyala</string>
+    <string name="session_pin_switch">PIN iste</string>
+    <string name="session_pin_switch_desc">Ziyaretçiler önce bir kod girmeli</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">Paylaşılanları değiştir</string>
+    <string name="library_title_simple">Paylaştıkların</string>
+    <string name="library_add_files_or_folders">Dosya veya klasör ekle</string>
+    <string name="settings_group_while_sharing">Paylaşırken</string>
+    <string name="settings_group_app">Uygulama</string>
+    <string name="settings_show_advanced">Gelişmiş ayarları göster</string>
+    <string name="settings_hide_advanced">Gelişmiş ayarları gizle</string>
+    <string name="settings_advanced_desc">TV ve DLNA, bağlantı noktası, tarayıcı görünümü, depolama</string>
+    <string name="settings_allow_downloads">İndirmeye izin ver</string>
+    <string name="settings_allow_downloads_desc">Ziyaretçiler dosyaları sadece görmekle kalmaz, kaydedebilir</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d cihaz bağlı</item>
+        <item quantity="other">%d cihaz bağlı</item>
     </plurals>
 </resources>

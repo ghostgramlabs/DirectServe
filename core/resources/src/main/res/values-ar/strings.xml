@@ -12,8 +12,8 @@
     <string name="common_dismiss">رفض</string>
     <string name="common_remove">يزيل</string>
     <string name="common_search">يبحث</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">يتخطى</string>
     <string name="onboarding_title">البث المباشر ومشاركة الملفات</string>
     <string name="onboarding_subtitle">حوّل هاتفك إلى مركز محلي خاص للوصول إلى TV والكمبيوتر المحمول والهاتف والجهاز اللوحي والمتصفح.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d البند</item>
         <item quantity="other">%1$d العناصر</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">جاهز للمشاركة</string>
+    <string name="home_step_choose">اختر ما تريد مشاركته</string>
+    <string name="home_step_choose_empty">لم تتم إضافة أي شيء بعد.</string>
+    <string name="home_add_everything">أضف كل ما على هذا الهاتف</string>
+    <string name="home_pick_files">اختر ملفات أو مجلدات</string>
+    <string name="home_change_selection">تغيير الاختيار</string>
+    <string name="home_types_hint">اضغط على نوع لتضمينه أو تخطيه.</string>
+    <string name="home_step_start">ابدأ المشاركة</string>
+    <string name="home_step_start_hint">ستحصل على رمز QR. يمكن لأي شخص على نفس شبكة Wi-Fi مسحه لفتح ملفاتك في المتصفح. لا حاجة إلى تطبيق.</string>
+    <string name="home_sharing_on">المشاركة قيد التشغيل</string>
+    <string name="home_show_qr">عرض رمز QR</string>
+    <string name="home_more">المزيد</string>
+    <string name="home_tool_mirror">عكس الشاشة</string>
+    <string name="home_tool_send_text">إرسال نص</string>
+    <string name="home_tool_history">السجل</string>
+    <string name="home_tool_tv">التلفاز والمشغلات</string>
+    <string name="home_remove_all">إزالة الكل</string>
+    <string name="session_waiting_connect">في انتظار اتصال أحد</string>
+    <string name="session_stop_short">إيقاف</string>
+    <string name="session_scan_title">امسح الرمز بالجهاز الآخر</string>
+    <string name="session_or_type">أو اكتب هذا العنوان في أي متصفح على نفس شبكة Wi-Fi:</string>
+    <string name="session_copy_short">نسخ</string>
+    <string name="session_pin_switch">طلب رمز PIN</string>
+    <string name="session_pin_switch_desc">يجب على الزوار إدخال رمز أولاً</string>
+    <string name="session_pin_value">رمز PIN: %1$s</string>
+    <string name="session_change_shared">تغيير ما تتم مشاركته</string>
+    <string name="library_title_simple">ما تشاركه</string>
+    <string name="library_add_files_or_folders">إضافة ملفات أو مجلدات</string>
+    <string name="settings_group_while_sharing">أثناء المشاركة</string>
+    <string name="settings_group_app">التطبيق</string>
+    <string name="settings_show_advanced">إظهار الإعدادات المتقدمة</string>
+    <string name="settings_hide_advanced">إخفاء الإعدادات المتقدمة</string>
+    <string name="settings_advanced_desc">التلفاز وDLNA، المنفذ، مظهر المتصفح، التخزين</string>
+    <string name="settings_allow_downloads">السماح بالتنزيل</string>
+    <string name="settings_allow_downloads_desc">يمكن للزوار حفظ الملفات وليس عرضها فقط</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d جهاز متصل</item>
+        <item quantity="other">%d أجهزة متصلة</item>
     </plurals>
 </resources>

@@ -3,46 +3,49 @@ package com.ghoststream.feature.library
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.CreateNewFolder
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.InsertDriveFile
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.NoteAdd
 import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,27 +53,30 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ghostgramlabs.directserve.core.resources.R
-import androidx.compose.ui.res.pluralStringResource
-import com.ghostgramlabs.directserve.core.resources.util.LocalizationUtils
+import com.ghostgramlabs.directserve.core.resources.ui.GhostSectionLabel
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
-import com.ghostgramlabs.directserve.core.resources.R as SharedR
+import com.ghostgramlabs.directserve.core.resources.ui.GhostUi
+import com.ghostgramlabs.directserve.core.resources.util.LocalizationUtils
 import com.ghoststream.core.media.CompatibilityJob
 import com.ghoststream.core.media.CompatibilityStatus
 import com.ghoststream.core.model.LibraryState
@@ -78,9 +84,12 @@ import com.ghoststream.core.model.MediaCategory
 import com.ghoststream.core.model.PlaybackMode
 import com.ghoststream.core.model.SharedFolder
 import com.ghoststream.core.model.SharedItem
-import kotlin.math.roundToInt
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+/**
+ * "What you're sharing": search, filter, remove with one tap, and one Add button at the bottom.
+ * Sorting and "remove all" live in the overflow menu so they don't compete with the list.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SharedLibraryScreen(
     libraryState: LibraryState,
@@ -100,20 +109,14 @@ fun SharedLibraryScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var selectedCategory by rememberSaveable { mutableStateOf("all") }
     var sortOption by rememberSaveable { mutableStateOf("newest") }
-    var sortMenuExpanded by remember { mutableStateOf(false) }
+    var overflowExpanded by remember { mutableStateOf(false) }
+    var addMenuExpanded by remember { mutableStateOf(false) }
     var showClearAllDialog by rememberSaveable { mutableStateOf(false) }
-    var addMediaExpanded by rememberSaveable { mutableStateOf(false) }
 
-    val selectedItemIds = remember { mutableStateListOf<String>() }
     val hasLibraryContent = libraryState.items.isNotEmpty() || libraryState.folders.isNotEmpty()
 
-    LaunchedEffect(libraryState.items, libraryState.folders) {
-        val validIds = libraryState.items.mapTo(mutableSetOf()) { it.id }
-        selectedItemIds.removeAll { it !in validIds }
-        if (libraryState.items.isEmpty() && libraryState.folders.isEmpty()) {
-            selectedItemIds.clear()
-            showClearAllDialog = false
-        }
+    LaunchedEffect(hasLibraryContent) {
+        if (!hasLibraryContent) showClearAllDialog = false
     }
 
     val categories = listOf("all", "videos", "photos", "music", "files")
@@ -125,9 +128,7 @@ fun SharedLibraryScreen(
                 (selectedCategory == "music" && item.category == MediaCategory.MUSIC) ||
                 (selectedCategory == "files" && item.category == MediaCategory.FILE)
         }
-        .filter { item ->
-            query.isBlank() || item.displayName.contains(query, ignoreCase = true)
-        }
+        .filter { item -> query.isBlank() || item.displayName.contains(query, ignoreCase = true) }
         .let { items ->
             when (sortOption) {
                 "name" -> items.sortedBy { it.displayName.lowercase() }
@@ -136,127 +137,229 @@ fun SharedLibraryScreen(
             }
         }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(vertical = GhostSpacing.screenVertical),
-        verticalArrangement = Arrangement.spacedBy(GhostSpacing.section),
     ) {
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GhostSpacing.screenHorizontal),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.library_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-        }
-        item { LibraryHeader(libraryState = libraryState) }
-        item {
-            LibraryControlsCard(
-                query = query,
-                onQueryChange = { query = it },
-                categories = categories,
-                selectedCategory = selectedCategory,
-                onSelectCategory = { selectedCategory = it },
-                sortOption = sortOption,
-                sortMenuExpanded = sortMenuExpanded,
-                onSortExpand = { sortMenuExpanded = true },
-                onSortDismiss = { sortMenuExpanded = false },
-                onSortSelected = {
-                    sortOption = it
-                    sortMenuExpanded = false
-                },
-                hasLibraryContent = hasLibraryContent,
-                hasNonDirectVideo = libraryState.items.any {
-                    it.category == MediaCategory.VIDEO && it.playbackDecision.mode != PlaybackMode.DIRECT
-                },
-                addMediaExpanded = addMediaExpanded,
-                onToggleAddMedia = { addMediaExpanded = !addMediaExpanded },
-                onClearAll = { showClearAllDialog = true },
-                onOpenAddFiles = onOpenAddFiles,
-                onOpenAddFolder = onOpenAddFolder,
-                onOpenBatchSelect = onOpenBatchSelect,
-            )
-        }
-
-        if (libraryImportingCount > 0) {
-            item {
-                LibraryImportingCard(
-                    importingCount = libraryImportingCount,
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.library_title_simple),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    pluralStringResource(
+                        R.plurals.home_saved_shares_items_count,
+                        libraryState.summary.totalItems,
+                        libraryState.summary.totalItems,
+                    ) + stringResource(R.string.common_separator_dot) +
+                        LocalizationUtils.formatBytes(LocalContext.current, libraryState.summary.totalBytes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        if (libraryState.items.isEmpty() && libraryState.folders.isEmpty()) {
-            item {
-                LibraryEmptyState(
-                    title = stringResource(R.string.library_empty_title),
-                    description = stringResource(R.string.library_empty_body),
-                )
-            }
-        } else {
-            if (libraryState.folders.isNotEmpty()) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(
+                start = GhostSpacing.screenHorizontal,
+                end = GhostSpacing.screenHorizontal,
+                top = 8.dp,
+                bottom = 16.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (hasLibraryContent) {
                 item {
-                    Column(
-                        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        placeholder = { Text(stringResource(R.string.common_search)) },
+                        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                        singleLine = true,
+                    )
+                }
+                item {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        SectionHeader(
-                            title = stringResource(R.string.library_section_folders),
-                            subtitle = stringResource(R.string.library_section_folders_body),
-                        )
-                        libraryState.folders.forEach { folder ->
-                            FolderRow(folder = folder, onRemoveFolder = onRemoveFolder)
+                        categories.forEach { category ->
+                            FilterChip(
+                                selected = selectedCategory == category,
+                                onClick = { selectedCategory = category },
+                                label = { Text(categoryLabel(category)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                            )
                         }
                     }
                 }
             }
 
-            if (filteredItems.isEmpty()) {
+            if (libraryImportingCount > 0) {
+                item {
+                    Row(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text(
+                            stringResource(R.string.library_importing_body, libraryImportingCount),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+            }
+
+            if (!hasLibraryContent) {
                 item {
                     LibraryEmptyState(
-                        title = stringResource(R.string.library_empty_filter_title),
-                        description = stringResource(R.string.library_empty_filter_body),
+                        title = stringResource(R.string.library_empty_title),
+                        description = stringResource(R.string.library_empty_body),
                     )
                 }
             } else {
+                if (libraryState.folders.isNotEmpty() && selectedCategory == "all" && query.isBlank()) {
+                    item { GhostSectionLabel(stringResource(R.string.library_section_folders), modifier = Modifier.padding(top = 8.dp)) }
+                    items(libraryState.folders, key = { "folder-" + it.id }) { folder ->
+                        FolderRow(folder = folder, onRemoveFolder = onRemoveFolder)
+                    }
+                }
+
                 item {
-                    SectionHeader(
-                        title = stringResource(R.string.library_section_files),
-                        subtitle = pluralStringResource(SharedR.plurals.library_items_in_view, filteredItems.size, filteredItems.size),
-                        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal),
+                    GhostSectionLabel(
+                        stringResource(R.string.library_section_files) + stringResource(R.string.common_separator_dot) +
+                            pluralStringResource(R.plurals.library_items_in_view, filteredItems.size, filteredItems.size),
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-                items(filteredItems, key = { it.id }) { item ->
-                    LibraryItemRow(
-                        item = item,
-                        compatibilityJob = compatibilityJobs[item.id],
-                        showThumbnails = showThumbnails,
-
-                        onPrepareItem = onPrepareItem,
-                        onRemoveItem = onRemoveItem,
-                    )
+                if (filteredItems.isEmpty()) {
+                    item {
+                        LibraryEmptyState(
+                            title = stringResource(R.string.library_empty_filter_title),
+                            description = stringResource(R.string.library_empty_filter_body),
+                        )
+                    }
+                } else {
+                    items(filteredItems, key = { it.id }) { item ->
+                        LibraryItemRow(
+                            item = item,
+                            compatibilityJob = compatibilityJobs[item.id],
+                            showThumbnails = showThumbnails,
+                            onPrepareItem = onPrepareItem,
+                            onRemoveItem = onRemoveItem,
+                        )
+                    }
                 }
             }
         }
 
-        item { Spacer(modifier = Modifier.height(18.dp)) }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GhostSpacing.screenHorizontal, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                Button(
+                    onClick = { addMenuExpanded = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                    shape = GhostUi.buttonShape,
+                ) {
+                    Icon(Icons.Outlined.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.library_add_files_or_folders), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                DropdownMenu(expanded = addMenuExpanded, onDismissRequest = { addMenuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_add_from_suggestions)) },
+                        leadingIcon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
+                        onClick = {
+                            addMenuExpanded = false
+                            onOpenBatchSelect()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_add_files)) },
+                        leadingIcon = { Icon(Icons.Outlined.NoteAdd, contentDescription = null) },
+                        onClick = {
+                            addMenuExpanded = false
+                            onOpenAddFiles()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_add_whole_folder)) },
+                        leadingIcon = { Icon(Icons.Outlined.CreateNewFolder, contentDescription = null) },
+                        onClick = {
+                            addMenuExpanded = false
+                            onOpenAddFolder()
+                        },
+                    )
+                }
+            }
+            if (hasLibraryContent) {
+                Box {
+                    OutlinedButton(
+                        onClick = { overflowExpanded = true },
+                        modifier = Modifier.size(52.dp),
+                        shape = GhostUi.buttonShape,
+                        contentPadding = PaddingValues(0.dp),
+                    ) {
+                        Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.library_organize_title))
+                    }
+                    DropdownMenu(expanded = overflowExpanded, onDismissRequest = { overflowExpanded = false }) {
+                        listOf("newest", "name", "size").forEach { option ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(R.string.library_sort_prefix, sortOptionLabel(option)),
+                                        fontWeight = if (option == sortOption) FontWeight.Bold else FontWeight.Normal,
+                                    )
+                                },
+                                leadingIcon = { Icon(Icons.Outlined.Sort, contentDescription = null) },
+                                onClick = {
+                                    sortOption = option
+                                    overflowExpanded = false
+                                },
+                            )
+                        }
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.library_clear_all_action), color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(Icons.Outlined.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                overflowExpanded = false
+                                showClearAllDialog = true
+                            },
+                        )
+                    }
+                }
+            }
+        }
     }
 
     if (showClearAllDialog) {
         AlertDialog(
             onDismissRequest = { showClearAllDialog = false },
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            tonalElevation = 0.dp,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text(stringResource(R.string.library_clear_all_title)) },
             text = { Text(stringResource(R.string.library_clear_all_body)) },
             confirmButton = {
@@ -265,152 +368,20 @@ fun SharedLibraryScreen(
                         showClearAllDialog = false
                         onClearAll()
                     },
-                    colors = libraryPrimaryButtonColors(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
                 ) {
                     Text(stringResource(R.string.library_clear_all_action))
                 }
             },
             dismissButton = {
-                OutlinedButton(
-                    onClick = { showClearAllDialog = false },
-                    colors = librarySecondaryButtonColors(),
-                ) {
+                TextButton(onClick = { showClearAllDialog = false }) {
                     Text(stringResource(R.string.common_cancel))
                 }
             },
         )
-    }
-
-}
-
-@Composable
-private fun LibraryImportingCard(
-    importingCount: Int,
-) {
-    Column(
-        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal).fillMaxWidth().padding(vertical = 8.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.5.dp,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = stringResource(R.string.library_importing_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.library_importing_body, importingCount),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun LibraryHeader(
-    libraryState: LibraryState,
-) {
-    val hasVideos = libraryState.items.any { it.category == MediaCategory.VIDEO }
-    Column(
-        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal).fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.library_header_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.library_header_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (hasVideos) {
-                Text(
-                    text = stringResource(R.string.library_header_subtitles),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                LibraryInfoChip(label = stringResource(R.string.library_info_items), value = libraryState.summary.totalItems.toString(), showDot = true)
-                LibraryInfoChip(label = stringResource(R.string.library_info_folders), value = libraryState.folders.size.toString())
-                LibraryInfoChip(label = stringResource(R.string.library_info_size), value = LocalizationUtils.formatBytes(androidx.compose.ui.platform.LocalContext.current, libraryState.summary.totalBytes))
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionHeader(
-    title: String,
-    subtitle: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun LibraryInfoChip(
-    label: String,
-    value: String,
-    showDot: Boolean = false,
-) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color.Transparent,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showDot) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(999.dp)),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text("$label ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
     }
 }
 
@@ -429,197 +400,15 @@ internal fun LibraryEmptyState(title: String, description: String) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun LibraryControlsCard(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    categories: List<String>,
-    selectedCategory: String,
-    onSelectCategory: (String) -> Unit,
-    sortOption: String,
-    sortMenuExpanded: Boolean,
-    onSortExpand: () -> Unit,
-    onSortDismiss: () -> Unit,
-    onSortSelected: (String) -> Unit,
-    hasLibraryContent: Boolean,
-    hasNonDirectVideo: Boolean,
-    addMediaExpanded: Boolean,
-    onToggleAddMedia: () -> Unit,
-    onClearAll: () -> Unit,
-    onOpenAddFiles: () -> Unit,
-    onOpenAddFolder: () -> Unit,
-    onOpenBatchSelect: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal).fillMaxWidth(),
+private fun RowCard(content: @Composable () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = libraryAccentSurface(),
-                border = BorderStroke(1.dp, libraryAccentBorder()),
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.library_manage_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(R.string.library_manage_body),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                label = { Text(stringResource(R.string.library_search_label)) },
-                singleLine = true,
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionHeader(title = stringResource(R.string.library_show_title), subtitle = stringResource(R.string.library_show_body))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    categories.forEach { category ->
-                        FilterChip(
-                            selected = selectedCategory == category,
-                            onClick = { onSelectCategory(category) },
-                            label = { Text(categoryLabel(category)) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = libraryAccentSurface(),
-                                selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
-                                labelColor = MaterialTheme.colorScheme.onSurface,
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = selectedCategory == category,
-                                borderColor = MaterialTheme.colorScheme.outline,
-                                selectedBorderColor = libraryAccentBorder(),
-                            ),
-                        )
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionHeader(title = stringResource(R.string.library_add_title), subtitle = stringResource(R.string.library_add_body))
-                Button(
-                    onClick = onToggleAddMedia,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = libraryPrimaryButtonColors(),
-                ) {
-                    Text(
-                        stringResource(
-                            if (hasLibraryContent) R.string.home_button_add_more else R.string.home_button_add_media
-                        )
-                    )
-                }
-                if (addMediaExpanded) {
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.Transparent,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    ) {
-                        FlowRow(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            OutlinedButton(
-                                onClick = onOpenBatchSelect,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = librarySecondaryButtonColors(),
-                            ) { Text(stringResource(R.string.library_add_from_suggestions)) }
-                            OutlinedButton(
-                                onClick = onOpenAddFiles,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = librarySecondaryButtonColors(),
-                            ) { Text(stringResource(R.string.library_add_files)) }
-                            OutlinedButton(
-                                onClick = onOpenAddFolder,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = librarySecondaryButtonColors(),
-                            ) { Text(stringResource(R.string.library_add_whole_folder)) }
-                        }
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionHeader(title = stringResource(R.string.library_organize_title), subtitle = stringResource(R.string.library_organize_body))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = onSortExpand,
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = librarySecondaryButtonColors(),
-                    ) {
-                        Text(stringResource(R.string.library_sort_prefix, sortOptionLabel(sortOption)))
-                    }
-                    DropdownMenu(expanded = sortMenuExpanded, onDismissRequest = onSortDismiss) {
-                        listOf("newest", "name", "size").forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(sortOptionLabel(option)) },
-                                onClick = { onSortSelected(option) },
-                            )
-                        }
-                    }
-                    if (hasLibraryContent) {
-                        OutlinedButton(
-                            onClick = onClearAll,
-                            modifier = Modifier.heightIn(min = 48.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = librarySecondaryButtonColors(),
-                        ) {
-                            Text(stringResource(R.string.library_clear_all_action))
-                        }
-                    }
-                }
-            }
-
-            if (hasNonDirectVideo) {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color.Transparent,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(stringResource(R.string.library_browser_prep_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            stringResource(R.string.library_browser_prep_body),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
+        content()
     }
 }
 
@@ -628,208 +417,130 @@ private fun FolderRow(
     folder: SharedFolder,
     onRemoveFolder: (String) -> Unit,
 ) {
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent,
-    ) {
+    RowCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.heightIn(min = 60.dp).padding(start = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(libraryAccentSurface(), RoundedCornerShape(16.dp))
-                        .border(BorderStroke(1.dp, libraryAccentBorder()), RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Outlined.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(folder.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        stringResource(R.string.library_folder_summary, folder.fileCount, LocalizationUtils.formatBytes(androidx.compose.ui.platform.LocalContext.current, folder.totalSizeBytes)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            Icon(Icons.Outlined.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.width(12.dp))
-            OutlinedButton(
-                onClick = { onRemoveFolder(folder.id) },
-                modifier = Modifier.heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = librarySecondaryButtonColors(),
-            ) {
-                Text(stringResource(R.string.common_remove))
+            Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
+                Text(folder.displayName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    stringResource(
+                        R.string.library_folder_summary,
+                        folder.fileCount,
+                        LocalizationUtils.formatBytes(LocalContext.current, folder.totalSizeBytes),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = { onRemoveFolder(folder.id) }) {
+                Icon(
+                    Icons.Outlined.Close,
+                    contentDescription = stringResource(R.string.common_remove) + " " + folder.displayName,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LibraryItemRow(
     item: SharedItem,
     compatibilityJob: CompatibilityJob?,
     showThumbnails: Boolean,
-
     onPrepareItem: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
 ) {
-    Column(
-        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal).fillMaxWidth(),
-    ) {
-        BoxWithConstraints {
-            val compactActions = maxWidth < 520.dp
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+    val needsPreparation = item.category == MediaCategory.VIDEO && item.playbackDecision.mode != PlaybackMode.DIRECT
+    RowCard {
+        Column {
+            Row(
+                modifier = Modifier.heightIn(min = 64.dp).padding(start = 8.dp, end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    LibraryItemVisual(item = item, showThumbnails = showThumbnails)
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = item.displayName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = listOfNotNull(
-                                itemTypeLabel(item.category),
-                                item.durationMs?.let { LocalizationUtils.formatDurationTimestamp(androidx.compose.ui.platform.LocalContext.current, it) },
-                                LocalizationUtils.formatBytes(androidx.compose.ui.platform.LocalContext.current, item.sizeBytes),
-                                if (!item.isAvailable) stringResource(R.string.library_unavailable) else null,
-                            ).joinToString(stringResource(SharedR.string.common_separator_pipe)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            if (item.category == MediaCategory.VIDEO && item.playbackDecision.mode == PlaybackMode.DIRECT) {
-                                ItemPill(stringResource(R.string.library_direct_play), accent = true)
-                            }
-                            item.playbackDecision.compatibilityLabel?.let { label -> ItemPill(label) }
-                            if (item.subtitleMatch != null) {
-                                ItemPill(stringResource(R.string.library_subtitle))
-                            }
-                            if (!item.isAvailable) {
-                                ItemPill(stringResource(R.string.library_unavailable))
-                            }
-
-                        }
-                    }
+                LibraryItemVisual(item = item, showThumbnails = showThumbnails)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
+                    Text(item.displayName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        text = listOfNotNull(
+                            itemTypeLabel(item.category),
+                            item.durationMs?.let { LocalizationUtils.formatDurationTimestamp(LocalContext.current, it) },
+                            LocalizationUtils.formatBytes(LocalContext.current, item.sizeBytes),
+                            if (item.subtitleMatch != null) stringResource(R.string.library_subtitle) else null,
+                            if (!item.isAvailable) stringResource(R.string.library_unavailable) else null,
+                        ).joinToString(stringResource(R.string.common_separator_dot)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (item.isAvailable) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
-
-                if (item.category == MediaCategory.VIDEO && item.playbackDecision.mode != PlaybackMode.DIRECT) {
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.Transparent,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            compatibilityJob?.let { job ->
-                                Text(
-                                    text = compatibilityStatusLabel(job),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (job.status == CompatibilityStatus.READY) {
-                                        MaterialTheme.colorScheme.onSurface
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
-                            }
-                            Text(
-                                text = stringResource(R.string.library_browser_prep_body),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                IconButton(onClick = { onRemoveItem(item.id) }) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.common_remove) + " " + item.displayName,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
+            }
+            if (needsPreparation) {
+                PreparationRow(item = item, compatibilityJob = compatibilityJob, onPrepareItem = onPrepareItem)
+            }
+        }
+    }
+}
 
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = { onRemoveItem(item.id) },
-                        modifier = Modifier.heightIn(min = 48.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = librarySecondaryButtonColors(),
-                    ) {
-                        Icon(Icons.Outlined.Delete, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.common_remove))
-                    }
+/** Videos that can't play directly in every browser get a one-tap "Prepare" here (manual only). */
+@Composable
+private fun PreparationRow(
+    item: SharedItem,
+    compatibilityJob: CompatibilityJob?,
+    onPrepareItem: (String) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(start = 12.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = compatibilityJob?.let { compatibilityStatusLabel(it) } ?: stringResource(R.string.session_browser_prep_manual_note),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        when (compatibilityJob?.status) {
+            CompatibilityStatus.QUEUED,
+            CompatibilityStatus.ANALYZING,
+            CompatibilityStatus.PREPARING,
+            CompatibilityStatus.FINALIZING,
+            -> CircularProgressIndicator(modifier = Modifier.padding(12.dp).size(18.dp), strokeWidth = 2.dp)
 
-                    if (item.category == MediaCategory.VIDEO && item.playbackDecision.mode != PlaybackMode.DIRECT) {
-                        when (compatibilityJob?.status) {
-                            CompatibilityStatus.QUEUED,
-                            CompatibilityStatus.ANALYZING,
-                            CompatibilityStatus.PREPARING,
-                            CompatibilityStatus.FINALIZING,
-                            -> OutlinedButton(
-                                onClick = {},
-                                enabled = false,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = librarySecondaryButtonColors(),
-                            ) {
-                                Text(if (compactActions) stringResource(R.string.library_preparing) else stringResource(R.string.library_preparing_for_browser))
-                            }
+            CompatibilityStatus.PLAYABLE_NOW,
+            CompatibilityStatus.READY,
+            -> Text(
+                stringResource(R.string.library_ready),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(12.dp),
+            )
 
-                            CompatibilityStatus.PLAYABLE_NOW,
-                            CompatibilityStatus.READY -> OutlinedButton(
-                                onClick = {},
-                                enabled = false,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = librarySecondaryButtonColors(),
-                            ) {
-                                Text(if (compactActions) stringResource(R.string.library_ready) else stringResource(R.string.library_ready_for_browser))
-                            }
-
-                            else -> Button(
-                                onClick = { onPrepareItem(item.id) },
-                                enabled = item.isAvailable,
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = libraryPrimaryButtonColors(),
-                            ) {
-                                Text(
-                                    if (compatibilityJob?.status == CompatibilityStatus.FAILED) {
-                                        if (compactActions) stringResource(R.string.library_try_again) else stringResource(R.string.library_try_browser_prep_again)
-                                    } else {
-                                        if (compactActions) stringResource(R.string.library_prepare) else stringResource(R.string.library_prepare_for_browser)
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
+            else -> TextButton(onClick = { onPrepareItem(item.id) }, enabled = item.isAvailable) {
+                Text(
+                    if (compatibilityJob?.status == CompatibilityStatus.FAILED) {
+                        stringResource(R.string.library_try_again)
+                    } else {
+                        stringResource(R.string.library_prepare)
+                    },
+                )
             }
         }
     }
@@ -840,22 +551,23 @@ private fun LibraryItemVisual(
     item: SharedItem,
     showThumbnails: Boolean,
 ) {
-    val shape = RoundedCornerShape(16.dp)
-    if (showThumbnails && (item.category == MediaCategory.PHOTO || item.category == MediaCategory.VIDEO)) {
+    val shape = RoundedCornerShape(8.dp)
+    // Coil has no video decoder in this app, so only photos get a real preview.
+    if (showThumbnails && item.category == MediaCategory.PHOTO) {
         AsyncImage(
             model = Uri.parse(item.uri),
             contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(84.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, shape)
-                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), shape),
+                .size(48.dp)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
         )
     } else {
         Box(
             modifier = Modifier
-                .size(72.dp)
-                .background(libraryAccentSurface(), RoundedCornerShape(18.dp))
-                .border(BorderStroke(1.dp, libraryAccentBorder()), RoundedCornerShape(18.dp)),
+                .size(48.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, shape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -863,45 +575,23 @@ private fun LibraryItemVisual(
                     MediaCategory.VIDEO -> Icons.Outlined.Movie
                     MediaCategory.PHOTO -> Icons.Outlined.Photo
                     MediaCategory.MUSIC -> Icons.Outlined.MusicNote
-                    MediaCategory.FILE -> Icons.Outlined.InsertDriveFile
+                    MediaCategory.FILE -> Icons.AutoMirrored.Outlined.InsertDriveFile
                 },
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp),
             )
         }
     }
 }
 
 @Composable
-private fun ItemPill(
-    label: String,
-    accent: Boolean = false,
-) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = if (accent) libraryAccentSurface() else Color.Transparent,
-        border = BorderStroke(
-            1.dp,
-            if (accent) libraryAccentBorder() else MaterialTheme.colorScheme.outline,
-        ),
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (accent) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
 private fun itemTypeLabel(category: MediaCategory): String {
     return when (category) {
-        MediaCategory.VIDEO -> androidx.compose.ui.res.stringResource(R.string.library_type_video)
-        MediaCategory.PHOTO -> androidx.compose.ui.res.stringResource(R.string.library_type_photo)
-        MediaCategory.MUSIC -> androidx.compose.ui.res.stringResource(R.string.library_type_music)
-        MediaCategory.FILE -> androidx.compose.ui.res.stringResource(R.string.library_type_file)
+        MediaCategory.VIDEO -> stringResource(R.string.library_type_video)
+        MediaCategory.PHOTO -> stringResource(R.string.library_type_photo)
+        MediaCategory.MUSIC -> stringResource(R.string.library_type_music)
+        MediaCategory.FILE -> stringResource(R.string.library_type_file)
     }
 }
 
@@ -939,26 +629,3 @@ private fun sortOptionLabel(option: String): String = when (option) {
     "size" -> stringResource(R.string.library_sort_size)
     else -> stringResource(R.string.library_sort_newest)
 }
-
-@Composable
-private fun libraryPrimaryButtonColors() = ButtonDefaults.buttonColors(
-    containerColor = MaterialTheme.colorScheme.primary,
-    contentColor = MaterialTheme.colorScheme.onPrimary,
-    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f),
-)
-
-@Composable
-private fun librarySecondaryButtonColors() = ButtonDefaults.outlinedButtonColors(
-    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-    contentColor = MaterialTheme.colorScheme.primary,
-    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
-    disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.46f),
-)
-
-@Composable
-private fun libraryAccentSurface() = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-
-@Composable
-private fun libraryAccentBorder() = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
-

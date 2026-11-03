@@ -1,4 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/directserve_logo_fixed"
-    android:inset="6dp" />
+<!-- DirectServe mark: a screen with a play button, sending signal waves from its corner,
+     i.e. "play it on another screen". Drawn inside the 66dp safe zone (21..87) of 108dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:pathData="M32,44 L58,44 A6,6 0 0,1 64,50 L64,68 A6,6 0 0,1 58,74 L32,74 A6,6 0 0,1 26,68 L26,50 A6,6 0 0,1 32,44 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round"
+        android:pathData="M40.5,52.5 L40.5,65.5 L51,59 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M66,34 A8,8 0 0,1 74,42" />
+    <path
+        android:strokeColor="#7DD3FC"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M66,27 A15,15 0 0,1 81,42" />
+</vector>

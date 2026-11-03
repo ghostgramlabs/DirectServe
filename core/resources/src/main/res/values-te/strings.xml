@@ -12,8 +12,8 @@
     <string name="common_dismiss">మూసివేయు</string>
     <string name="common_remove">తీసివేయు</string>
     <string name="common_search">వెతుకు</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">వదిలివేయి</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">లోకల్ ఫైల్ షేరింగ్.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d అంశం</item>
         <item quantity="other">%1$d అంశాలు</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">షేర్ చేయడానికి సిద్ధం</string>
+    <string name="home_step_choose">ఏమి షేర్ చేయాలో ఎంచుకోండి</string>
+    <string name="home_step_choose_empty">ఇంకా ఏమీ జోడించలేదు.</string>
+    <string name="home_add_everything">ఈ ఫోన్‌లోని అన్నింటినీ జోడించండి</string>
+    <string name="home_pick_files">ఫైల్‌లు లేదా ఫోల్డర్‌లను ఎంచుకోండి</string>
+    <string name="home_change_selection">ఎంపికను మార్చండి</string>
+    <string name="home_types_hint">ఒక రకాన్ని చేర్చడానికి లేదా వదిలేయడానికి దానిపై నొక్కండి.</string>
+    <string name="home_step_start">షేర్ చేయడం ప్రారంభించండి</string>
+    <string name="home_step_start_hint">మీకు ఒక QR కోడ్ వస్తుంది. అదే Wi-Fiలో ఉన్న ఎవరైనా దాన్ని స్కాన్ చేసి మీ ఫైల్‌లను బ్రౌజర్‌లో తెరవవచ్చు. యాప్ అవసరం లేదు.</string>
+    <string name="home_sharing_on">షేరింగ్ ఆన్‌లో ఉంది</string>
+    <string name="home_show_qr">QR కోడ్ చూపించు</string>
+    <string name="home_more">మరిన్ని</string>
+    <string name="home_tool_mirror">స్క్రీన్ మిర్రర్ చేయండి</string>
+    <string name="home_tool_send_text">టెక్స్ట్ పంపండి</string>
+    <string name="home_tool_history">చరిత్ర</string>
+    <string name="home_tool_tv">టీవీ మరియు ప్లేయర్‌లు</string>
+    <string name="home_remove_all">అన్నీ తీసివేయండి</string>
+    <string name="session_waiting_connect">ఎవరైనా కనెక్ట్ అవ్వడం కోసం వేచి ఉంది</string>
+    <string name="session_stop_short">ఆపండి</string>
+    <string name="session_scan_title">ఇతర పరికరంతో స్కాన్ చేయండి</string>
+    <string name="session_or_type">లేదా అదే Wi-Fiలో ఏ బ్రౌజర్‌లోనైనా ఈ చిరునామాను టైప్ చేయండి:</string>
+    <string name="session_copy_short">కాపీ చేయండి</string>
+    <string name="session_pin_switch">PIN అడగండి</string>
+    <string name="session_pin_switch_desc">సందర్శకులు ముందుగా కోడ్ నమోదు చేయాలి</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">షేర్ చేసేవాటిని మార్చండి</string>
+    <string name="library_title_simple">మీరు షేర్ చేస్తున్నవి</string>
+    <string name="library_add_files_or_folders">ఫైల్‌లు లేదా ఫోల్డర్‌లను జోడించండి</string>
+    <string name="settings_group_while_sharing">షేర్ చేస్తున్నప్పుడు</string>
+    <string name="settings_group_app">యాప్</string>
+    <string name="settings_show_advanced">అధునాతన సెట్టింగ్‌లను చూపించు</string>
+    <string name="settings_hide_advanced">అధునాతన సెట్టింగ్‌లను దాచు</string>
+    <string name="settings_advanced_desc">టీవీ మరియు DLNA, పోర్ట్, బ్రౌజర్ రూపం, స్టోరేజ్</string>
+    <string name="settings_allow_downloads">డౌన్‌లోడ్‌లను అనుమతించండి</string>
+    <string name="settings_allow_downloads_desc">సందర్శకులు చూడటమే కాదు, ఫైల్‌లను సేవ్ కూడా చేయవచ్చు</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d పరికరం కనెక్ట్ అయింది</item>
+        <item quantity="other">%d పరికరాలు కనెక్ట్ అయ్యాయి</item>
     </plurals>
 </resources>

@@ -40,8 +40,8 @@ private val GhostStreamDarkColorScheme = darkColorScheme(
     outline = GhostDarkBorder,
     outlineVariant = GhostDarkBorder,
     surfaceTint = GhostDarkAccent,
-    error = GhostDarkAccentPressed,
-    onError = GhostDarkAccentForeground,
+    error = GhostDarkDanger,
+    onError = GhostDarkDangerForeground,
     errorContainer = GhostDarkCard,
     onErrorContainer = GhostDarkTextPrimary,
 )
@@ -68,8 +68,8 @@ private val GhostStreamLightColorScheme = lightColorScheme(
     outline = GhostLightBorder,
     outlineVariant = GhostLightBorder,
     surfaceTint = GhostLightAccent,
-    error = GhostLightAccentPressed,
-    onError = GhostLightAccentForeground,
+    error = GhostLightDanger,
+    onError = GhostLightDangerForeground,
     errorContainer = GhostLightCard,
     onErrorContainer = GhostLightTextPrimary,
 )

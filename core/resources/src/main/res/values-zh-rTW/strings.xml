@@ -12,8 +12,8 @@
     <string name="common_dismiss">關閉</string>
     <string name="common_remove">移除</string>
     <string name="common_search">搜尋</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">跳過</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">將您的手機變成電視和電腦的本地控制中心。</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d 個項目</item>
         <item quantity="other">%1$d</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">可以開始分享</string>
+    <string name="home_step_choose">選擇要分享的內容</string>
+    <string name="home_step_choose_empty">尚未新增任何內容。</string>
+    <string name="home_add_everything">新增這支手機上的所有內容</string>
+    <string name="home_pick_files">選擇檔案或資料夾</string>
+    <string name="home_change_selection">變更選擇</string>
+    <string name="home_types_hint">輕觸某個類型即可納入或略過。</string>
+    <string name="home_step_start">開始分享</string>
+    <string name="home_step_start_hint">你會取得一個 QR 圖碼。同一個 Wi-Fi 上的任何人掃描後，就能在瀏覽器中開啟你的檔案，不需要安裝應用程式。</string>
+    <string name="home_sharing_on">正在分享</string>
+    <string name="home_show_qr">顯示 QR 圖碼</string>
+    <string name="home_more">更多</string>
+    <string name="home_tool_mirror">螢幕鏡像</string>
+    <string name="home_tool_send_text">傳送文字</string>
+    <string name="home_tool_history">記錄</string>
+    <string name="home_tool_tv">電視和播放器</string>
+    <string name="home_remove_all">全部移除</string>
+    <string name="session_waiting_connect">正在等待有人連線</string>
+    <string name="session_stop_short">停止</string>
+    <string name="session_scan_title">用另一部裝置掃描</string>
+    <string name="session_or_type">或在同一個 Wi-Fi 上的任何瀏覽器輸入這個網址：</string>
+    <string name="session_copy_short">複製</string>
+    <string name="session_pin_switch">要求輸入 PIN 碼</string>
+    <string name="session_pin_switch_desc">訪客必須先輸入代碼</string>
+    <string name="session_pin_value">PIN 碼：%1$s</string>
+    <string name="session_change_shared">變更分享內容</string>
+    <string name="library_title_simple">你正在分享的內容</string>
+    <string name="library_add_files_or_folders">新增檔案或資料夾</string>
+    <string name="settings_group_while_sharing">分享時</string>
+    <string name="settings_group_app">應用程式</string>
+    <string name="settings_show_advanced">顯示進階設定</string>
+    <string name="settings_hide_advanced">隱藏進階設定</string>
+    <string name="settings_advanced_desc">電視和 DLNA、通訊埠、瀏覽器外觀、儲存空間</string>
+    <string name="settings_allow_downloads">允許下載</string>
+    <string name="settings_allow_downloads_desc">訪客不只能查看，還能儲存檔案</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">已連線 %d 部裝置</item>
+        <item quantity="other">已連線 %d 部裝置</item>
     </plurals>
 </resources>

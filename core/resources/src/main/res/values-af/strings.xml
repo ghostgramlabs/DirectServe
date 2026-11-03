@@ -12,8 +12,8 @@
     <string name="common_dismiss">Verwerp</string>
     <string name="common_remove">Verwyder</string>
     <string name="common_search">Soek</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Slaan oor</string>
     <string name="onboarding_title">Direkte stroom en lêerdeling</string>
     <string name="onboarding_subtitle">Verander jou foon in \'n private plaaslike spilpunt vir TV, skootrekenaar, foon, tablet en blaaiertoegang.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$ditem</item>
         <item quantity="other">%1$ditems</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Gereed om te deel</string>
+    <string name="home_step_choose">Kies wat om te deel</string>
+    <string name="home_step_choose_empty">Nog niks bygevoeg nie.</string>
+    <string name="home_add_everything">Voeg alles op hierdie foon by</string>
+    <string name="home_pick_files">Kies lêers of vouers</string>
+    <string name="home_change_selection">Verander keuse</string>
+    <string name="home_types_hint">Tik op \'n tipe om dit in te sluit of oor te slaan.</string>
+    <string name="home_step_start">Begin deel</string>
+    <string name="home_step_start_hint">Jy kry \'n QR-kode. Enigiemand op dieselfde Wi-Fi kan dit skandeer om jou lêers in \'n blaaier oop te maak. Geen app nodig nie.</string>
+    <string name="home_sharing_on">Deel is aan</string>
+    <string name="home_show_qr">Wys QR-kode</string>
+    <string name="home_more">Meer</string>
+    <string name="home_tool_mirror">Spieël skerm</string>
+    <string name="home_tool_send_text">Stuur teks</string>
+    <string name="home_tool_history">Geskiedenis</string>
+    <string name="home_tool_tv">TV en spelers</string>
+    <string name="home_remove_all">Verwyder alles</string>
+    <string name="session_waiting_connect">Wag vir iemand om te koppel</string>
+    <string name="session_stop_short">Stop</string>
+    <string name="session_scan_title">Skandeer met die ander toestel</string>
+    <string name="session_or_type">Of tik hierdie adres in enige blaaier op dieselfde Wi-Fi:</string>
+    <string name="session_copy_short">Kopieer</string>
+    <string name="session_pin_switch">Vra vir \'n PIN</string>
+    <string name="session_pin_switch_desc">Besoekers moet eers \'n kode invoer</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">Verander wat gedeel word</string>
+    <string name="library_title_simple">Wat jy deel</string>
+    <string name="library_add_files_or_folders">Voeg lêers of vouers by</string>
+    <string name="settings_group_while_sharing">Terwyl jy deel</string>
+    <string name="settings_group_app">Program</string>
+    <string name="settings_show_advanced">Wys gevorderde instellings</string>
+    <string name="settings_hide_advanced">Versteek gevorderde instellings</string>
+    <string name="settings_advanced_desc">TV en DLNA, poort, blaaier-voorkoms, berging</string>
+    <string name="settings_allow_downloads">Laat aflaai toe</string>
+    <string name="settings_allow_downloads_desc">Besoekers kan lêers stoor, nie net kyk nie</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d toestel gekoppel</item>
+        <item quantity="other">%d toestelle gekoppel</item>
     </plurals>
 </resources>

@@ -448,7 +448,7 @@ class GhostStreamForegroundService : Service() {
         )
         val title = getString(SharedR.string.service_quick_text_title, message.senderName)
         val notification = NotificationCompat.Builder(this, QUICK_TEXT_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(title)
             .setContentText(message.text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message.text))
@@ -483,7 +483,7 @@ class GhostStreamForegroundService : Service() {
 
         val fileText = if (request.fileCount > 1) getString(SharedR.string.service_file_count, request.fileCount) else request.fileName
         val notification = NotificationCompat.Builder(this, REQUEST_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(getString(SharedR.string.service_upload_request_title))
             .setContentText(getString(SharedR.string.service_upload_request_text, fileText, LocalizationUtils.formatBytes(this, request.sizeBytes), formatGeneratedNameWithIp(request.requesterIp)))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -525,7 +525,7 @@ class GhostStreamForegroundService : Service() {
             getString(SharedR.string.service_upload_progress_text_unknown, senderLabel)
         }
         val notification = NotificationCompat.Builder(this, REQUEST_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(getString(SharedR.string.service_upload_progress_title, fileLabel))
             .setContentText(detail)
             .setSubText(getString(SharedR.string.service_upload_progress_subtext_pattern, LocalizationUtils.formatBytes(this, progress.transferredBytes), LocalizationUtils.formatBytes(this, progress.totalSizeBytes)))
@@ -563,7 +563,7 @@ class GhostStreamForegroundService : Service() {
         }
         val senderLabel = formatGeneratedNameWithIp(completion.requesterIp)
         val notification = NotificationCompat.Builder(this, REQUEST_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(getString(SharedR.string.service_upload_success_title, fileLabel))
             .setContentText(getString(SharedR.string.service_upload_success_text, senderLabel))
             .setSubText(getString(SharedR.string.service_upload_success_subtext))
@@ -592,7 +592,7 @@ class GhostStreamForegroundService : Service() {
         val clientNames = clients.joinToString(", ") { formatGeneratedNameWithIp(it.ipAddress) }
         val detail = resources.getQuantityString(SharedR.plurals.service_devices_joined, clients.size, clientNames, totalConnectedCount)
         val notification = NotificationCompat.Builder(this, CONNECTION_CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(title)
             .setContentText(detail)
             .setStyle(NotificationCompat.BigTextStyle().bigText(detail))
@@ -630,7 +630,7 @@ class GhostStreamForegroundService : Service() {
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(contentText)
             .setContentIntent(openAppIntent)

@@ -12,8 +12,8 @@
     <string name="common_dismiss">Sluiten</string>
     <string name="common_remove">Verwijderen</string>
     <string name="common_search">Zoeken</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Overslaan</string>
     <string name="onboarding_title">Directe streaming &amp; bestanden delen</string>
     <string name="onboarding_subtitle">Verander je telefoon in een privé lokale hub voor toegang vanaf TV, laptop, tablet en browser.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">1 item</item>
         <item quantity="other">%1$d items</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Klaar om te delen</string>
+    <string name="home_step_choose">Kies wat je wilt delen</string>
+    <string name="home_step_choose_empty">Nog niets toegevoegd.</string>
+    <string name="home_add_everything">Alles op deze telefoon toevoegen</string>
+    <string name="home_pick_files">Bestanden of mappen kiezen</string>
+    <string name="home_change_selection">Selectie wijzigen</string>
+    <string name="home_types_hint">Tik op een type om het mee te nemen of over te slaan.</string>
+    <string name="home_step_start">Beginnen met delen</string>
+    <string name="home_step_start_hint">Je krijgt een QR-code. Iedereen op hetzelfde wifi-netwerk kan die scannen om je bestanden in een browser te openen. Geen app nodig.</string>
+    <string name="home_sharing_on">Delen staat aan</string>
+    <string name="home_show_qr">QR-code tonen</string>
+    <string name="home_more">Meer</string>
+    <string name="home_tool_mirror">Scherm spiegelen</string>
+    <string name="home_tool_send_text">Tekst sturen</string>
+    <string name="home_tool_history">Geschiedenis</string>
+    <string name="home_tool_tv">Tv en spelers</string>
+    <string name="home_remove_all">Alles verwijderen</string>
+    <string name="session_waiting_connect">Wachten tot iemand verbinding maakt</string>
+    <string name="session_stop_short">Stoppen</string>
+    <string name="session_scan_title">Scan met het andere apparaat</string>
+    <string name="session_or_type">Of typ dit adres in een browser op hetzelfde wifi-netwerk:</string>
+    <string name="session_copy_short">Kopiëren</string>
+    <string name="session_pin_switch">Om een pincode vragen</string>
+    <string name="session_pin_switch_desc">Bezoekers moeten eerst een code invoeren</string>
+    <string name="session_pin_value">Pincode: %1$s</string>
+    <string name="session_change_shared">Wijzigen wat je deelt</string>
+    <string name="library_title_simple">Wat je deelt</string>
+    <string name="library_add_files_or_folders">Bestanden of mappen toevoegen</string>
+    <string name="settings_group_while_sharing">Tijdens het delen</string>
+    <string name="settings_group_app">App</string>
+    <string name="settings_show_advanced">Geavanceerde instellingen tonen</string>
+    <string name="settings_hide_advanced">Geavanceerde instellingen verbergen</string>
+    <string name="settings_advanced_desc">Tv en DLNA, poort, browserweergave, opslag</string>
+    <string name="settings_allow_downloads">Downloads toestaan</string>
+    <string name="settings_allow_downloads_desc">Bezoekers kunnen bestanden opslaan, niet alleen bekijken</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d apparaat verbonden</item>
+        <item quantity="other">%d apparaten verbonden</item>
     </plurals>
 </resources>

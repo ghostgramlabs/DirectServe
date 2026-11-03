@@ -12,8 +12,8 @@
     <string name="common_dismiss">Tutup</string>
     <string name="common_remove">Hapus</string>
     <string name="common_search">Cari</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Lewati</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">Ubah ponsel Anda menjadi hub lokal untuk TV dan PC.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d barang</item>
         <item quantity="other">%1$d</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Siap dibagikan</string>
+    <string name="home_step_choose">Pilih yang ingin dibagikan</string>
+    <string name="home_step_choose_empty">Belum ada yang ditambahkan.</string>
+    <string name="home_add_everything">Tambahkan semua di ponsel ini</string>
+    <string name="home_pick_files">Pilih file atau folder</string>
+    <string name="home_change_selection">Ubah pilihan</string>
+    <string name="home_types_hint">Ketuk jenis untuk menyertakan atau melewatinya.</string>
+    <string name="home_step_start">Mulai berbagi</string>
+    <string name="home_step_start_hint">Anda akan mendapat kode QR. Siapa pun di Wi-Fi yang sama dapat memindainya untuk membuka file Anda di browser. Tidak perlu aplikasi.</string>
+    <string name="home_sharing_on">Berbagi aktif</string>
+    <string name="home_show_qr">Tampilkan kode QR</string>
+    <string name="home_more">Lainnya</string>
+    <string name="home_tool_mirror">Cerminkan layar</string>
+    <string name="home_tool_send_text">Kirim teks</string>
+    <string name="home_tool_history">Riwayat</string>
+    <string name="home_tool_tv">TV &amp; pemutar</string>
+    <string name="home_remove_all">Hapus semua</string>
+    <string name="session_waiting_connect">Menunggu seseorang terhubung</string>
+    <string name="session_stop_short">Berhenti</string>
+    <string name="session_scan_title">Pindai dengan perangkat lain</string>
+    <string name="session_or_type">Atau ketik alamat ini di browser mana pun pada Wi-Fi yang sama:</string>
+    <string name="session_copy_short">Salin</string>
+    <string name="session_pin_switch">Minta PIN</string>
+    <string name="session_pin_switch_desc">Pengunjung harus memasukkan kode terlebih dahulu</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">Ubah yang dibagikan</string>
+    <string name="library_title_simple">Yang Anda bagikan</string>
+    <string name="library_add_files_or_folders">Tambahkan file atau folder</string>
+    <string name="settings_group_while_sharing">Saat berbagi</string>
+    <string name="settings_group_app">Aplikasi</string>
+    <string name="settings_show_advanced">Tampilkan setelan lanjutan</string>
+    <string name="settings_hide_advanced">Sembunyikan setelan lanjutan</string>
+    <string name="settings_advanced_desc">TV &amp; DLNA, port, tampilan browser, penyimpanan</string>
+    <string name="settings_allow_downloads">Izinkan unduhan</string>
+    <string name="settings_allow_downloads_desc">Pengunjung dapat menyimpan file, tidak hanya melihat</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d perangkat terhubung</item>
+        <item quantity="other">%d perangkat terhubung</item>
     </plurals>
 </resources>

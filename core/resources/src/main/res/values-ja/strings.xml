@@ -12,8 +12,8 @@
     <string name="common_dismiss">閉じる</string>
     <string name="common_remove">削除</string>
     <string name="common_search">検索</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">スキップ</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">スマホをTVやPCのローカルハブに。</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d個のアイテム</item>
         <item quantity="other">%1$d</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">共有の準備ができました</string>
+    <string name="home_step_choose">共有するものを選ぶ</string>
+    <string name="home_step_choose_empty">まだ何も追加されていません。</string>
+    <string name="home_add_everything">このスマホのすべてを追加</string>
+    <string name="home_pick_files">ファイルやフォルダを選ぶ</string>
+    <string name="home_change_selection">選択を変更</string>
+    <string name="home_types_hint">種類をタップして含めるかどうかを切り替えます。</string>
+    <string name="home_step_start">共有を開始</string>
+    <string name="home_step_start_hint">QR コードが表示されます。同じ Wi-Fi の人がスキャンすると、ブラウザでファイルを開けます。アプリは不要です。</string>
+    <string name="home_sharing_on">共有中</string>
+    <string name="home_show_qr">QR コードを表示</string>
+    <string name="home_more">その他</string>
+    <string name="home_tool_mirror">画面をミラーリング</string>
+    <string name="home_tool_send_text">テキストを送信</string>
+    <string name="home_tool_history">履歴</string>
+    <string name="home_tool_tv">テレビとプレーヤー</string>
+    <string name="home_remove_all">すべて削除</string>
+    <string name="session_waiting_connect">接続を待っています</string>
+    <string name="session_stop_short">停止</string>
+    <string name="session_scan_title">相手のデバイスでスキャン</string>
+    <string name="session_or_type">または、同じ Wi-Fi のブラウザでこのアドレスを入力:</string>
+    <string name="session_copy_short">コピー</string>
+    <string name="session_pin_switch">PIN を要求</string>
+    <string name="session_pin_switch_desc">訪問者は最初にコードを入力する必要があります</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">共有内容を変更</string>
+    <string name="library_title_simple">共有しているもの</string>
+    <string name="library_add_files_or_folders">ファイルやフォルダを追加</string>
+    <string name="settings_group_while_sharing">共有中の設定</string>
+    <string name="settings_group_app">アプリ</string>
+    <string name="settings_show_advanced">詳細設定を表示</string>
+    <string name="settings_hide_advanced">詳細設定を隠す</string>
+    <string name="settings_advanced_desc">テレビと DLNA、ポート、ブラウザの表示、ストレージ</string>
+    <string name="settings_allow_downloads">ダウンロードを許可</string>
+    <string name="settings_allow_downloads_desc">訪問者は表示だけでなくファイルを保存できます</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d 台が接続中</item>
+        <item quantity="other">%d 台が接続中</item>
     </plurals>
 </resources>

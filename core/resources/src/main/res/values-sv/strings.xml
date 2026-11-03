@@ -12,8 +12,8 @@
     <string name="common_dismiss">Stäng</string>
     <string name="common_remove">Ta bort</string>
     <string name="common_search">Sök</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Hoppa över</string>
     <string name="onboarding_title">Direktströmning och fildelning</string>
     <string name="onboarding_subtitle">Gör din telefon till en privat hubb för TV, PC och webbläsare.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d objekt</item>
         <item quantity="other">%1$d filer</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Redo att dela</string>
+    <string name="home_step_choose">Välj vad du vill dela</string>
+    <string name="home_step_choose_empty">Inget har lagts till än.</string>
+    <string name="home_add_everything">Lägg till allt på den här telefonen</string>
+    <string name="home_pick_files">Välj filer eller mappar</string>
+    <string name="home_change_selection">Ändra urval</string>
+    <string name="home_types_hint">Tryck på en typ för att ta med eller hoppa över den.</string>
+    <string name="home_step_start">Börja dela</string>
+    <string name="home_step_start_hint">Du får en QR-kod. Alla i samma wifi kan skanna den för att öppna dina filer i en webbläsare. Ingen app behövs.</string>
+    <string name="home_sharing_on">Delning pågår</string>
+    <string name="home_show_qr">Visa QR-kod</string>
+    <string name="home_more">Mer</string>
+    <string name="home_tool_mirror">Spegla skärmen</string>
+    <string name="home_tool_send_text">Skicka text</string>
+    <string name="home_tool_history">Historik</string>
+    <string name="home_tool_tv">TV och spelare</string>
+    <string name="home_remove_all">Ta bort alla</string>
+    <string name="session_waiting_connect">Väntar på att någon ansluter</string>
+    <string name="session_stop_short">Stoppa</string>
+    <string name="session_scan_title">Skanna med den andra enheten</string>
+    <string name="session_or_type">Eller skriv den här adressen i en webbläsare i samma wifi:</string>
+    <string name="session_copy_short">Kopiera</string>
+    <string name="session_pin_switch">Fråga efter PIN-kod</string>
+    <string name="session_pin_switch_desc">Besökare måste först ange en kod</string>
+    <string name="session_pin_value">PIN-kod: %1$s</string>
+    <string name="session_change_shared">Ändra vad som delas</string>
+    <string name="library_title_simple">Det du delar</string>
+    <string name="library_add_files_or_folders">Lägg till filer eller mappar</string>
+    <string name="settings_group_while_sharing">Under delning</string>
+    <string name="settings_group_app">App</string>
+    <string name="settings_show_advanced">Visa avancerade inställningar</string>
+    <string name="settings_hide_advanced">Dölj avancerade inställningar</string>
+    <string name="settings_advanced_desc">TV och DLNA, port, webbläsarvy, lagring</string>
+    <string name="settings_allow_downloads">Tillåt nedladdningar</string>
+    <string name="settings_allow_downloads_desc">Besökare kan spara filer, inte bara titta</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d enhet ansluten</item>
+        <item quantity="other">%d enheter anslutna</item>
     </plurals>
 </resources>

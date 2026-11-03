@@ -12,8 +12,8 @@
     <string name="common_dismiss">Закрыть</string>
     <string name="common_remove">Убрать</string>
     <string name="common_search">Поиск</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_title">Прямая трансляция и передача файлов</string>
     <string name="onboarding_subtitle">Превратите телефон в частный центр для ТВ, ПК, планшетов и браузеров.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d шт.</item>
         <item quantity="other">%1$d шт.</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">Готово к отправке</string>
+    <string name="home_step_choose">Выберите, чем поделиться</string>
+    <string name="home_step_choose_empty">Пока ничего не добавлено.</string>
+    <string name="home_add_everything">Добавить всё с этого телефона</string>
+    <string name="home_pick_files">Выбрать файлы или папки</string>
+    <string name="home_change_selection">Изменить выбор</string>
+    <string name="home_types_hint">Нажмите на тип, чтобы включить или пропустить его.</string>
+    <string name="home_step_start">Начать раздачу</string>
+    <string name="home_step_start_hint">Вы получите QR-код. Любой в той же сети Wi-Fi может отсканировать его и открыть ваши файлы в браузере. Приложение не нужно.</string>
+    <string name="home_sharing_on">Раздача включена</string>
+    <string name="home_show_qr">Показать QR-код</string>
+    <string name="home_more">Ещё</string>
+    <string name="home_tool_mirror">Трансляция экрана</string>
+    <string name="home_tool_send_text">Отправить текст</string>
+    <string name="home_tool_history">История</string>
+    <string name="home_tool_tv">ТВ и плееры</string>
+    <string name="home_remove_all">Удалить всё</string>
+    <string name="session_waiting_connect">Ожидание подключения</string>
+    <string name="session_stop_short">Стоп</string>
+    <string name="session_scan_title">Отсканируйте другим устройством</string>
+    <string name="session_or_type">Или введите этот адрес в любом браузере в той же сети Wi-Fi:</string>
+    <string name="session_copy_short">Копировать</string>
+    <string name="session_pin_switch">Запрашивать PIN-код</string>
+    <string name="session_pin_switch_desc">Посетители сначала должны ввести код</string>
+    <string name="session_pin_value">PIN-код: %1$s</string>
+    <string name="session_change_shared">Изменить, чем вы делитесь</string>
+    <string name="library_title_simple">Чем вы делитесь</string>
+    <string name="library_add_files_or_folders">Добавить файлы или папки</string>
+    <string name="settings_group_while_sharing">Во время раздачи</string>
+    <string name="settings_group_app">Приложение</string>
+    <string name="settings_show_advanced">Показать расширенные настройки</string>
+    <string name="settings_hide_advanced">Скрыть расширенные настройки</string>
+    <string name="settings_advanced_desc">ТВ и DLNA, порт, вид в браузере, хранилище</string>
+    <string name="settings_allow_downloads">Разрешить скачивание</string>
+    <string name="settings_allow_downloads_desc">Посетители могут сохранять файлы, а не только смотреть</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d устройство подключено</item>
+        <item quantity="other">%d устройств подключено</item>
     </plurals>
 </resources>

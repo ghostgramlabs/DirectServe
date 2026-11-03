@@ -12,8 +12,8 @@
     <string name="common_dismiss">닫기</string>
     <string name="common_remove">제거</string>
     <string name="common_search">검색</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">건너뛰기</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">휴대폰을 로컬 허브로 만드세요.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d개 항목</item>
         <item quantity="other">%1$d</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">공유할 준비 완료</string>
+    <string name="home_step_choose">공유할 항목 선택</string>
+    <string name="home_step_choose_empty">아직 추가된 항목이 없습니다.</string>
+    <string name="home_add_everything">이 휴대폰의 모든 항목 추가</string>
+    <string name="home_pick_files">파일 또는 폴더 선택</string>
+    <string name="home_change_selection">선택 변경</string>
+    <string name="home_types_hint">유형을 탭하여 포함하거나 제외하세요.</string>
+    <string name="home_step_start">공유 시작</string>
+    <string name="home_step_start_hint">QR 코드가 표시됩니다. 같은 Wi-Fi에 있는 누구나 스캔하여 브라우저에서 파일을 열 수 있습니다. 앱이 필요 없습니다.</string>
+    <string name="home_sharing_on">공유 중</string>
+    <string name="home_show_qr">QR 코드 보기</string>
+    <string name="home_more">더보기</string>
+    <string name="home_tool_mirror">화면 미러링</string>
+    <string name="home_tool_send_text">텍스트 보내기</string>
+    <string name="home_tool_history">기록</string>
+    <string name="home_tool_tv">TV 및 플레이어</string>
+    <string name="home_remove_all">모두 삭제</string>
+    <string name="session_waiting_connect">연결을 기다리는 중</string>
+    <string name="session_stop_short">중지</string>
+    <string name="session_scan_title">다른 기기로 스캔하세요</string>
+    <string name="session_or_type">또는 같은 Wi-Fi의 브라우저에 이 주소를 입력하세요:</string>
+    <string name="session_copy_short">복사</string>
+    <string name="session_pin_switch">PIN 요청</string>
+    <string name="session_pin_switch_desc">방문자는 먼저 코드를 입력해야 합니다</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">공유 항목 변경</string>
+    <string name="library_title_simple">공유 중인 항목</string>
+    <string name="library_add_files_or_folders">파일 또는 폴더 추가</string>
+    <string name="settings_group_while_sharing">공유하는 동안</string>
+    <string name="settings_group_app">앱</string>
+    <string name="settings_show_advanced">고급 설정 보기</string>
+    <string name="settings_hide_advanced">고급 설정 숨기기</string>
+    <string name="settings_advanced_desc">TV 및 DLNA, 포트, 브라우저 모양, 저장공간</string>
+    <string name="settings_allow_downloads">다운로드 허용</string>
+    <string name="settings_allow_downloads_desc">방문자가 보기만 하는 게 아니라 파일을 저장할 수 있습니다</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d대 연결됨</item>
+        <item quantity="other">%d대 연결됨</item>
     </plurals>
 </resources>

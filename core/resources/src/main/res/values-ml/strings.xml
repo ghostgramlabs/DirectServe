@@ -12,8 +12,8 @@
     <string name="common_dismiss">മാറ്റുക</string>
     <string name="common_remove">നീക്കം ചെയ്യുക</string>
     <string name="common_search">തിരയുക</string>
-    <string name="common_separator_pipe"> | </string>
-    <string name="common_separator_dot"> • </string>
+    <string name="common_separator_pipe">" | "</string>
+    <string name="common_separator_dot">" • "</string>
     <string name="onboarding_skip">ഒഴിവാക്കുക</string>
     <string name="onboarding_title">DirectServe</string>
     <string name="onboarding_subtitle">പ്രാദേശിക ഫയൽ ഷെയറിംഗ്.</string>
@@ -979,5 +979,45 @@
     <plurals name="home_saved_shares_items_count">
         <item quantity="one">%1$d ഇനം</item>
         <item quantity="other">%1$d ഇനങ്ങൾ</item>
+    </plurals>
+    <!-- Redesign (1.0.27) -->
+    <string name="home_ready_to_share">പങ്കിടാൻ തയ്യാർ</string>
+    <string name="home_step_choose">എന്ത് പങ്കിടണമെന്ന് തിരഞ്ഞെടുക്കുക</string>
+    <string name="home_step_choose_empty">ഇതുവരെ ഒന്നും ചേർത്തിട്ടില്ല.</string>
+    <string name="home_add_everything">ഈ ഫോണിലെ എല്ലാം ചേർക്കുക</string>
+    <string name="home_pick_files">ഫയലുകളോ ഫോൾഡറുകളോ തിരഞ്ഞെടുക്കുക</string>
+    <string name="home_change_selection">തിരഞ്ഞെടുപ്പ് മാറ്റുക</string>
+    <string name="home_types_hint">ഒരു തരം ഉൾപ്പെടുത്താനോ ഒഴിവാക്കാനോ അതിൽ ടാപ്പ് ചെയ്യുക.</string>
+    <string name="home_step_start">പങ്കിടൽ ആരംഭിക്കുക</string>
+    <string name="home_step_start_hint">നിങ്ങൾക്ക് ഒരു QR കോഡ് ലഭിക്കും. അതേ Wi-Fi-യിലുള്ള ആർക്കും അത് സ്കാൻ ചെയ്ത് നിങ്ങളുടെ ഫയലുകൾ ബ്രൗസറിൽ തുറക്കാം. ആപ്പ് ആവശ്യമില്ല.</string>
+    <string name="home_sharing_on">പങ്കിടൽ ഓണാണ്</string>
+    <string name="home_show_qr">QR കോഡ് കാണിക്കുക</string>
+    <string name="home_more">കൂടുതൽ</string>
+    <string name="home_tool_mirror">സ്ക്രീൻ മിറർ ചെയ്യുക</string>
+    <string name="home_tool_send_text">ടെക്സ്റ്റ് അയയ്ക്കുക</string>
+    <string name="home_tool_history">ചരിത്രം</string>
+    <string name="home_tool_tv">ടിവിയും പ്ലെയറുകളും</string>
+    <string name="home_remove_all">എല്ലാം നീക്കം ചെയ്യുക</string>
+    <string name="session_waiting_connect">ആരെങ്കിലും കണക്റ്റ് ചെയ്യുന്നതിനായി കാത്തിരിക്കുന്നു</string>
+    <string name="session_stop_short">നിർത്തുക</string>
+    <string name="session_scan_title">മറ്റേ ഉപകരണം ഉപയോഗിച്ച് സ്കാൻ ചെയ്യുക</string>
+    <string name="session_or_type">അല്ലെങ്കിൽ അതേ Wi-Fi-യിലെ ഏത് ബ്രൗസറിലും ഈ വിലാസം ടൈപ്പ് ചെയ്യുക:</string>
+    <string name="session_copy_short">പകർത്തുക</string>
+    <string name="session_pin_switch">PIN ചോദിക്കുക</string>
+    <string name="session_pin_switch_desc">സന്ദർശകർ ആദ്യം ഒരു കോഡ് നൽകണം</string>
+    <string name="session_pin_value">PIN: %1$s</string>
+    <string name="session_change_shared">പങ്കിടുന്നവ മാറ്റുക</string>
+    <string name="library_title_simple">നിങ്ങൾ പങ്കിടുന്നവ</string>
+    <string name="library_add_files_or_folders">ഫയലുകളോ ഫോൾഡറുകളോ ചേർക്കുക</string>
+    <string name="settings_group_while_sharing">പങ്കിടുമ്പോൾ</string>
+    <string name="settings_group_app">ആപ്പ്</string>
+    <string name="settings_show_advanced">വിപുലമായ ക്രമീകരണങ്ങൾ കാണിക്കുക</string>
+    <string name="settings_hide_advanced">വിപുലമായ ക്രമീകരണങ്ങൾ മറയ്ക്കുക</string>
+    <string name="settings_advanced_desc">ടിവിയും DLNA-യും, പോർട്ട്, ബ്രൗസർ രൂപം, സ്റ്റോറേജ്</string>
+    <string name="settings_allow_downloads">ഡൗൺലോഡുകൾ അനുവദിക്കുക</string>
+    <string name="settings_allow_downloads_desc">സന്ദർശകർക്ക് കാണാൻ മാത്രമല്ല, ഫയലുകൾ സേവ് ചെയ്യാനും കഴിയും</string>
+    <plurals name="session_devices_connected">
+        <item quantity="one">%d ഉപകരണം കണക്റ്റ് ചെയ്തു</item>
+        <item quantity="other">%d ഉപകരണങ്ങൾ കണക്റ്റ് ചെയ്തു</item>
     </plurals>
 </resources>
