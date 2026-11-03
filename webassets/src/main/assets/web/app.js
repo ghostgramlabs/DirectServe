@@ -3837,7 +3837,13 @@ function mountLiveScreen(initialState) {
 
   const applyLiveState = (sessionState) => {
     state.liveScreenState = sessionState || null;
-    if (sessionState?.status === "LIVE") applyStatus(gsStr("web_live_status_connecting", ""), sessionState.viewerCount > 0 ? gsStr("web_live_status_live", "") : gsStr("web_live_status_waiting_viewer", ""));
+    if (sessionState?.status === "LIVE") {
+      // Once this viewer's video is actually playing, say "Live" on its own; the state poll used
+      // to overwrite that with "Connecting | Live" every few seconds.
+      const playing = !video.paused && video.readyState >= 2;
+      if (playing) applyStatus(gsStr("web_live_status_live", ""));
+      else applyStatus(gsStr("web_live_status_connecting", ""), sessionState.viewerCount > 0 ? "" : gsStr("web_live_status_waiting_viewer", ""));
+    }
     else if (sessionState?.status === "STARTING") applyStatus(gsStr("web_live_status_starting", ""));
     else if (sessionState?.status === "ERROR") applyStatus(gsStr("web_live_stream_ended", ""), sessionState.lastError || "");
     else applyStatus(gsStr("web_live_waiting", ""));

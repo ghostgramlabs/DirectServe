@@ -199,7 +199,7 @@ class LiveScreenCaptureService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(getString(SharedR.string.live_screen_notification_title))
             .setContentText(getString(SharedR.string.live_screen_notification_body))
             .setContentIntent(openAppIntent)
@@ -715,6 +715,9 @@ class LiveScreenCaptureService : Service() {
         if (waitForIce) {
             waitForLocalIceGathering(connection)
         }
+        // A newer viewer (or a page refresh) may have replaced and disposed this peer while we
+        // waited; touching a disposed PeerConnection segfaults inside libjingle.
+        if (peerConnection !== connection || activeViewerId != viewerId) return
         val localOffer = connection.localDescription ?: fallbackDescription
         container.debugLogRepository.log(
             "LiveScreen",
@@ -1138,6 +1141,8 @@ class LiveScreenCaptureService : Service() {
         if (waitForIce) {
             waitForLocalIceGathering(connection)
         }
+        // Same as for offers: never read from a peer that was disposed while we waited.
+        if (peerConnection !== connection || activeViewerId != viewerId) return
         val localAnswer = connection?.localDescription ?: fallbackDescription
         container.debugLogRepository.log(
             "LiveScreen",
