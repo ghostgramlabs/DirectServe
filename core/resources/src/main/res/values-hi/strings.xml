@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">इस डिवाइस का नाम बदलें</string>
     <string name="web_rename_device_prompt">इस डिवाइस का नाम लिखें (अधिकतम 30 अक्षर):</string>
     <string name="web_rename_device_too_long">यह नाम बहुत लंबा है। 30 या उससे कम अक्षर रखें।</string>
+    <string name="web_music_unsupported">यह ब्राउज़र यह ट्रैक नहीं चला सकता। सुनने के लिए इसे डाउनलोड करें।</string>
 </resources>

@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">이 기기 이름 변경</string>
     <string name="web_rename_device_prompt">이 기기의 이름(최대 30자):</string>
     <string name="web_rename_device_too_long">이름이 너무 깁니다. 30자 이하로 입력하세요.</string>
+    <string name="web_music_unsupported">이 브라우저에서는 이 트랙을 재생할 수 없습니다. 다운로드해서 들어 보세요.</string>
 </resources>

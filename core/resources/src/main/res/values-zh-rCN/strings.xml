@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">重命名此设备</string>
     <string name="web_rename_device_prompt">为此设备命名（最多 30 个字符）：</string>
     <string name="web_rename_device_too_long">名称太长，请不超过 30 个字符。</string>
+    <string name="web_music_unsupported">此浏览器无法播放这首曲目。请下载后收听。</string>
 </resources>

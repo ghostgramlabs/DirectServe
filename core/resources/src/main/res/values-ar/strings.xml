@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">إعادة تسمية هذا الجهاز</string>
     <string name="web_rename_device_prompt">اكتب اسمًا لهذا الجهاز (حتى 30 حرفًا):</string>
     <string name="web_rename_device_too_long">هذا الاسم طويل جدًا. استخدم 30 حرفًا أو أقل.</string>
+    <string name="web_music_unsupported">لا يمكن لهذا المتصفح تشغيل هذا المقطع. نزّله للاستماع إليه.</string>
 </resources>

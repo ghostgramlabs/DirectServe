@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">Mudar o nome deste dispositivo</string>
     <string name="web_rename_device_prompt">Nome deste dispositivo (até 30 carateres):</string>
     <string name="web_rename_device_too_long">Esse nome é demasiado longo. Use 30 carateres ou menos.</string>
+    <string name="web_music_unsupported">Este navegador não consegue reproduzir esta faixa. Transfira-a para a ouvir.</string>
 </resources>

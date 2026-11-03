@@ -617,7 +617,9 @@ class Media3FragmentedMp4CompatibilityWorker(
                 labelResId = R.string.pipeline_label_transcoding,
                 browserMimeType = "video/mp4",
                 reason = "$FALLBACK_TRANSCODE_REASON_PREFIX: $fallbackReason",
-                reasonResId = sourceProbe.transcodeFallbackReasonResId,
+                // PlaybackDecision has no format args, so a resource with a %1$s placeholder would
+                // reach the browser unformatted; keep the formatted text for those.
+                reasonResId = sourceProbe.transcodeFallbackReasonResId.takeIf { sourceProbe.transcodeFallbackArgs.isEmpty() },
             ),
             metadata = item.metadata + metadataUpdates,
         )
@@ -954,8 +956,11 @@ class Media3FragmentedMp4CompatibilityWorker(
     }
 
     private fun targetOutputSize(item: SharedItem): OutputSize {
-        val width = item.metadata["width"]?.toIntOrNull()
-        val height = item.metadata["height"]?.toIntOrNull()
+        // Without a known source size the fallback is a fixed 1080p, which upscaled a 720p AVI
+        // to 1080p (more encode work and battery for no gain), so ask the retriever first.
+        val (width, height) = item.metadata["width"]?.toIntOrNull()?.let { w ->
+            item.metadata["height"]?.toIntOrNull()?.let { h -> w to h }
+        } ?: retrieverVideoSize(item) ?: media3VideoSize(item) ?: (null to null)
         if (width == null || height == null || width <= 0 || height <= 0) {
             return OutputSize(width = null, height = null)
         }
@@ -967,6 +972,38 @@ class Media3FragmentedMp4CompatibilityWorker(
             height = scaledHeight.coerceAtLeast(2),
         )
     }
+
+    private fun retrieverVideoSize(item: SharedItem): Pair<Int?, Int?>? {
+        // Unrotated size, matching the MediaFormat width/height the source probe stores.
+        val retriever = android.media.MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(context, Uri.parse(item.uri))
+            val w = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull()
+            val h = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull()
+            if (w == null || h == null) null else w to h
+        } catch (_: Exception) {
+            null
+        } finally {
+            retriever.release()
+        }
+    }
+
+    // The platform retriever can't open AVI (no platform extractor); Media3's own extractors can.
+    private fun media3VideoSize(item: SharedItem): Pair<Int?, Int?>? = runCatching {
+        val groups = androidx.media3.exoplayer.MetadataRetriever
+            .retrieveMetadata(context, MediaItem.fromUri(item.uri))
+            .get(5, java.util.concurrent.TimeUnit.SECONDS)
+        for (i in 0 until groups.length) {
+            val group = groups[i]
+            for (j in 0 until group.length) {
+                val format = group.getFormat(j)
+                if (MimeTypes.isVideo(format.sampleMimeType) && format.width > 0 && format.height > 0) {
+                    return@runCatching format.width to format.height
+                }
+            }
+        }
+        null
+    }.getOrNull()
 
     private fun targetVideoBitrate(targetSize: OutputSize, frameRate: Float?): Int {
         val width = targetSize.width ?: 1920

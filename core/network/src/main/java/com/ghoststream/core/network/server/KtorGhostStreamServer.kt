@@ -454,6 +454,7 @@ class KtorGhostStreamServer(
                             "web_rename_device" to localizedContext.getString(R.string.web_rename_device),
                             "web_rename_device_prompt" to localizedContext.getString(R.string.web_rename_device_prompt),
                             "web_rename_device_too_long" to localizedContext.getString(R.string.web_rename_device_too_long),
+                            "web_music_unsupported" to localizedContext.getString(R.string.web_music_unsupported),
                             "web_strip_link" to localizedContext.getString(R.string.web_strip_link),
                             "web_security_pin" to localizedContext.getString(R.string.web_security_pin),
                             "web_security_open" to localizedContext.getString(R.string.web_security_open),
@@ -2181,7 +2182,14 @@ class KtorGhostStreamServer(
 
         val directFailed = playbackDirectFailedCache.contains(playbackOverrideKey(host, item.id))
         val effectiveDecision = when {
-            caps == null || forcedBrowserFallback -> inspectedItem.playbackDecision
+            forcedBrowserFallback -> inspectedItem.playbackDecision
+            // The browser hasn't reported its capabilities yet (the player can ask before the
+            // telemetry POST lands). Items added by a bulk MediaStore scan carry only the default
+            // DIRECT decision, so decide from the fresh inspection with default capabilities
+            // rather than streaming e.g. a Theora or AC-3 file the browser can't decode.
+            caps == null -> refreshedInspection?.let {
+                mediaAnalyzer.decidePlayback(it, ClientCapabilities.DEFAULT, directPlaybackFailed = directFailed)
+            } ?: inspectedItem.playbackDecision
             else -> {
                 val cacheKey = buildDecisionCacheKey(host, inspectedItem, caps)
                 decisionCache[cacheKey] ?: (refreshedInspection?.let { mediaAnalyzer.decidePlayback(it, caps, directPlaybackFailed = directFailed) }

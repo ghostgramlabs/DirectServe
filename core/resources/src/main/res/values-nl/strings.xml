@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">Dit apparaat hernoemen</string>
     <string name="web_rename_device_prompt">Naam voor dit apparaat (maximaal 30 tekens):</string>
     <string name="web_rename_device_too_long">Die naam is te lang. Gebruik maximaal 30 tekens.</string>
+    <string name="web_music_unsupported">Deze browser kan dit nummer niet afspelen. Download het om te luisteren.</string>
 </resources>

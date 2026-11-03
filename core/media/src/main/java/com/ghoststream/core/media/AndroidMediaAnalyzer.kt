@@ -28,9 +28,20 @@ class AndroidMediaAnalyzer(
 ) : MediaAnalyzer {
 
     override fun inspect(uri: Uri, mimeType: String?, displayName: String): MediaInspection {
-        val tracks = inspectTracks(uri)
         val extension = displayName.substringAfterLast('.', "").lowercase()
         val container = inferContainer(mimeType, displayName)
+        val extracted = inspectTracks(uri)
+        // The platform Matroska extractor silently drops tracks it can't parse (A_AC3 on many
+        // builds, A_DTS, A_TRUEHD), which made an AC-3 MKV look audio-less and play DIRECT with
+        // no sound. Read the codec ID from the header so the engine sees the real audio codec.
+        val tracks = if (
+            extracted.audioTrackMimeType == null &&
+            (container == MediaContainer.MATROSKA || container == MediaContainer.WEBM)
+        ) {
+            probeMatroskaAudioMime(uri)?.let { extracted.copy(audioTrackMimeType = it) } ?: extracted
+        } else {
+            extracted
+        }
 
         return MediaInspection(
             originalMimeType = mimeType,
@@ -114,6 +125,53 @@ class AndroidMediaAnalyzer(
                 }
             }
         }.getOrNull()
+    }
+
+    // Scans the start of a Matroska/WebM file for the first audio CodecID element (ID 0x86,
+    // an EBML size, then an ASCII "A_..." string). Track entries sit near the start of the
+    // file, so the first 1 MB is enough.
+    private fun probeMatroskaAudioMime(uri: Uri): String? = runCatching {
+        val buf = context.contentResolver.openInputStream(uri)?.use { stream ->
+            val out = ByteArray(1024 * 1024)
+            var read = 0
+            while (read < out.size) {
+                val n = stream.read(out, read, out.size - read)
+                if (n < 0) break
+                read += n
+            }
+            out.copyOf(read)
+        } ?: return@runCatching null
+        var i = 0
+        while (i < buf.size - 3) {
+            if (buf[i] == 0x86.toByte()) {
+                val first = buf[i + 1].toInt() and 0xff
+                // One-byte EBML sizes cover every codec ID string (< 127 bytes).
+                if (first and 0x80 != 0) {
+                    val len = first and 0x7f
+                    val start = i + 2
+                    if (len in 3..32 && start + len <= buf.size && buf[start] == 'A'.code.toByte() && buf[start + 1] == '_'.code.toByte()) {
+                        val codecId = String(buf, start, len, Charsets.US_ASCII)
+                        matroskaAudioCodecMime(codecId)?.let { return@runCatching it }
+                    }
+                }
+            }
+            i++
+        }
+        null
+    }.getOrNull()
+
+    private fun matroskaAudioCodecMime(codecId: String): String? = when {
+        codecId == "A_AC3" || codecId.startsWith("A_AC3/") -> "audio/ac3"
+        codecId == "A_EAC3" -> "audio/eac3"
+        codecId.startsWith("A_DTS") -> "audio/vnd.dts"
+        codecId == "A_TRUEHD" -> "audio/true-hd"
+        codecId.startsWith("A_AAC") -> "audio/mp4a-latm"
+        codecId == "A_MPEG/L3" -> "audio/mpeg"
+        codecId == "A_OPUS" -> "audio/opus"
+        codecId == "A_VORBIS" -> "audio/vorbis"
+        codecId == "A_FLAC" -> "audio/flac"
+        codecId.startsWith("A_PCM") -> "audio/raw"
+        else -> null
     }
 
     private fun java.io.InputStream.readFullyOrReturnFalse(buf: ByteArray): Boolean {

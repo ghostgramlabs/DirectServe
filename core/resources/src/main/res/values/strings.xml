@@ -668,7 +668,7 @@
     <string name="web_btn_download_original">Download original</string>
     <string name="web_btn_try_original">Try original file</string>
     <string name="web_btn_fullscreen">Full screen</string>
-    <string name="web_error_streaming_codec">This file\'s codec is not supported by the Android server for streaming. Please download.</string>
+    <string name="web_error_streaming_codec">Your phone couldn\'t convert this video for the browser. Download it to watch in a video player app.</string>
     <string name="web_error_downloads_disabled">Downloads are disabled by the device owner.</string>
     <string name="web_error_video_decode">This browser could not decode the video stream. Try downloading the original file.</string>
     <string name="web_error_video_start">This browser could not start the video. Try again or download the original file.</string>
@@ -1049,4 +1049,5 @@
     <string name="web_rename_device">Rename this device</string>
     <string name="web_rename_device_prompt">Name this device (up to 30 characters):</string>
     <string name="web_rename_device_too_long">That name is too long. Use 30 characters or fewer.</string>
+    <string name="web_music_unsupported">This browser can\'t play this track. Download it to listen.</string>
 </resources>

@@ -1036,7 +1036,7 @@ function compatibilityHeadline(item, streamLive = item.streamReady) {
 
 function compatibilityBody(item, streamLive = item.streamReady) {
   if (item.compatibilityStatus === "FAILED") {
-    return gsStr("web_error_streaming_codec", "This file's codec is not supported by the Android server for streaming. Please download.");
+    return gsStr("web_error_streaming_codec", "Your phone couldn't convert this video for the browser. Download it to watch in a video player app.");
   }
   if (item.compatibilityStatus === "STALLED") {
     return gsStr("web_player_stalled_desc", "The file may be too complex for this device. Try downloading instead.");
@@ -1963,6 +1963,10 @@ async function renderVideoPlayer(id) {
     ensureCompatiblePlayerMounted(item);
   } else if (isPreparationActive) {
     pollCompat(id, item, { startPreparation: false });
+  } else if (!isTerminalFailure) {
+    // Opening the player is the play intent (the card's button says "Play"), so start
+    // preparing right away instead of asking for a second "Prepare" tap.
+    startPreparation(id);
   }
 }
 
@@ -3182,6 +3186,16 @@ function attachMusicPlayers() {
     }
 
     const mediaElement = player?.media || audio;
+
+    // Formats such as AC-3 or WMA have no browser decoder; say so instead of a dead Play button.
+    mediaElement.addEventListener("error", () => {
+      const row = cardElement?.querySelector(".gs-music-row");
+      if (!row || row.querySelector(".gs-music-unsupported")) return;
+      row.insertAdjacentHTML(
+        "beforeend",
+        `<p class="gs-meta gs-music-unsupported">${esc(gsStr("web_music_unsupported", "This browser can't play this track. Download it to listen."))}</p>`,
+      );
+    });
 
     mediaElement.addEventListener("play", () => {
       document.querySelectorAll(".gs-audio-player").forEach((element) => {

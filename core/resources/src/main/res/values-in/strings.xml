@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">Ganti nama perangkat ini</string>
     <string name="web_rename_device_prompt">Nama perangkat ini (maksimal 30 karakter):</string>
     <string name="web_rename_device_too_long">Nama itu terlalu panjang. Gunakan 30 karakter atau kurang.</string>
+    <string name="web_music_unsupported">Browser ini tidak dapat memutar trek ini. Unduh untuk mendengarkannya.</string>
 </resources>

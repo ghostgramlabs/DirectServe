@@ -1023,4 +1023,5 @@
     <string name="web_rename_device">Byt namn på den här enheten</string>
     <string name="web_rename_device_prompt">Namn på den här enheten (högst 30 tecken):</string>
     <string name="web_rename_device_too_long">Namnet är för långt. Använd högst 30 tecken.</string>
+    <string name="web_music_unsupported">Den här webbläsaren kan inte spela upp spåret. Ladda ned det för att lyssna.</string>
 </resources>
