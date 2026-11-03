@@ -386,7 +386,10 @@ class LiveScreenCaptureService : Service() {
                 } else {
                     writeSilence(buffer)
                 }
-                captureTimestampNs
+                // The PCM we just wrote was captured earlier than this callback ran (it waited in
+                // the pump's jitter cushion); report its real age so the viewer lip-syncs it.
+                val latencyNs = pump?.lastServedLatencyNs ?: 0L
+                if (captureTimestampNs > latencyNs) captureTimestampNs - latencyNs else captureTimestampNs
             }
             .setAudioRecordErrorCallback(object : JavaAudioDeviceModule.AudioRecordErrorCallback {
                 override fun onWebRtcAudioRecordInitError(errorMessage: String?) {
