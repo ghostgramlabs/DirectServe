@@ -258,7 +258,7 @@ fun SettingsScreen(
             SettingsGroup(title = stringResource(R.string.settings_group_help)) {
                 SettingsChoiceRow(stringResource(R.string.settings_privacy_policy), stringResource(R.string.settings_privacy_policy_desc), onOpenPrivacyPolicy)
                 SettingsChoiceRow(stringResource(R.string.settings_rate_app), stringResource(R.string.settings_rate_app_desc), onRateApp)
-                SettingsChoiceRow(stringResource(R.string.settings_app_version), appVersionLabel, onClick = {})
+                SettingsChoiceRow(stringResource(R.string.settings_app_version), appVersionLabel, onClick = null)
             }
         }
     }
@@ -650,11 +650,11 @@ private fun ManualPortRow(currentPort: String, onPortChanged: (String) -> Unit) 
 }
 
 @Composable
-private fun SettingsChoiceRow(title: String, value: String, onClick: () -> Unit) {
+private fun SettingsChoiceRow(title: String, value: String, onClick: (() -> Unit)?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .heightIn(min = 64.dp)
             .padding(horizontal = GhostSpacing.listItem, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -665,11 +665,13 @@ private fun SettingsChoiceRow(title: String, value: String, onClick: () -> Unit)
             Spacer(modifier = Modifier.height(2.dp))
             Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
-        Icon(
-            Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (onClick != null) {
+            Icon(
+                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

@@ -22,14 +22,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Collections
-import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.QrCode2
-import androidx.compose.material.icons.outlined.SyncAlt
-import androidx.compose.material.icons.outlined.Textsms
-import androidx.compose.material.icons.outlined.LiveTv
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -58,6 +53,8 @@ fun OnboardingScreen(
     onGetStarted: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Three pages: what it does, how the other device joins, and that it stays private.
+    // The old eight-page tour explained every feature before people had used any of them.
     val pages = listOf(
         OnboardingCard(
             icon = Icons.Outlined.Collections,
@@ -65,39 +62,14 @@ fun OnboardingScreen(
             description = stringResource(R.string.onboarding_page_1_description),
         ),
         OnboardingCard(
-            icon = Icons.Outlined.Devices,
-            title = stringResource(R.string.onboarding_page_2_title),
-            description = stringResource(R.string.onboarding_page_2_description),
-        ),
-        OnboardingCard(
             icon = Icons.Outlined.QrCode2,
             title = stringResource(R.string.onboarding_page_3_title),
             description = stringResource(R.string.onboarding_page_3_description),
         ),
         OnboardingCard(
-            icon = Icons.Outlined.SyncAlt,
-            title = stringResource(R.string.onboarding_page_4_title),
-            description = stringResource(R.string.onboarding_page_4_description),
-        ),
-        OnboardingCard(
-            icon = Icons.Outlined.CloudOff,
-            title = stringResource(R.string.onboarding_page_5_title),
-            description = stringResource(R.string.onboarding_page_5_description),
-        ),
-        OnboardingCard(
             icon = Icons.Outlined.Lock,
             title = stringResource(R.string.onboarding_page_6_title),
             description = stringResource(R.string.onboarding_page_6_description),
-        ),
-        OnboardingCard(
-            icon = Icons.Outlined.Textsms,
-            title = stringResource(R.string.onboarding_page_7_title),
-            description = stringResource(R.string.onboarding_page_7_description),
-        ),
-        OnboardingCard(
-            icon = Icons.Outlined.LiveTv,
-            title = stringResource(R.string.onboarding_page_8_title),
-            description = stringResource(R.string.onboarding_page_8_description),
         ),
     )
     val pagerState = rememberPagerState(pageCount = { pages.size })
@@ -137,22 +109,6 @@ fun OnboardingScreen(
                     }
                 }
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.onboarding_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(R.string.onboarding_subtitle),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
                 HorizontalPager(
                     state = pagerState,
                     pageSpacing = 12.dp, // Add breathing room between pages so each card reads as a separate step.
@@ -167,9 +123,10 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = GhostSpacing.heroCard, vertical = GhostSpacing.heroCard),
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Surface(
-                                modifier = Modifier.size(72.dp),
+                                modifier = Modifier.size(88.dp),
                                 shape = CircleShape,
                                 color = ghostAccentSurface(),
                                 border = BorderStroke(1.dp, ghostAccentBorder()),
@@ -179,7 +136,7 @@ fun OnboardingScreen(
                                         imageVector = pages[page].icon,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(34.dp),
+                                        modifier = Modifier.size(42.dp),
                                     )
                                 }
                             }
@@ -195,19 +152,6 @@ fun OnboardingScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            Spacer(modifier = Modifier.weight(1f)) // Push progress metadata lower to keep the title and body grouped together.
-                            Surface(
-                                shape = RoundedCornerShape(999.dp),
-                                color = ghostAccentSurface(),
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.onboarding_page_counter, page + 1, pages.size),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                )
-                            }
                         }
                     }
                 }
@@ -280,4 +224,4 @@ private fun ghostAccentSurface() = MaterialTheme.colorScheme.primary.copy(alpha 
 private fun ghostAccentBorder() = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
 
 @Composable
-private fun ghostMutedSurface() = MaterialTheme.colorScheme.surfaceVariant
+private fun ghostMutedSurface() = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)

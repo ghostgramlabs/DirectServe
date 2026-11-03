@@ -308,14 +308,24 @@ private fun SessionStatusBar(
     }
 }
 
+/** QR code plus the typed address; shared by the sharing and Live Screen screens. */
 @Composable
-private fun ScanCard(
+internal fun ScanCard(
     accessUrl: String?,
     onCopyLink: () -> Unit,
-    onShareLink: () -> Unit,
+    onShareLink: (() -> Unit)?,
+    stepNumber: Int? = 3,
 ) {
     GhostCard {
-        GhostStepHeader(number = 3, title = stringResource(R.string.session_scan_title))
+        if (stepNumber != null) {
+            GhostStepHeader(number = stepNumber, title = stringResource(R.string.session_scan_title))
+        } else {
+            Text(
+                stringResource(R.string.session_scan_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -371,8 +381,10 @@ private fun ScanCard(
                 Button(onClick = onCopyLink, shape = RoundedCornerShape(10.dp)) {
                     Text(stringResource(R.string.session_copy_short))
                 }
-                IconButton(onClick = onShareLink) {
-                    Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.session_share))
+                if (onShareLink != null) {
+                    IconButton(onClick = onShareLink) {
+                        Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.session_share))
+                    }
                 }
             }
         }
@@ -385,12 +397,28 @@ private fun PinCard(
     onTogglePinProtection: (Boolean) -> Unit,
     onRegeneratePin: () -> Unit,
 ) {
+    PinSwitchCard(
+        enabled = sessionState.authEnabled,
+        pin = sessionState.pin,
+        onTogglePinProtection = onTogglePinProtection,
+        onRegeneratePin = onRegeneratePin,
+    )
+}
+
+/** "Ask for a PIN" switch with the current PIN and a New PIN action when it is on. */
+@Composable
+internal fun PinSwitchCard(
+    enabled: Boolean,
+    pin: String?,
+    onTogglePinProtection: (Boolean) -> Unit,
+    onRegeneratePin: () -> Unit,
+) {
     GhostCard(contentPadding = 16.dp) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .toggleable(
-                    value = sessionState.authEnabled,
+                    value = enabled,
                     role = Role.Switch,
                     onValueChange = onTogglePinProtection,
                 ),
@@ -408,12 +436,12 @@ private fun PinCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Switch(checked = sessionState.authEnabled, onCheckedChange = null, colors = ghostSwitchColors())
+            Switch(checked = enabled, onCheckedChange = null, colors = ghostSwitchColors())
         }
-        if (sessionState.authEnabled) {
+        if (enabled) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    stringResource(R.string.session_pin_value, sessionState.pin ?: "----"),
+                    stringResource(R.string.session_pin_value, pin ?: "----"),
                     style = MaterialTheme.typography.headlineSmall,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,

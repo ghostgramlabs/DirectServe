@@ -1,6 +1,8 @@
 package com.ghoststream.feature.history
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,20 +20,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,13 +49,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ghostgramlabs.directserve.core.resources.R
-import com.ghostgramlabs.directserve.core.resources.R as SharedR
+import com.ghostgramlabs.directserve.core.resources.ui.GhostCard
+import com.ghostgramlabs.directserve.core.resources.ui.GhostSectionLabel
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
+import com.ghostgramlabs.directserve.core.resources.ui.GhostUi
 import com.ghoststream.core.model.QuickTextDevice
 import com.ghoststream.core.model.QuickTextMessage
 import com.ghoststream.core.model.QuickTextTargetType
 
-@OptIn(ExperimentalLayoutApi::class)
+/** Send text: write a message, pick who gets it, send. Past messages below with copy/open/delete. */
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun QuickTextScreen(
     messages: List<QuickTextMessage>,
@@ -81,24 +89,24 @@ fun QuickTextScreen(
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = GhostSpacing.screenVertical),
-        verticalArrangement = Arrangement.spacedBy(GhostSpacing.section),
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(start = GhostSpacing.screenHorizontal, end = GhostSpacing.screenHorizontal, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GhostSpacing.screenHorizontal),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    text = stringResource(R.string.quick_text_title),
+                    text = stringResource(R.string.home_tool_send_text),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = onRefreshDevices) {
@@ -108,90 +116,72 @@ fun QuickTextScreen(
         }
 
         item {
-            Column(
-                modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                    Text(
-                        text = stringResource(R.string.quick_text_send_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+            GhostCard {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { if (it.length <= 1000) draft = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    shape = RoundedCornerShape(12.dp),
+                    placeholder = { Text(stringResource(R.string.quick_text_placeholder)) },
+                )
+                Text(
+                    text = stringResource(R.string.quick_text_target_label),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    val chipColors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
                     )
-                    OutlinedTextField(
-                        value = draft,
-                        onValueChange = { 
-                            if (it.length <= 1000) {
-                                draft = it 
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        placeholder = { Text(stringResource(R.string.quick_text_placeholder)) },
-                    )
-                    Text(
-                        text = stringResource(R.string.quick_text_target_label),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        targetDevices.forEach { device ->
-                            TargetChip(
-                                label = device.name,
-                                selected = activeTargetId == device.id,
-                                onClick = { selectedTargetId = device.id },
-                            )
-                        }
-                        TargetChip(
-                            label = broadcastLabel,
-                            selected = activeTargetId == BROADCAST_ID,
-                            onClick = { selectedTargetId = BROADCAST_ID },
+                    targetDevices.forEach { device ->
+                        FilterChip(
+                            selected = activeTargetId == device.id,
+                            onClick = { selectedTargetId = device.id },
+                            label = { Text(device.name) },
+                            colors = chipColors,
                         )
                     }
-                    Button(
-                        onClick = {
-                            val isBroadcast = activeTargetId == BROADCAST_ID
-                            val target = targetDevices.firstOrNull { it.id == activeTargetId }
-                            onSend(
-                                draft,
-                                if (isBroadcast) QuickTextTargetType.BROADCAST else QuickTextTargetType.DEVICE,
-                                if (isBroadcast) null else target?.id,
-                                if (isBroadcast) broadcastLabel else target?.name,
-                            )
-                            draft = ""
-                        },
-                        enabled = draft.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(stringResource(R.string.quick_text_send))
-                    }
+                    FilterChip(
+                        selected = activeTargetId == BROADCAST_ID,
+                        onClick = { selectedTargetId = BROADCAST_ID },
+                        label = { Text(broadcastLabel) },
+                        colors = chipColors,
+                    )
+                }
+                Button(
+                    onClick = {
+                        val isBroadcast = activeTargetId == BROADCAST_ID
+                        val target = targetDevices.firstOrNull { it.id == activeTargetId }
+                        onSend(
+                            draft,
+                            if (isBroadcast) QuickTextTargetType.BROADCAST else QuickTextTargetType.DEVICE,
+                            if (isBroadcast) null else target?.id,
+                            if (isBroadcast) broadcastLabel else target?.name,
+                        )
+                        draft = ""
+                    },
+                    enabled = draft.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                    shape = GhostUi.buttonShape,
+                ) {
+                    Icon(Icons.AutoMirrored.Outlined.Send, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.quick_text_send))
+                }
             }
         }
 
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GhostSpacing.screenHorizontal),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.quick_text_history_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(R.string.quick_text_history_subtitle),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                GhostSectionLabel(stringResource(R.string.quick_text_history_title), modifier = Modifier.weight(1f))
                 if (messages.isNotEmpty()) {
-                    OutlinedButton(onClick = onClearAll) {
-                        Text(stringResource(R.string.quick_text_clear_all))
+                    TextButton(onClick = onClearAll) {
+                        Text(stringResource(R.string.quick_text_clear_all), color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -201,7 +191,7 @@ fun QuickTextScreen(
             item {
                 Text(
                     text = stringResource(R.string.quick_text_empty),
-                    modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal),
+                    modifier = Modifier.padding(horizontal = 4.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -230,56 +220,38 @@ private fun QuickTextMessageCard(
     } else {
         message.targetName.orEmpty()
     }
-    Column(
-        modifier = Modifier.padding(horizontal = GhostSpacing.screenHorizontal, vertical = 12.dp).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-            Text(message.text, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = listOf(message.senderName, targetLabel, DateFormat.format("MMM d, h:mm a", message.timestampMs).toString())
-                    .joinToString(stringResource(SharedR.string.common_separator_pipe)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onCopy) {
-                    Icon(Icons.Outlined.ContentCopy, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.quick_text_copy))
-                }
-                if (message.isLink) {
-                    OutlinedButton(onClick = onOpenLink) {
-                        Icon(Icons.Outlined.Link, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.quick_text_open_link))
-                    }
-                }
-                OutlinedButton(onClick = onDelete) {
-                    Icon(Icons.Outlined.Delete, contentDescription = null)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.common_delete))
+        Row(
+            modifier = Modifier.padding(start = 14.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(message.text, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = listOf(message.senderName, targetLabel, DateFormat.format("MMM d, h:mm a", message.timestampMs).toString())
+                        .filter { it.isNotBlank() }
+                        .joinToString(stringResource(R.string.common_separator_dot)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (message.isLink) {
+                IconButton(onClick = onOpenLink) {
+                    Icon(Icons.Outlined.Link, contentDescription = stringResource(R.string.quick_text_open_link), tint = MaterialTheme.colorScheme.primary)
                 }
             }
+            IconButton(onClick = onCopy) {
+                Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.quick_text_copy))
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.common_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
-}
-
-@Composable
-private fun TargetChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceVariant,
-        onClick = onClick,
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.labelLarge,
-        )
     }
 }
 

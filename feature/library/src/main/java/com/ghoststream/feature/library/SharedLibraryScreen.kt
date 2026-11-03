@@ -427,11 +427,10 @@ private fun FolderRow(
             Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
                 Text(folder.displayName, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    stringResource(
-                        R.string.library_folder_summary,
-                        folder.fileCount,
+                    // The old "%d files" string read "1 files"; the plural keeps counts grammatical.
+                    pluralStringResource(R.plurals.home_saved_shares_items_count, folder.fileCount, folder.fileCount) +
+                        stringResource(R.string.common_separator_dot) +
                         LocalizationUtils.formatBytes(LocalContext.current, folder.totalSizeBytes),
-                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -1,47 +1,51 @@
 package com.ghoststream.feature.session
 
-import android.graphics.Bitmap
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.StopCircle
+import androidx.compose.material.icons.outlined.ScreenShare
+import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ghostgramlabs.directserve.core.resources.R
+import com.ghostgramlabs.directserve.core.resources.ui.GhostCard
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
+import com.ghostgramlabs.directserve.core.resources.ui.GhostUi
+import com.ghostgramlabs.directserve.core.resources.ui.ghostStatusColors
 import com.ghoststream.core.model.LiveAudioStatus
 import com.ghoststream.core.model.LiveScreenSessionState
 import com.ghoststream.core.model.LiveScreenStatus
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
 
+/**
+ * Mirror screen: one big Start button while stopped; while live it mirrors the sharing screen
+ * (status bar with Stop, QR code and address, PIN switch) so both flows feel the same.
+ */
 @Composable
 fun LiveScreenControlScreen(
     state: LiveScreenSessionState,
@@ -54,188 +58,187 @@ fun LiveScreenControlScreen(
     onRegeneratePin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val qrBitmap = remember(state.displayUrl) {
-        state.displayUrl?.let(::generateQrBitmap)
-    }
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = GhostSpacing.screenVertical),
-        verticalArrangement = Arrangement.spacedBy(GhostSpacing.section),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        item {
+        if (state.isActive) {
+            LiveStatusBar(state = state, onBack = onBack, onStop = onStop)
+        } else {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GhostSpacing.screenHorizontal),
+                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Text(
-                    text = stringResource(R.string.live_screen_title),
+                    stringResource(R.string.home_tool_mirror),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
 
-        item {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = GhostSpacing.screenHorizontal)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                    Text(
-                        text = when (state.status) {
-                            LiveScreenStatus.LIVE -> stringResource(R.string.live_screen_status_live)
-                            LiveScreenStatus.STARTING -> stringResource(R.string.live_screen_status_starting)
-                            LiveScreenStatus.ERROR -> stringResource(R.string.live_screen_status_stopped)
-                            LiveScreenStatus.STOPPED -> stringResource(R.string.live_screen_status_stopped)
-                        },
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = GhostSpacing.screenHorizontal,
+                end = GhostSpacing.screenHorizontal,
+                top = 16.dp,
+                bottom = 32.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            if (!state.isActive) {
+                item { StartCard(state = state, onStart = onStart) }
+            } else {
+                item {
+                    ScanCard(
+                        accessUrl = state.displayUrl,
+                        onCopyLink = onCopyLink,
+                        onShareLink = null,
+                        stepNumber = null,
                     )
-                    Text(
-                        text = stringResource(R.string.live_screen_intro),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = stringResource(R.string.live_screen_audio_limit),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    when (state.audioStatus) {
-                        LiveAudioStatus.AUDIO_LIVE -> Text(
-                            text = stringResource(R.string.live_screen_audio_available),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        LiveAudioStatus.AUDIO_SUPPORTED,
-                        LiveAudioStatus.AUDIO_INITIALIZING,
-                        -> Unit
-                        LiveAudioStatus.AUDIO_SILENT,
-                        LiveAudioStatus.AUDIO_FAILED,
-                        -> Text(
-                            text = stringResource(R.string.live_screen_audio_blocked_or_silent),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        LiveAudioStatus.AUDIO_UNAVAILABLE -> Text(
-                            text = stringResource(R.string.live_screen_audio_unavailable),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    state.pin?.takeIf { it.isNotBlank() }?.let { pin ->
-                        Text(
-                            text = stringResource(R.string.live_screen_pin_label, pin),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            text = stringResource(R.string.live_screen_pin_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (state.isActive) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            OutlinedButton(
-                                onClick = {
-                                    if (pinProtectionEnabled) onRegeneratePin() else onTogglePinProtection(true)
-                                },
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(
-                                    text = stringResource(
-                                        if (pinProtectionEnabled) R.string.session_new_pin else R.string.session_turn_pin_on
-                                    ),
-                                )
-                            }
-                            if (pinProtectionEnabled) {
-                                OutlinedButton(
-                                    onClick = { onTogglePinProtection(false) },
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    Text(stringResource(R.string.session_turn_pin_off))
-                                }
-                            }
-                        }
-                    }
-                    state.displayUrl?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    if (qrBitmap != null) {
-                        Image(
-                            bitmap = qrBitmap.asImageBitmap(),
-                            contentDescription = stringResource(R.string.live_screen_qr_content_desc),
-                            modifier = Modifier
-                                .size(220.dp)
-                                .align(Alignment.CenterHorizontally),
-                        )
-                    }
-                    if (state.width != null && state.height != null) {
-                        val width = state.width ?: 0
-                        val height = state.height ?: 0
-                        Text(
-                            text = stringResource(
-                                R.string.live_screen_stats,
-                                width,
-                                height,
-                                state.fps,
-                                state.bitrateKbps,
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    state.lastError?.takeIf { it.isNotBlank() }?.let { message ->
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    if (!state.isActive) {
-                        Button(onClick = onStart, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.live_screen_start))
-                        }
-                    } else {
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            OutlinedButton(onClick = onCopyLink, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Outlined.ContentCopy, contentDescription = null)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.session_share_link))
-                            }
-                            Button(onClick = onStop, modifier = Modifier.weight(1f)) {
-                                Icon(Icons.Outlined.StopCircle, contentDescription = null)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.live_screen_stop))
-                            }
-                        }
-                    }
                 }
+                item {
+                    PinSwitchCard(
+                        enabled = pinProtectionEnabled,
+                        pin = state.pin,
+                        onTogglePinProtection = onTogglePinProtection,
+                        onRegeneratePin = onRegeneratePin,
+                    )
+                }
+                item { StreamInfo(state = state) }
+            }
         }
     }
 }
 
-private fun generateQrBitmap(content: String): Bitmap? {
-    return runCatching {
-        val bitMatrix = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, 720, 720)
-        Bitmap.createBitmap(bitMatrix.width, bitMatrix.height, Bitmap.Config.ARGB_8888).apply {
-            for (x in 0 until bitMatrix.width) {
-                for (y in 0 until bitMatrix.height) {
-                    setPixel(
-                        x,
-                        y,
-                        if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE,
-                    )
-                }
+@Composable
+private fun LiveStatusBar(
+    state: LiveScreenSessionState,
+    onBack: () -> Unit,
+    onStop: () -> Unit,
+) {
+    val status = ghostStatusColors()
+    val live = state.status == LiveScreenStatus.LIVE
+    val background = if (live) status.successContainer else MaterialTheme.colorScheme.surfaceVariant
+    val onBackground = if (live) status.onSuccessContainer else MaterialTheme.colorScheme.onSurface
+    Surface(color = background, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = onBackground)
+            }
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(if (live) status.success else MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.home_tool_mirror) + stringResource(R.string.common_separator_dot) +
+                        stringResource(if (live) R.string.live_screen_status_live else R.string.live_screen_status_starting),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = state.viewerName?.takeIf { state.viewerCount > 0 && it.isNotBlank() }
+                        ?: stringResource(R.string.session_waiting_connect),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onStop,
+                shape = GhostUi.buttonShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+            ) {
+                Icon(Icons.Outlined.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.live_screen_stop))
             }
         }
-    }.getOrNull()
+    }
+}
+
+@Composable
+private fun StartCard(
+    state: LiveScreenSessionState,
+    onStart: () -> Unit,
+) {
+    GhostCard {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Outlined.ScreenShare, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        }
+        Text(
+            stringResource(R.string.live_screen_intro),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            stringResource(R.string.live_screen_audio_limit),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        state.lastError?.takeIf { it.isNotBlank() }?.let { message ->
+            Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+        Button(
+            onClick = onStart,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            shape = GhostUi.buttonShape,
+        ) {
+            Icon(Icons.Outlined.ScreenShare, contentDescription = null)
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(stringResource(R.string.live_screen_start), style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
+
+@Composable
+private fun StreamInfo(state: LiveScreenSessionState) {
+    val audio = when (state.audioStatus) {
+        LiveAudioStatus.AUDIO_LIVE -> stringResource(R.string.live_screen_audio_available)
+        LiveAudioStatus.AUDIO_SILENT, LiveAudioStatus.AUDIO_FAILED -> stringResource(R.string.live_screen_audio_blocked_or_silent)
+        LiveAudioStatus.AUDIO_UNAVAILABLE -> stringResource(R.string.live_screen_audio_unavailable)
+        LiveAudioStatus.AUDIO_SUPPORTED, LiveAudioStatus.AUDIO_INITIALIZING -> null
+    }
+    val video = if (state.width != null && state.height != null) {
+        stringResource(R.string.live_screen_stats, state.width ?: 0, state.height ?: 0, state.fps, state.bitrateKbps)
+    } else {
+        null
+    }
+    Column(
+        modifier = Modifier.padding(horizontal = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        listOfNotNull(audio, video).forEach { line ->
+            Text(line, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text(
+            stringResource(R.string.live_screen_audio_limit),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }

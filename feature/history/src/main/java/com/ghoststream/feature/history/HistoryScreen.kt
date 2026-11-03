@@ -1,30 +1,69 @@
 package com.ghoststream.feature.history
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Upload
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ghostgramlabs.directserve.core.resources.R
-import com.ghostgramlabs.directserve.core.resources.R as SharedR
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
 import com.ghostgramlabs.directserve.core.resources.util.LocalizationUtils
-import com.ghoststream.core.model.*
+import com.ghoststream.core.model.TransferDirection
+import com.ghoststream.core.model.TransferRecord
+import com.ghoststream.core.model.formatHistoryPeer
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
+/** Received and sent files, one compact row each, with Open (received) and Delete. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
@@ -37,145 +76,104 @@ fun HistoryScreen(
     onClearReceivedHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf(
-        stringResource(R.string.history_tab_received),
-        stringResource(R.string.history_sent)
-    )
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var showClearConfirmation by remember { mutableStateOf(false) }
+    val showingReceived = selectedTab == 0
+    val filteredHistory = history.filter {
+        it.direction == if (showingReceived) TransferDirection.RECEIVED else TransferDirection.SENT
+    }
 
     if (showClearConfirmation) {
         AlertDialog(
             onDismissRequest = { showClearConfirmation = false },
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            tonalElevation = 0.dp,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             title = { Text(stringResource(R.string.history_clear_title)) },
             text = { Text(stringResource(R.string.history_clear_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        when (selectedTab) {
-                            0 -> onClearReceivedHistory()
-                            else -> onClearSentHistory()
-                        }
+                        if (showingReceived) onClearReceivedHistory() else onClearSentHistory()
                         showClearConfirmation = false
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
-                    Text(stringResource(SharedR.string.common_delete))
+                    Text(stringResource(R.string.common_delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearConfirmation = false }) {
-                    Text(stringResource(SharedR.string.common_cancel))
+                    Text(stringResource(R.string.common_cancel))
                 }
-            }
+            },
         )
     }
 
-    val filteredHistory = when (selectedTab) {
-        0 -> history.filter { it.direction == TransferDirection.RECEIVED }
-        else -> history.filter { it.direction == TransferDirection.SENT }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.history_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
-                },
-                actions = {
-                    if (filteredHistory.isNotEmpty()) {
-                        IconButton(onClick = { showClearConfirmation = true }) {
-                            Icon(
-                                imageVector = Icons.Outlined.DeleteSweep,
-                                contentDescription = "Clear History",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-            )
-        },
+    Column(
         modifier = modifier
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = GhostSpacing.screenHorizontal,
-                        vertical = 12.dp,
-                    ),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = Color.Transparent,
-                    divider = {},
-                    indicator = {},
-                ) {
-                    tabs.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            selectedContentColor = MaterialTheme.colorScheme.primary,
-                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            text = {
-                                Surface(
-                                    shape = RoundedCornerShape(14.dp),
-                                    color = if (selectedTab == index) {
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                    } else {
-                                        Color.Transparent
-                                    },
-                                ) {
-                                    Text(
-                                        text = title,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                                        fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Medium,
-                                    )
-                                }
-                            }
-                        )
-                    }
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.common_back))
+            }
+            Text(
+                stringResource(R.string.home_tool_history),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            if (filteredHistory.isNotEmpty()) {
+                IconButton(onClick = { showClearConfirmation = true }) {
+                    Icon(
+                        Icons.Outlined.DeleteSweep,
+                        contentDescription = stringResource(R.string.history_clear_title),
+                        tint = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
+        }
 
-            if (filteredHistory.isEmpty()) {
-                EmptyHistoryState(
-                    message = when (selectedTab) {
-                        1 -> stringResource(R.string.history_empty_received)
-                        2 -> stringResource(R.string.history_empty_sent)
-                        else -> stringResource(R.string.history_empty_all)
-                    }
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        horizontal = GhostSpacing.screenHorizontal,
-                        vertical = GhostSpacing.headerVertical,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GhostSpacing.screenHorizontal, vertical = 12.dp),
+        ) {
+            listOf(R.string.history_tab_received, R.string.history_sent).forEachIndexed { index, label ->
+                SegmentedButton(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
                 ) {
-                    items(filteredHistory, key = { it.id }) { record ->
-                        HistoryItem(
-                            record = record,
-                            onDelete = { onDeleteRecord(record.id) },
-                            onOpen = { record.fileUri?.let(onOpenFile) }
-                        )
-                    }
+                    Text(stringResource(label))
+                }
+            }
+        }
+
+        if (filteredHistory.isEmpty()) {
+            EmptyHistoryState(
+                message = stringResource(
+                    if (showingReceived) R.string.history_empty_received else R.string.history_empty_sent,
+                ),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = GhostSpacing.screenHorizontal,
+                    end = GhostSpacing.screenHorizontal,
+                    bottom = 24.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(filteredHistory, key = { it.id }) { record ->
+                    HistoryItem(
+                        record = record,
+                        onDelete = { onDeleteRecord(record.id) },
+                        onOpen = { record.fileUri?.let(onOpenFile) },
+                    )
                 }
             }
         }
@@ -189,113 +187,69 @@ private fun HistoryItem(
     onOpen: () -> Unit,
 ) {
     val dateStr = remember(record.timestampMs) {
-        SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(record.timestampMs))
+        SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(record.timestampMs))
     }
     val timeStr = remember(record.timestampMs) {
         SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(record.timestampMs))
     }
+    val received = record.direction == TransferDirection.RECEIVED
+    val canOpen = received && record.fileUri != null
 
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+    Surface(
+        onClick = onOpen,
+        enabled = canOpen,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(
-            modifier = Modifier.padding(GhostSpacing.listItem),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Row(
+            modifier = Modifier.heightIn(min = 64.dp).padding(start = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val icon = when (record.direction) {
-                    TransferDirection.SENT -> Icons.Outlined.Upload
-                    TransferDirection.RECEIVED -> Icons.Outlined.Download
-                }
-                val iconColor = when (record.direction) {
-                    TransferDirection.SENT -> MaterialTheme.colorScheme.secondary
-                    TransferDirection.RECEIVED -> MaterialTheme.colorScheme.primary
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = iconColor.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, iconColor.copy(alpha = 0.22f)),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            icon,
-                            contentDescription = null,
-                            tint = iconColor,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (record.direction == TransferDirection.SENT) stringResource(R.string.history_sent) else stringResource(R.string.history_received),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = iconColor
-                        )
-                    }
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (received) Icons.Outlined.Download else Icons.Outlined.Upload,
+                    contentDescription = stringResource(if (received) R.string.history_received else R.string.history_sent),
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f).padding(vertical = 10.dp)) {
+                Text(record.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = listOf(
+                        LocalizationUtils.formatBytes(LocalContext.current, record.sizeBytes),
+                        formatHistoryPeer(record.peer),
+                        stringResource(R.string.history_date_time_format, dateStr, timeStr),
+                    ).joinToString(stringResource(R.string.common_separator_dot)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (canOpen) {
+                IconButton(onClick = onOpen) {
+                    Icon(
+                        Icons.AutoMirrored.Outlined.OpenInNew,
+                        contentDescription = stringResource(R.string.history_open),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
-
-            Text(
-                text = record.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            
-            Text(
-                text = listOf(
-                    LocalizationUtils.formatBytes(androidx.compose.ui.platform.LocalContext.current, record.sizeBytes),
-                    formatHistoryPeer(record.peer)
-                ).joinToString(stringResource(SharedR.string.common_separator_dot)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Text(
-                text = stringResource(R.string.history_date_time_format, dateStr, timeStr),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            if (record.direction == TransferDirection.RECEIVED && record.fileUri != null) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = onOpen,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
-                    ) {
-                        Icon(Icons.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.history_open))
-                    }
-                    OutlinedIconButton(
-                        onClick = onDelete,
-                        colors = IconButtonDefaults.outlinedIconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.history_delete))
-                    }
-                }
-            } else {
-                // For sent items or items without local file, just a delete option in a secondary way
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            Icons.Outlined.Delete,
-                            contentDescription = stringResource(R.string.history_delete_desc),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Outlined.Delete,
+                    contentDescription = stringResource(R.string.history_delete_desc),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -312,15 +266,14 @@ private fun EmptyHistoryState(message: String) {
                 Icons.Outlined.History,
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.size(16.dp))
             Text(
                 text = message,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
         }
     }
 }
-
-
