@@ -1020,4 +1020,7 @@
         <item quantity="one">%d పరికరం కనెక్ట్ అయింది</item>
         <item quantity="other">%d పరికరాలు కనెక్ట్ అయ్యాయి</item>
     </plurals>
+    <string name="web_rename_device">ఈ పరికరం పేరు మార్చండి</string>
+    <string name="web_rename_device_prompt">ఈ పరికరానికి పేరు (గరిష్టంగా 30 అక్షరాలు):</string>
+    <string name="web_rename_device_too_long">ఆ పేరు చాలా పొడవుగా ఉంది. 30 లేదా అంతకంటే తక్కువ అక్షరాలు ఉపయోగించండి.</string>
 </resources>

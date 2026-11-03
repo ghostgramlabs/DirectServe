@@ -1020,4 +1020,7 @@
         <item quantity="one">%d perangkat terhubung</item>
         <item quantity="other">%d perangkat terhubung</item>
     </plurals>
+    <string name="web_rename_device">Ganti nama perangkat ini</string>
+    <string name="web_rename_device_prompt">Nama perangkat ini (maksimal 30 karakter):</string>
+    <string name="web_rename_device_too_long">Nama itu terlalu panjang. Gunakan 30 karakter atau kurang.</string>
 </resources>

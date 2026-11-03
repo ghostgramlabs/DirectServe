@@ -198,6 +198,10 @@ function fileTypeLabel(mimeType, title) {
   return ext && ext.length <= 5 ? ext.toUpperCase() : "FILE";
 }
 
+const BACK_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`;
+const FULLSCREEN_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`;
+const DOWNLOAD_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
 const CATEGORY_ICONS = {
   videos: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
   photos: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
@@ -1183,15 +1187,6 @@ function shell(content, options = {}) {
     : "";
 
   const securityLabel = bootstrap?.authEnabled ? gsStr("web_security_pin", "PIN protected") : gsStr("web_security_open", "Open on local network");
-  const sessionLink = bootstrap?.sessionUrl
-    ? `
-      <div class="gs-inline-note">
-        <span class="gs-inline-note-label">${gsStr("web_strip_link", "Link")}</span>
-        <span class="gs-status-link">${esc(bootstrap.sessionUrl)}</span>
-      </div>
-    `
-    : "";
-
   const headerHtml = immersive
     ? ""
     : `
@@ -1212,21 +1207,18 @@ function shell(content, options = {}) {
             `}
           </div>
           <div class="gs-nav-meta">
-            <span class="gs-status-pill">${securityLabel}</span>
+            ${bootstrap?.deviceName ? `
+              <span class="gs-device-chip" title="${esc(bootstrap.deviceIp || "")}">
+                ${gsStr("web_strip_device", "Device")}: <strong id="deviceNameText">${esc(bootstrap.deviceName)}</strong>
+                <button class="gs-icon-btn" id="editDeviceNameBtn" type="button" aria-label="${esc(gsStr("web_rename_device", "Rename this device"))}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                </button>
+              </span>
+            ` : ""}
+            <span class="gs-status-pill" title="${esc(securityLabel)}">${securityLabel}</span>
             ${bootstrap?.authEnabled ? `<button class="gs-btn gs-btn-sm" id="logoutBtn">${gsStr("web_nav_logout", "Log out")}</button>` : ""}
           </div>
         </nav>
-        <div class="gs-status-strip">
-          <div class="gs-inline-note">
-            <span class="gs-inline-note-label">${gsStr("web_strip_session", "Session")}</span>
-            <span>${esc(bootstrap?.subtitle || sessionSubtitle)}</span>
-          </div>
-          <div class="gs-inline-note">
-            <span class="gs-inline-note-label">${gsStr("web_strip_device", "Device")}</span>
-            <span>${bootstrap?.deviceName ? `<span id="deviceNameText">${esc(bootstrap.deviceName)}</span> <button class="gs-btn gs-btn-sm" id="editDeviceNameBtn" style="padding:2px 6px; font-size:10px; min-height:unset; margin-left:4px; background:rgba(255,255,255,0.1); border-radius:4px; border:1px solid rgba(255,255,255,0.2); color:white; cursor:pointer;">✏️</button> • ${esc(bootstrap.deviceIp)}` : gsStr("web_status_unknown", "Unknown")}</span>
-          </div>
-          ${sessionLink}
-        </div>
         ${mediaSubnav}
       </header>
     `;
@@ -1275,11 +1267,11 @@ function shell(content, options = {}) {
 
   document.getElementById("editDeviceNameBtn")?.addEventListener("click", async () => {
     const oldName = document.getElementById("deviceNameText")?.innerText || "";
-    let newName = prompt("Enter your Device Name (Max 30 chars):", oldName);
+    let newName = prompt(gsStr("web_rename_device_prompt", "Name this device (up to 30 characters):"), oldName);
     if (newName !== null) {
       newName = newName.trim();
       if (newName.length > 30) {
-        alert("Name is too long! Please limit it to 30 characters.");
+        showToast(gsStr("web_rename_device_too_long", "That name is too long. Use 30 characters or fewer."));
         return;
       }
       if (newName !== oldName) {
@@ -1328,28 +1320,14 @@ function renderHome() {
   shell(`
     <section class="gs-hero">
       <div class="gs-hero-copy">
-        <span class="gs-eyebrow">${gsStr("web_hero_eyebrow", "DirectServe session")}</span>
+        <span class="gs-eyebrow">${total} ${gsStr("web_items", "items")} · ${gsStr("web_hero_stat_shared", "Shared now")}</span>
         <h1>${gsStr("web_hero_title", "Media")}</h1>
         <p>${gsStr("web_hero_desc1", "Watch videos, open photos, and play music from this share.")}
         ${gsStr("web_hero_desc3", "Everything stays on the same local network.")}</p>
       </div>
-      <div class="gs-hero-side">
-        <div class="gs-hero-summary">
-          <div class="gs-hero-stat">
-            <span class="gs-inline-note-label">${gsStr("web_hero_stat_shared", "Shared now")}</span>
-            <strong>${total} ${gsStr("web_items", "items")}</strong>
-            <span class="gs-meta">${gsStr("web_hero_stat_ready", "Ready on this local session")}</span>
-          </div>
-          <div class="gs-hero-stat">
-            <span class="gs-inline-note-label">${gsStr("web_hero_stat_access", "Access")}</span>
-            <strong>${bootstrap?.authEnabled ? gsStr("web_access_pin", "PIN required") : gsStr("web_access_instant", "Instant open")}</strong>
-            <span class="gs-meta">${bootstrap?.authEnabled ? gsStr("web_access_pin_desc", "Enter the code from the host phone") : gsStr("web_access_instant_desc", "Open in any browser on this network")}</span>
-          </div>
-        </div>
-        <div class="gs-hero-actions">
-          ${filesEnabled ? `<a class="gs-btn gs-btn-accent" data-link href="/files">${gsStr("web_nav_files", "Files")}</a>` : ""}
-          <a class="gs-btn" data-link href="/upload">${gsStr("web_nav_send", "Send")}</a>
-        </div>
+      <div class="gs-hero-actions">
+        ${filesEnabled ? `<a class="gs-btn" data-link href="/files">${gsStr("web_nav_files", "Files")}</a>` : ""}
+        <a class="gs-btn gs-btn-accent" data-link href="/upload">${gsStr("web_send_floating_title", "Send to device")}</a>
       </div>
     </section>
 
@@ -1945,20 +1923,22 @@ async function renderVideoPlayer(id) {
   state.compatItem = item;
   
   shell(`
-    <section class="gs-section">
+    <section class="gs-section gs-player-page">
       <div class="gs-player">
+        <div class="gs-player-bar">
+          <a class="gs-back-link" data-link href="/videos">${BACK_ICON}${gsStr("web_btn_back", "Back to videos")}</a>
+        </div>
+        <div id="playerStage" class="gs-stage">${renderVideoStage(item, showPlayerImmediately)}</div>
         <div class="gs-player-top">
           <div>
             <h2>${esc(item.title)}</h2>
-            <div class="gs-meta">${fmtBytes(item.sizeBytes)}${item.durationMs ? ` | ${fmtDur(item.durationMs)}` : ""}</div>
+            <div class="gs-meta">${fmtBytes(item.sizeBytes)}${item.durationMs ? ` · ${fmtDur(item.durationMs)}` : ""}</div>
           </div>
           <div class="gs-toolbar-actions">
-            <a class="gs-btn gs-btn-sm" data-link href="/videos">${gsStr("web_btn_back", "Back to videos")}</a>
-            <button class="gs-btn gs-btn-sm" type="button" id="fullscreenBtn">${gsStr("web_btn_fullscreen", "Full screen")}</button>
-            ${allowDownloads ? `<a class="gs-btn gs-btn-download" href="${item.downloadUrl}">${gsStr("web_btn_download_original", "Download original")}</a>` : ""}
+            <button class="gs-btn gs-btn-sm" type="button" id="fullscreenBtn">${FULLSCREEN_ICON}${gsStr("web_btn_fullscreen", "Full screen")}</button>
+            ${allowDownloads ? `<a class="gs-btn gs-btn-sm gs-btn-download" href="${item.downloadUrl}">${DOWNLOAD_ICON}${gsStr("web_btn_download_original", "Download original")}</a>` : ""}
           </div>
         </div>
-        <div id="playerStage">${renderVideoStage(item, showPlayerImmediately)}</div>
         ${!isDirect ? `
           <div class="gs-compat-inline${isStreamLive ? " is-visible" : ""}" id="compatInline">
             <span class="gs-badge" data-compat-badge>${compatibilityBadgeLabel(item, isStreamLive)}</span>
@@ -2106,11 +2086,11 @@ function videoMarkup(item) {
         ${item.subtitleUrl ? `<track kind="subtitles" src="${item.subtitleUrl}" srclang="en" label="Subtitle" default>` : ""}
       </video>
       <div class="gs-video-error" id="vError">
-        <strong>Video needs attention</strong>
-        <p id="vErrorText">This browser could not start the video.</p>
+        <strong>${gsStr("web_player_error_open", "This video could not be opened")}</strong>
+        <p id="vErrorText">${gsStr("web_error_video_start", "This browser could not start the video. Try again or download the original file.")}</p>
         <div class="gs-toolbar-actions">
-          <button class="gs-btn gs-btn-accent gs-btn-sm" id="retryVideoBtn">Try again</button>
-          ${item.playbackMode !== "DIRECT" ? `<button class="gs-btn gs-btn-sm" onclick="retryPreparation('${item.id}')">Reset & Retry Optimization</button>` : ""}
+          <button class="gs-btn gs-btn-accent gs-btn-sm" id="retryVideoBtn">${gsStr("web_player_try_again", "Try again")}</button>
+          ${item.playbackMode !== "DIRECT" ? `<button class="gs-btn gs-btn-sm" onclick="retryPreparation('${item.id}')">${gsStr("web_btn_prepare_for_browser", "Prepare for browser")}</button>` : ""}
           ${allowDownloads ? `<a class="gs-btn gs-btn-download gs-btn-sm" href="${item.downloadUrl}">${gsStr("web_btn_download_original", "Download original")}</a>` : ""}
         </div>
       </div>
@@ -2999,26 +2979,32 @@ async function renderPhotoViewer(id) {
     if (index >= 0 && index < all.length - 1) next = all[index + 1].id;
   } catch (_) {}
 
+  const isPdf = item.mimeType === "application/pdf" || String(item.title).toLowerCase().endsWith(".pdf");
+  const isImage = item.category === "photo" || (item.mimeType && item.mimeType.startsWith("image/"));
   shell(`
-    <section class="gs-section">
+    <section class="gs-section gs-player-page">
       <div class="gs-player">
+        <div class="gs-player-bar">
+          <a class="gs-back-link" data-link href="/photos">${BACK_ICON}${gsStr("web_btn_back_to_photos", "Back to photos")}</a>
+        </div>
+        <div class="gs-stage" style="position:relative;">
+          ${isPdf
+            ? `<iframe class="gs-preview gs-preview-pdf" src="${item.streamUrl}" title="${esc(item.title)}" style="width:100%;"></iframe>`
+            : isImage
+              ? `<img class="gs-preview gs-photo-preview" src="${item.streamUrl}" alt="${esc(item.title)}">`
+              : `<div class="gs-preview gs-no-preview">${gsStr("web_error_no_preview", "No preview available for this file type")}</div>`}
+          ${prev ? `<a class="gs-photo-nav prev" data-link href="/photo/${prev}" aria-label="${esc(gsStr("web_action_previous", "Previous"))}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>` : ""}
+          ${next ? `<a class="gs-photo-nav next" data-link href="/photo/${next}" aria-label="${esc(gsStr("web_action_next", "Next"))}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></a>` : ""}
+        </div>
         <div class="gs-player-top">
           <div>
             <h2>${esc(item.title)}</h2>
             <div class="gs-meta">${fmtBytes(item.sizeBytes)}</div>
           </div>
           <div class="gs-toolbar-actions">
-            ${prev ? `<a class="gs-btn gs-btn-sm" data-link href="/photo/${prev}">${gsStr("web_action_previous", "Previous")}</a>` : ""}
-            ${next ? `<a class="gs-btn gs-btn-sm" data-link href="/photo/${next}">${gsStr("web_action_next", "Next")}</a>` : ""}
-            <a class="gs-btn gs-btn-sm" data-link href="/photos">${gsStr("web_btn_back_to_photos", "Gallery")}</a>
-            ${allowDownloads ? `<a class="gs-btn gs-btn-download" href="${item.downloadUrl}">${gsStr("web_btn_download_original", "Download original")}</a>` : ""}
+            ${allowDownloads ? `<a class="gs-btn gs-btn-sm gs-btn-download" href="${item.downloadUrl}">${DOWNLOAD_ICON}${gsStr("web_btn_download_original", "Download original")}</a>` : ""}
           </div>
         </div>
-        ${(item.mimeType === "application/pdf" || String(item.title).toLowerCase().endsWith(".pdf"))
-          ? `<iframe class="gs-preview gs-preview-pdf" src="${item.streamUrl}" title="${esc(item.title)}"></iframe>`
-          : (item.category === "photo" || (item.mimeType && item.mimeType.startsWith("image/")))
-            ? `<img class="gs-preview gs-photo-preview" src="${item.streamUrl}" alt="${esc(item.title)}">`
-            : `<div class="gs-preview gs-no-preview">${gsStr("web_error_no_preview", "No preview available for this file type")}</div>`}
       </div>
     </section>
   `);
@@ -3093,12 +3079,12 @@ function showToast(message, duration = 4000) {
 
 function card(item, selectable = false) {
   const allowDownloads = !state.bootstrap?.preventDownload && Boolean(item.downloadUrl);
-  const actionBtnClass = state.bootstrap?.prominentDownloadButton
-    ? "gs-btn gs-btn-sm"
-    : "gs-btn gs-btn-accent gs-btn-sm";
+  // One clear primary action per card; Download is a compact icon button beside it
+  // ("Highlight downloads" on the phone turns that icon into the accent colour).
+  const actionBtnClass = "gs-btn gs-btn-accent gs-btn-sm";
   const downloadBtnClass = state.bootstrap?.prominentDownloadButton
-    ? "gs-btn gs-btn-download gs-btn-sm"
-    : "gs-btn gs-btn-sm";
+    ? "gs-btn gs-btn-download gs-btn-sm gs-btn-square"
+    : "gs-btn gs-btn-sm gs-btn-square";
   const action = item.category === "video"
     ? (() => {
         if (
@@ -3116,30 +3102,37 @@ function card(item, selectable = false) {
         if (isPreparationActiveStatus(item.compatibilityStatus)) {
           return `<span class="${actionBtnClass}" aria-disabled="true">${gsStr("web_player_status_opening", "Preparing")}</span>`;
         }
-        return `<a class="${actionBtnClass}" data-link href="/player/video/${item.id}">${gsStr("web_prepare_video", "Prepare video")}</a>`;
+        // Opening the player is not a prepare request: if this browser can't play the file
+        // directly, the player page offers "Prepare for browser" itself.
+        return `<a class="${actionBtnClass}" data-link href="/player/video/${item.id}">${gsStr("common_play", "Play")}</a>`;
       })()
     : item.category === "photo"
       ? `<a class="${actionBtnClass}" data-link href="/photo/${item.id}">${gsStr("web_photo_view", "View")}</a>`
       : item.category === "music"
-        ? `<button class="${actionBtnClass} music-play-btn" data-audio-item-id="${item.id}" data-title="${esc(item.title)}">${gsStr("common_play", "Play")}</button>`
+        ? ""
         : isBrowserPreviewable(item.mimeType)
           ? `<a class="${actionBtnClass}" href="${item.streamUrl}" target="_blank" rel="noopener noreferrer">${gsStr("web_action_view", "View")}</a>`
           : "";
-  const showSlowStartHint = item.category === "video" && item.playbackMode !== "DIRECT";
+  // Tapping the picture opens the item, like any media app; the buttons stay for clarity.
+  const openHref = item.category === "video"
+    ? `/player/video/${item.id}`
+    : item.category === "photo" ? `/photo/${item.id}` : null;
+  const thumb = item.thumbnailUrl
+    ? `<img class="gs-card-img" loading="lazy" decoding="async" fetchpriority="low" src="${THUMBNAIL_PLACEHOLDER_SRC}" data-thumb-src="${item.thumbnailUrl}" data-thumb-state="idle" alt="">`
+    : `<div class="gs-card-img gs-card-placeholder">${item.category === "music" ? CATEGORY_ICONS.music : CATEGORY_ICONS.files || ""}<span>${item.category === "file" ? fileTypeLabel(item.mimeType, item.title) : esc(gsStr(item.category === "music" ? "web_cat_music" : "web_cat_files", item.category))}</span></div>`;
+  const thumbOverlay = item.category === "video"
+    ? `<span class="gs-card-play" aria-hidden="true"></span>${item.durationMs ? `<span class="gs-card-duration">${fmtDur(item.durationMs)}</span>` : ""}`
+    : "";
 
   return `
     <article class="gs-card gs-card--${item.category}${selectable && state.selectMode ? " gs-card-selectable" : ""}${state.selected.has(item.id) ? " is-selected" : ""}" data-select-card="${selectable ? item.id : ""}">
       ${selectable ? `<button class="gs-card-toggle${state.selectMode ? " is-visible" : ""}" data-select-toggle="${item.id}">${state.selected.has(item.id) ? gsStr("web_status_selected", "Selected") : gsStr("web_action_select", "Select")}</button>` : ""}
-      ${item.thumbnailUrl
-        ? `<img class="gs-card-img" loading="lazy" decoding="async" fetchpriority="low" src="${THUMBNAIL_PLACEHOLDER_SRC}" data-thumb-src="${item.thumbnailUrl}" data-thumb-state="idle" alt="">`
-        : `<div class="gs-card-img gs-card-placeholder"><span>${item.category === "file" ? fileTypeLabel(item.mimeType, item.title) : esc(item.category.toUpperCase())}</span></div>`}
+      ${openHref && !state.selectMode
+        ? `<a class="gs-card-thumb" data-link href="${openHref}" tabindex="-1" aria-hidden="true">${thumb}${thumbOverlay}</a>`
+        : `<div class="gs-card-thumb">${thumb}${thumbOverlay}</div>`}
       <div class="gs-card-body">
-        <div class="gs-card-topline">
-          <span class="gs-card-type">${item.category === "file" ? fileTypeLabel(item.mimeType, item.title) : esc(item.category)}</span>
-        </div>
         <div class="gs-card-title">${esc(item.title)}</div>
-        <div class="gs-meta">${fmtBytes(item.sizeBytes)}${item.durationMs ? ` | ${fmtDur(item.durationMs)}` : ""}</div>
-        ${showSlowStartHint ? `<div class="gs-card-caption">${gsStr("web_player_slow_start_hint")}</div>` : ""}
+        <div class="gs-meta">${fmtBytes(item.sizeBytes)}${item.durationMs && item.category !== "video" ? ` · ${fmtDur(item.durationMs)}` : ""}</div>
         ${renderCardProgress(item)}
         ${item.category === "music" ? `
           <div class="gs-music-row">
@@ -3150,7 +3143,7 @@ function card(item, selectable = false) {
         ` : ""}
         <div class="gs-card-actions">
           ${action}
-          ${allowDownloads ? `<a class="${downloadBtnClass}" href="${item.downloadUrl}">${gsStr("web_action_download", "Download")}</a>` : ""}
+          ${allowDownloads ? `<a class="${downloadBtnClass}" href="${item.downloadUrl}" aria-label="${esc(gsStr("web_action_download", "Download"))}" title="${esc(gsStr("web_action_download", "Download"))}">${DOWNLOAD_ICON}</a>` : ""}
         </div>
       </div>
     </article>`;
@@ -3165,7 +3158,8 @@ function attachMusicPlayers() {
     const player = typeof window.Plyr === "function"
       ? new window.Plyr(audio, {
           iconUrl: "/plyr.svg",
-          controls: ["play", "progress", "current-time", "mute", "volume"],
+          // No volume slider: it doesn't fit a card; the device volume and mute cover it.
+          controls: ["play", "progress", "current-time", "mute"],
           settings: [],
           storage: {
             enabled: false,
@@ -3575,6 +3569,7 @@ function titleForPath(path) {
     case "/photos": return gsStr("web_cat_photos", "Photos");
     case "/music": return gsStr("web_cat_music", "Music");
     case "/files": return gsStr("web_cat_files", "Files");
+    case "/folders": return gsStr("web_folders_title", "Folders");
     default: return gsStr("web_nav_media", "Media");
   }
 }
@@ -3793,31 +3788,32 @@ async function renderLiveScreen() {
   const liveState = await api("/api/live/state");
   state.liveScreenState = liveState;
   shell(`
-    <section class="gs-section" style="max-width:1200px;margin:0 auto;">
+    <section class="gs-section">
       <div class="gs-section-head">
         <div>
           <h2>${gsStr("web_live_title", "")}</h2>
-          <div class="gs-section-meta" id="liveStatusText"></div>
+          <div class="gs-live-status" id="liveStatusText"></div>
         </div>
         <div class="gs-toolbar-actions">
-          <button class="gs-btn gs-btn-sm" id="liveFullscreenBtn">${gsStr("web_live_fullscreen", "")}</button>
+          <button class="gs-btn gs-btn-sm gs-btn-accent" id="liveAudioBtn">${gsStr("web_live_mute", "")}</button>
+          <button class="gs-btn gs-btn-sm" id="liveFullscreenBtn">${FULLSCREEN_ICON}${gsStr("web_live_fullscreen", "")}</button>
+        </div>
+      </div>
+      <div class="gs-live-stage">
+        <video id="liveVideo" autoplay playsinline muted></video>
+      </div>
+      <div class="gs-toolbar" style="margin-top:12px;justify-content:space-between;">
+        <div class="gs-note">
+          <div id="liveAudioText"></div>
+          <div id="liveAudioHint">${gsStr("web_live_unmute_hint", "")}</div>
+        </div>
+        <div class="gs-toolbar-actions">
+          <button class="gs-btn gs-btn-sm" id="liveFitBtn">${gsStr("web_live_fit", "")}</button>
+          <button class="gs-btn gs-btn-sm" id="liveFillBtn">${gsStr("web_live_fill", "")}</button>
           <button class="gs-btn gs-btn-sm" id="liveRefreshBtn">${gsStr("web_live_refresh", "")}</button>
         </div>
       </div>
-      <div class="gs-section-meta" style="margin:0 0 16px;line-height:1.5;">
-        <div>${gsStr("web_live_capture_notice", "")}</div>
-        <div>${gsStr("web_live_browser_tip", "")}</div>
-      </div>
-      <div style="background:#050816;border-radius:28px;padding:18px;">
-        <video id="liveVideo" autoplay playsinline muted style="width:100%;max-height:72vh;background:#050816;border-radius:20px;object-fit:contain;"></video>
-      </div>
-      <div class="gs-section-meta" id="liveAudioText" style="margin-top:12px;"></div>
-      <div class="gs-section-meta" id="liveAudioHint" style="margin-top:8px;">${gsStr("web_live_unmute_hint", "")}</div>
-      <div class="gs-toolbar-actions" style="margin-top:16px;">
-        <button class="gs-btn gs-btn-sm" id="liveFitBtn">${gsStr("web_live_fit", "")}</button>
-        <button class="gs-btn gs-btn-sm" id="liveFillBtn">${gsStr("web_live_fill", "")}</button>
-        <button class="gs-btn gs-btn-sm" id="liveAudioBtn">${gsStr("web_live_mute", "")}</button>
-      </div>
+      <p class="gs-note" style="margin-top:16px;">${gsStr("web_live_capture_notice", "")} ${gsStr("web_live_browser_tip", "")}</p>
     </section>
   `);
   mountLiveScreen(liveState);
@@ -4440,23 +4436,23 @@ function waitForLiveIceGathering(peer, timeoutMs) {
 async function renderQuickText() {
   const payload = await api("/api/quick-text/messages");
   shell(`
-    <section class="gs-section" style="max-width:900px;margin:0 auto;">
+    <section class="gs-section" style="max-width:760px;margin-left:auto;margin-right:auto;">
       <div class="gs-section-head">
-        <div>
-          <h2>${gsStr("web_quick_text_title", "")}</h2>
-          <div class="gs-section-meta">${gsStr("web_quick_text_history", "")}</div>
-        </div>
-        <button class="gs-btn gs-btn-sm" id="quickTextClearBtn">${gsStr("web_quick_text_clear_all", "")}</button>
+        <h2>${gsStr("web_quick_text_title", "")}</h2>
       </div>
-      <div class="gs-category-card" style="margin-bottom:20px;">
+      <div class="gs-category-card" style="gap:12px;margin-bottom:24px;">
         <textarea id="quickTextInput" class="gs-search" rows="4" placeholder="${esc(gsStr("web_quick_text_placeholder", ""))}" maxlength="1000"></textarea>
-        <div class="gs-toolbar-actions" style="margin-top:12px;">
-          <label for="quickTextTarget">${gsStr("web_quick_text_target", "")}</label>
-          <select id="quickTextTarget" class="gs-search" style="max-width:260px;"></select>
-          <button class="gs-btn gs-btn-accent" id="quickTextSendBtn">${gsStr("web_quick_text_send", "")}</button>
+        <div class="gs-toolbar">
+          <label for="quickTextTarget" class="gs-meta">${gsStr("web_quick_text_target", "")}</label>
+          <select id="quickTextTarget" class="gs-search" style="flex:1 1 200px;max-width:280px;min-height:44px;"></select>
+          <button class="gs-btn gs-btn-accent" id="quickTextSendBtn" style="margin-left:auto;">${gsStr("web_quick_text_send", "")}</button>
         </div>
       </div>
-      <div id="quickTextHistory"></div>
+      <div class="gs-section-head">
+        <span class="gs-inline-note-label">${gsStr("web_quick_text_history", "")}</span>
+        <button class="gs-btn gs-btn-sm gs-btn-ghost" id="quickTextClearBtn" style="color:var(--danger);">${gsStr("web_quick_text_clear_all", "")}</button>
+      </div>
+      <div id="quickTextHistory" style="display:grid;gap:10px;"></div>
     </section>
   `);
   mountQuickText(payload);
@@ -4599,7 +4595,7 @@ async function renderUpload() {
             <div class="gs-category-kicker">${gsStr("web_upload_target_kicker", "Target Device")}</div>
             <strong>${esc(bootstrap?.title || sessionTitle)}</strong>
             <div class="gs-category-meta" style="font-family: monospace; word-break: break-all; margin-top: 8px">
-              ${esc(bootstrap?.sessionUrl || "Local connection")}
+              ${esc(bootstrap?.sessionUrl || gsStr("web_status_unknown", "Unknown"))}
             </div>
             <div class="gs-category-meta" style="margin-top: 4px; font-size: 0.82rem">
               ${gsStr("web_upload_target_status", "Status: Connected and ready for transfers")}

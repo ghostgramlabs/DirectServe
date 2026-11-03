@@ -1020,4 +1020,7 @@
         <item quantity="one">%d dispositivo connesso</item>
         <item quantity="other">%d dispositivi connessi</item>
     </plurals>
+    <string name="web_rename_device">Rinomina questo dispositivo</string>
+    <string name="web_rename_device_prompt">Nome per questo dispositivo (fino a 30 caratteri):</string>
+    <string name="web_rename_device_too_long">Il nome è troppo lungo. Usa al massimo 30 caratteri.</string>
 </resources>

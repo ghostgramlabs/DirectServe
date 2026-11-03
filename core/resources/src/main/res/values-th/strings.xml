@@ -1020,4 +1020,7 @@
         <item quantity="one">เชื่อมต่อ %d อุปกรณ์</item>
         <item quantity="other">เชื่อมต่อ %d อุปกรณ์</item>
     </plurals>
+    <string name="web_rename_device">เปลี่ยนชื่ออุปกรณ์นี้</string>
+    <string name="web_rename_device_prompt">ตั้งชื่ออุปกรณ์นี้ (ไม่เกิน 30 ตัวอักษร):</string>
+    <string name="web_rename_device_too_long">ชื่อยาวเกินไป ใช้ไม่เกิน 30 ตัวอักษร</string>
 </resources>

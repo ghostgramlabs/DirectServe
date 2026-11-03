@@ -1020,4 +1020,7 @@
         <item quantity="one">%d thiết bị đã kết nối</item>
         <item quantity="other">%d thiết bị đã kết nối</item>
     </plurals>
+    <string name="web_rename_device">Đổi tên thiết bị này</string>
+    <string name="web_rename_device_prompt">Tên thiết bị này (tối đa 30 ký tự):</string>
+    <string name="web_rename_device_too_long">Tên quá dài. Hãy dùng tối đa 30 ký tự.</string>
 </resources>

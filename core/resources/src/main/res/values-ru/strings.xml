@@ -1020,4 +1020,7 @@
         <item quantity="one">%d устройство подключено</item>
         <item quantity="other">%d устройств подключено</item>
     </plurals>
+    <string name="web_rename_device">Переименовать это устройство</string>
+    <string name="web_rename_device_prompt">Имя этого устройства (до 30 символов):</string>
+    <string name="web_rename_device_too_long">Слишком длинное имя. Используйте не более 30 символов.</string>
 </resources>

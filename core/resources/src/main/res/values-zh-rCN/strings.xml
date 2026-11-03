@@ -1020,4 +1020,7 @@
         <item quantity="one">已连接 %d 台设备</item>
         <item quantity="other">已连接 %d 台设备</item>
     </plurals>
+    <string name="web_rename_device">重命名此设备</string>
+    <string name="web_rename_device_prompt">为此设备命名（最多 30 个字符）：</string>
+    <string name="web_rename_device_too_long">名称太长，请不超过 30 个字符。</string>
 </resources>

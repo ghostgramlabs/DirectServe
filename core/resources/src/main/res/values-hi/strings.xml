@@ -1020,4 +1020,7 @@
         <item quantity="one">%d डिवाइस कनेक्ट है</item>
         <item quantity="other">%d डिवाइस कनेक्ट हैं</item>
     </plurals>
+    <string name="web_rename_device">इस डिवाइस का नाम बदलें</string>
+    <string name="web_rename_device_prompt">इस डिवाइस का नाम लिखें (अधिकतम 30 अक्षर):</string>
+    <string name="web_rename_device_too_long">यह नाम बहुत लंबा है। 30 या उससे कम अक्षर रखें।</string>
 </resources>

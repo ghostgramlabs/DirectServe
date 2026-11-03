@@ -1020,4 +1020,7 @@
         <item quantity="one">%d enhet ansluten</item>
         <item quantity="other">%d enheter anslutna</item>
     </plurals>
+    <string name="web_rename_device">Byt namn på den här enheten</string>
+    <string name="web_rename_device_prompt">Namn på den här enheten (högst 30 tecken):</string>
+    <string name="web_rename_device_too_long">Namnet är för långt. Använd högst 30 tecken.</string>
 </resources>

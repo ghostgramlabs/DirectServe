@@ -1020,4 +1020,7 @@
         <item quantity="one">%d 台が接続中</item>
         <item quantity="other">%d 台が接続中</item>
     </plurals>
+    <string name="web_rename_device">このデバイスの名前を変更</string>
+    <string name="web_rename_device_prompt">このデバイスの名前（30 文字以内）:</string>
+    <string name="web_rename_device_too_long">名前が長すぎます。30 文字以内にしてください。</string>
 </resources>

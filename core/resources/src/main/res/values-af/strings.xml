@@ -1020,4 +1020,7 @@
         <item quantity="one">%d toestel gekoppel</item>
         <item quantity="other">%d toestelle gekoppel</item>
     </plurals>
+    <string name="web_rename_device">Hernoem hierdie toestel</string>
+    <string name="web_rename_device_prompt">Noem hierdie toestel (tot 30 karakters):</string>
+    <string name="web_rename_device_too_long">Daardie naam is te lank. Gebruik 30 karakters of minder.</string>
 </resources>

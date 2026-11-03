@@ -1020,4 +1020,7 @@
         <item quantity="one">%d cihaz bağlı</item>
         <item quantity="other">%d cihaz bağlı</item>
     </plurals>
+    <string name="web_rename_device">Bu cihazı yeniden adlandır</string>
+    <string name="web_rename_device_prompt">Bu cihazın adı (en fazla 30 karakter):</string>
+    <string name="web_rename_device_too_long">Bu ad çok uzun. En fazla 30 karakter kullan.</string>
 </resources>

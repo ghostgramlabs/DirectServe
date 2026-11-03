@@ -1020,4 +1020,7 @@
         <item quantity="one">%d ഉപകരണം കണക്റ്റ് ചെയ്തു</item>
         <item quantity="other">%d ഉപകരണങ്ങൾ കണക്റ്റ് ചെയ്തു</item>
     </plurals>
+    <string name="web_rename_device">ഈ ഉപകരണത്തിന്റെ പേര് മാറ്റുക</string>
+    <string name="web_rename_device_prompt">ഈ ഉപകരണത്തിന് ഒരു പേര് നൽകുക (പരമാവധി 30 അക്ഷരങ്ങൾ):</string>
+    <string name="web_rename_device_too_long">ആ പേര് വളരെ നീളമുള്ളതാണ്. 30 അക്ഷരങ്ങളോ അതിൽ കുറവോ ഉപയോഗിക്കുക.</string>
 </resources>

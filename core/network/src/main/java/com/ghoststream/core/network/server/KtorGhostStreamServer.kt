@@ -217,6 +217,9 @@ class KtorGhostStreamServer(
             get("/files") { call.serveShellPage() }
             get("/live") { call.serveShellPage() }
             get("/quick-text") { call.serveShellPage() }
+            // Without these, reloading (or sharing a link to) the Send and Folders pages gave a 404.
+            get("/upload") { call.serveShellPage() }
+            get("/folders") { call.serveShellPage() }
             get("/dlna/description.xml") {
                 call.respondText(dlnaService.getDeviceDescription(), ContentType.parse("text/xml"))
             }
@@ -448,6 +451,9 @@ class KtorGhostStreamServer(
                             "web_nav_logout" to localizedContext.getString(R.string.web_nav_logout),
                             "web_strip_session" to localizedContext.getString(R.string.web_strip_session),
                             "web_strip_device" to localizedContext.getString(R.string.web_strip_device),
+                            "web_rename_device" to localizedContext.getString(R.string.web_rename_device),
+                            "web_rename_device_prompt" to localizedContext.getString(R.string.web_rename_device_prompt),
+                            "web_rename_device_too_long" to localizedContext.getString(R.string.web_rename_device_too_long),
                             "web_strip_link" to localizedContext.getString(R.string.web_strip_link),
                             "web_security_pin" to localizedContext.getString(R.string.web_security_pin),
                             "web_security_open" to localizedContext.getString(R.string.web_security_open),

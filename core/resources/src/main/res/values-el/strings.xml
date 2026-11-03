@@ -1020,4 +1020,7 @@
         <item quantity="one">%d συσκευή συνδεδεμένη</item>
         <item quantity="other">%d συσκευές συνδεδεμένες</item>
     </plurals>
+    <string name="web_rename_device">Μετονομασία αυτής της συσκευής</string>
+    <string name="web_rename_device_prompt">Όνομα για αυτή τη συσκευή (έως 30 χαρακτήρες):</string>
+    <string name="web_rename_device_too_long">Το όνομα είναι πολύ μεγάλο. Χρησιμοποιήστε έως 30 χαρακτήρες.</string>
 </resources>

@@ -1046,4 +1046,7 @@
         <item quantity="one">%d device connected</item>
         <item quantity="other">%d devices connected</item>
     </plurals>
+    <string name="web_rename_device">Rename this device</string>
+    <string name="web_rename_device_prompt">Name this device (up to 30 characters):</string>
+    <string name="web_rename_device_too_long">That name is too long. Use 30 characters or fewer.</string>
 </resources>

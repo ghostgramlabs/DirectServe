@@ -1020,4 +1020,7 @@
         <item quantity="one">%d جهاز متصل</item>
         <item quantity="other">%d أجهزة متصلة</item>
     </plurals>
+    <string name="web_rename_device">إعادة تسمية هذا الجهاز</string>
+    <string name="web_rename_device_prompt">اكتب اسمًا لهذا الجهاز (حتى 30 حرفًا):</string>
+    <string name="web_rename_device_too_long">هذا الاسم طويل جدًا. استخدم 30 حرفًا أو أقل.</string>
 </resources>

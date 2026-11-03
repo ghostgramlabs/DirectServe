@@ -8,6 +8,9 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 - A simpler app: choose what to share, tap Start, and scan the QR code. Settings are grouped,
   with expert options under Advanced.
 - New app icon.
+- Redesigned browser pages: clearer cards with one Play button, a dark video and photo viewer,
+  and simpler Live Screen and Send text pages.
+- Fixed: reloading the Send or Folders page in the browser showed "not found".
 - Shorter welcome tour (3 pages instead of 8), and simpler Mirror screen, Send text and History
   screens.
 - Mirror screen sound stays in step with the picture instead of drifting behind it.
