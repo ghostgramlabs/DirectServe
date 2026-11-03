@@ -10,19 +10,20 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 BLUE = (30, 41, 59)
 BLUE_DARK = (15, 23, 42)
 SKY = (125, 211, 252)
-TEAL = (13, 148, 136)
-TEAL_DARK = (17, 94, 89)
+ICE_TOP = (224, 247, 255)
+ICE = (125, 211, 252)
+ICE_INK = (11, 79, 124)
 WHITE = (255, 255, 255)
 FONTS = "C:/Windows/Fonts/"
 
-# (raw file, headline, sub line)
+# (raw file, headline, sub line[, phone shown beside a landscape shot])
 SHOTS = [
     ("home.png", "Share in 2 taps", "Pick what to share, tap Start. That's it."),
     ("session.png", "Scan and open in any browser", "TV, laptop, tablet or phone. No app needed."),
     ("laptop.png", "Open it on any screen", "The same share on a laptop or TV browser."),
     ("browser.png", "Watch and download in the browser", "Videos, photos, music and files."),
     ("player.png", "Plays straight from your phone", "Direct play first, prepared only when needed."),
-    ("mirror.png", "Mirror your screen live", "Show anything on a bigger screen."),
+    ("mirror.png", "Mirror your screen live", "Show anything on a bigger screen.", "mirror_phone.png"),
     ("library.png", "Always know what you're sharing", "Search, filter, remove in one tap."),
     ("dark.png", "Private and offline", "Everything stays on your own Wi-Fi."),
 ]
@@ -89,6 +90,17 @@ def laptop(shot: Image.Image, width: int) -> Image.Image:
     return out
 
 
+def gradient(size, top, bottom) -> Image.Image:
+    """Top-to-bottom fade, matching the launcher tile."""
+    w, h = size
+    im = Image.new("RGB", size)
+    d = ImageDraw.Draw(im)
+    for y in range(h):
+        t = y / max(1, h - 1)
+        d.line([(0, y), (w, y)], fill=tuple(round(a + (b - a) * t) for a, b in zip(top, bottom)))
+    return im
+
+
 def background(size, base=None, shade=None):
     w, h = size
     bg = Image.new("RGB", size, base or BLUE)
@@ -97,7 +109,7 @@ def background(size, base=None, shade=None):
     return bg.convert("RGBA")
 
 
-def screenshot(raw: Path, headline: str, sub: str, out: Path) -> None:
+def screenshot(raw: Path, headline: str, sub: str, out: Path, companion: str = "session.png") -> None:
     W, H = 1080, 1920
     canvas = background((W, H))
     d = ImageDraw.Draw(canvas)
@@ -112,10 +124,11 @@ def screenshot(raw: Path, headline: str, sub: str, out: Path) -> None:
         y += 54
     shot = Image.open(raw)
     if shot.width > shot.height:
-        # Laptop near the top, with the phone's QR screen overlapping its corner: "scan here, open there".
+        # Laptop near the top, with a phone overlapping its corner: the QR screen ("scan here, open
+        # there") or, for mirroring, the phone screen being shown.
         device = laptop(shot, W - 40)
         canvas.alpha_composite(device, (20, y + 40))
-        qr = raw.parent / "session.png"
+        qr = raw.parent / companion
         if qr.exists():
             handset = phone(Image.open(qr), H - y - device.height + 260)
             canvas.alpha_composite(handset, (W - handset.width + 10, H - handset.height + 40))
@@ -125,14 +138,14 @@ def screenshot(raw: Path, headline: str, sub: str, out: Path) -> None:
     canvas.convert("RGB").save(out, "PNG", optimize=True)
 
 
-def mark(draw, ox, oy, s, cut=TEAL):
+def mark(draw, ox, oy, s, ink=ICE_INK, cut=ICE):
     """The launcher mark at scale s (108-unit viewport) with origin (ox, oy): a phone handing off
-    to a big screen. The play triangle and home bar are drawn in `cut` so they read as holes."""
+    to a big screen, in `ink`. The play triangle and home bar are drawn in `cut` so they read as holes."""
     def p(x, y):
         return (ox + x * s, oy + y * s)
-    draw.rounded_rectangle([*p(46, 30.5), *p(82, 60.5)], radius=4 * s, fill=WHITE)
+    draw.rounded_rectangle([*p(46, 30.5), *p(82, 60.5)], radius=4 * s, fill=ink)
     draw.polygon([p(59, 38.5), p(59, 52.5), p(70, 45.5)], fill=cut)
-    draw.rounded_rectangle([*p(28.5, 48), *p(43.5, 75)], radius=3 * s, fill=WHITE)
+    draw.rounded_rectangle([*p(28.5, 48), *p(43.5, 75)], radius=3 * s, fill=ink)
     draw.rounded_rectangle([*p(33, 69.5), *p(39, 71.5)], radius=1 * s, fill=cut)
 
 
@@ -141,21 +154,21 @@ def icon(out: Path) -> None:
     size, k = 512, 4
     s = size * k / 72
     off = -18 * s  # the visible region starts 18 units into the 108 canvas
-    big = Image.new("RGB", (size * k, size * k), TEAL)
-    mark(ImageDraw.Draw(big), off, off, s)
+    big = gradient((size * k, size * k), ICE_TOP, ICE)
+    mark(ImageDraw.Draw(big), off, off, s, cut=(176, 228, 253))
     big.resize((size, size), Image.LANCZOS).save(out, "PNG")
 
 
 def feature_graphic(home: Path, out: Path) -> None:
     W, H = 1024, 500
-    canvas = background((W, H), TEAL, TEAL_DARK)
+    canvas = gradient((W, H), ICE_TOP, ICE).convert("RGBA")
     big = Image.new("RGBA", (W * 2, H * 2), (0, 0, 0, 0))
-    mark(ImageDraw.Draw(big), 10 * 2, 20 * 2, 3.2 * 2)
+    mark(ImageDraw.Draw(big), 10 * 2, 20 * 2, 3.2 * 2, cut=(200, 238, 254))
     canvas.alpha_composite(big.resize((W, H), Image.LANCZOS))
     d = ImageDraw.Draw(canvas)
-    d.text((60, 270), "DirectServe", font=font("segoeuib.ttf", 64), fill=WHITE)
-    d.text((62, 352), "Cast to TV, mirror your screen", font=font("segoeui.ttf", 32), fill=(204, 251, 241))
-    d.text((62, 394), "and share files over Wi-Fi", font=font("segoeui.ttf", 32), fill=(204, 251, 241))
+    d.text((60, 270), "DirectServe", font=font("segoeuib.ttf", 64), fill=ICE_INK)
+    d.text((62, 352), "Cast to TV, mirror your screen", font=font("segoeui.ttf", 32), fill=(12, 74, 110))
+    d.text((62, 394), "and share files over Wi-Fi", font=font("segoeui.ttf", 32), fill=(12, 74, 110))
     device = phone(Image.open(home), 470)
     canvas.alpha_composite(device.crop((0, 0, device.width, H - 10)), (W - device.width - 30, 20))
     canvas.convert("RGB").save(out, "PNG", optimize=True)
@@ -165,10 +178,10 @@ def main(raw_dir: str, out_dir: str) -> None:
     raw, out = Path(raw_dir), Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     n = 0
-    for name, headline, sub in SHOTS:
+    for name, headline, sub, *companion in SHOTS:
         if (raw / name).exists():
             n += 1
-            screenshot(raw / name, headline, sub, out / f"phone_{n:02d}_{name}")
+            screenshot(raw / name, headline, sub, out / f"phone_{n:02d}_{name}", *companion)
         else:
             print("skip (no capture):", name)
     icon(out / "icon_512.png")

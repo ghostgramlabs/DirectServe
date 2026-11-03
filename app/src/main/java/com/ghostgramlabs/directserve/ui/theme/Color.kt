@@ -19,16 +19,16 @@ val GhostLightTextPrimary = Color(0xFF0F172A)
 val GhostLightTextSecondary = Color(0xFF475569)
 val GhostLightMuted = Color(0xFF64748B)
 val GhostLightBorder = Color(0xFFE2E8F0)
-// Brand teal. The icon uses 0D9488; UI text and buttons use the deeper 0F766E because white on
-// 0D9488 is only ~3.7:1, while 0F766E keeps 5.5:1.
-val GhostLightAccent = Color(0xFF0F766E)
-val GhostLightAccentPressed = Color(0xFF115E59)
+// Brand ice blue. The icon is a pale E0F7FF..7DD3FC tile; buttons and text use the deeper 0369A1
+// because white on the pale blues is unreadable, while 0369A1 keeps 5.9:1.
+val GhostLightAccent = Color(0xFF0369A1)
+val GhostLightAccentPressed = Color(0xFF075985)
 val GhostLightAccentForeground = Color(0xFFFFFFFF)
 val GhostLightDanger = Color(0xFFB91C1C)
 val GhostLightDangerForeground = Color(0xFFFFFFFF)
 
-val GhostDarkAccent = Color(0xFF5EEAD4)
-val GhostDarkAccentPressed = Color(0xFF2DD4BF)
+val GhostDarkAccent = Color(0xFF7DD3FC)
+val GhostDarkAccentPressed = Color(0xFF38BDF8)
 val GhostDarkAccentForeground = GhostLightTextPrimary
 
 val GhostAccent = GhostDarkAccent

@@ -20,6 +20,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.google.android.play.core.ktx.launchReview
 import com.google.android.play.core.ktx.requestReview
@@ -950,7 +951,7 @@ private fun SplashRoute() {
             Box(
                 modifier = Modifier
                     .size(88.dp)
-                    .background(Color(0xFF0D9488), RoundedCornerShape(22.dp)),
+                    .background(Brush.verticalGradient(listOf(Color(0xFFE0F7FF), Color(0xFF7DD3FC))), RoundedCornerShape(22.dp)),
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_foreground),
