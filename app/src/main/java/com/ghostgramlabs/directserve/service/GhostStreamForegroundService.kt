@@ -226,7 +226,7 @@ class GhostStreamForegroundService : Service() {
                             this,
                             NOTIFICATION_ID,
                             buildNotification(container.sessionManager.sessionState.value),
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,
                         )
                     } catch (e: Exception) {
                         // ── Handle API 31+ Background Start and API 34+ Security Exceptions ──
@@ -275,6 +275,22 @@ class GhostStreamForegroundService : Service() {
             }
         }
         return START_STICKY
+    }
+
+    // connectedDevice has no time limit today, but if the system ever times this service out
+    // it has only a few seconds to stop before ForegroundServiceDidNotStopInTimeException.
+    // Leave the foreground state right away and let the session teardown (which can wait on
+    // the server's grace period) finish after.
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        debugLogRepository.log("ForegroundService", "onTimeout fgsType=$fgsType; stopping sharing")
+        startupInProgress = false
+        cancelActiveNotifications()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        val sharingCoordinator = container.sharingCoordinator
+        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
+            sharingCoordinator.stopSharing()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

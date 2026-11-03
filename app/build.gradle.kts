@@ -29,8 +29,8 @@ android {
         applicationId = "com.ghostgramlabs.directserve"
         minSdk = 26
         targetSdk = 36
-        versionCode = 28
-        versionName = "1.0.26"
+        versionCode = 29
+        versionName = "1.0.27"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -49,12 +49,9 @@ android {
 
     buildTypes {
         release {
-            // R8 minification (any combination of shrinking/optimization/obfuscation)
-            // breaks WebRTC's JNI_OnLoad with a SIGTRAP/RTC_CHECK assertion on
-            // Android 16, even with broad -keep rules for org.webrtc.**. The native
-            // library expects a class layout R8 cannot guarantee. We trade the ~13MB
-            // size benefit for a working Live Screen feature.
-            isMinifyEnabled = false
+            // WebRTC's JNI_OnLoad calls org.jni_zero.JniInit.init() from native code;
+            // proguard-rules.pro must keep org.jni_zero.** or Live Screen aborts on load.
+            isMinifyEnabled = true
             isShrinkResources = false
             ndk {
                 debugSymbolLevel = "FULL"

@@ -340,14 +340,34 @@ class AndroidMediaAnalyzer(
     private fun loadImageThumbnail(uri: Uri, maxSizePx: Int): ByteArray? {
         return runCatching {
             val orientation = readExifOrientation(uri)
+            // Read only the dimensions first so a large photo is never decoded at full resolution.
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             context.contentResolver.openInputStream(uri)?.use { stream ->
-                BitmapFactory.decodeStream(stream)
+                BitmapFactory.decodeStream(stream, null, bounds)
+            }
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
+            val decodeOptions = BitmapFactory.Options().apply {
+                inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, maxSizePx)
+            }
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, decodeOptions)
             }?.let { bitmap ->
                 val oriented = bitmap.applyExifOrientation(orientation)
                 if (oriented !== bitmap) bitmap.recycle()
                 oriented.useScaledJpeg(maxSizePx)
             }
         }.getOrNull()
+    }
+
+    // Largest power-of-two divisor that keeps the decoded image at or above maxSizePx on its
+    // longest edge, so useScaledJpeg still has enough pixels to produce a sharp thumbnail.
+    private fun calculateInSampleSize(width: Int, height: Int, maxSizePx: Int): Int {
+        val longestEdge = maxOf(width, height)
+        var sampleSize = 1
+        while (longestEdge / (sampleSize * 2) >= maxSizePx) {
+            sampleSize *= 2
+        }
+        return sampleSize
     }
 
     private fun loadPdfThumbnail(uri: Uri, maxSizePx: Int): ByteArray? {

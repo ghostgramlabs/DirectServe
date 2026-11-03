@@ -1,10 +1,3 @@
-# NOTE: Minification is currently disabled in app/build.gradle.kts because the
-# webrtc-sdk artifact's native library crashes in JNI_OnLoad on Android 16 when
-# R8 runs (any combination of shrinking/optimization/obfuscation reproduces it,
-# even with broad -keep class org.webrtc.** { *; } rules). Rules below are kept
-# as a record of what was tried so future re-enablement attempts have a starting
-# point. They are inert while isMinifyEnabled = false.
-
 # GhostStream relies on kotlinx serialization and Ktor route data classes.
 -keepclassmembers class kotlinx.serialization.** { *; }
 -keep class kotlinx.serialization.** { *; }
@@ -18,7 +11,17 @@
 -keepclassmembers class io.ktor.** { *; }
 -keepclassmembers class * implements io.ktor.server.engine.ApplicationEngineFactory { *; }
 
-# WebRTC keep rules (insufficient on their own — see note above).
+# WebRTC's native JNI_OnLoad calls the private org.jni_zero.JniInit.init() and
+# methods annotated @CalledByNative. Nothing in Java calls them, so R8 removes them
+# and the native side aborts with an RTC_CHECK. The AAR ships no consumer rules.
+-keep class org.jni_zero.** { *; }
+-keepclassmembers class * {
+    @org.jni_zero.CalledByNative *;
+    @org.jni_zero.CalledByNativeUnchecked *;
+    @org.jni_zero.AccessedByNative *;
+}
+
+# WebRTC keep rules.
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod, Exceptions
 -keep class org.webrtc.** { *; }
 -keep interface org.webrtc.** { *; }

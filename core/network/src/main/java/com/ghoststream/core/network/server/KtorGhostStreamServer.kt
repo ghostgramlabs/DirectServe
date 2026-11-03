@@ -40,6 +40,8 @@ import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
+import io.ktor.server.engine.applicationEngineEnvironment
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.origin
@@ -73,9 +75,11 @@ import java.io.File
 import java.io.InputStream
 import kotlin.io.copyTo
 import java.io.RandomAccessFile
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -144,7 +148,16 @@ class KtorGhostStreamServer(
             )
         }
 
-        val resolvedPort = if (port == 0) nextFreePort() else port
+        // CIO binds inside a background coroutine, so a busy port surfaces as an uncaught
+        // BindException that kills the process instead of failing start(). Probe first and
+        // fall back to a free port when another app (or a stale socket) holds the preferred one.
+        val resolvedPort = when {
+            port == 0 -> nextFreePort()
+            isPortAvailable(port) -> port
+            else -> nextFreePort().also { fallback ->
+                debugLogSink.log("LocalServer", "preferred port=$port busy, falling back to port=$fallback")
+            }
+        }
         val network = networkInspector.inspect()
         val address = network.localAddress ?: "127.0.0.1"
         debugLogSink.log(
@@ -152,15 +165,27 @@ class KtorGhostStreamServer(
             "binding host=0.0.0.0 resolvedPort=$resolvedPort networkType=${network.type} address=$address ready=${network.isReady}",
         )
 
+        val engineFailureHandler = CoroutineExceptionHandler { _, cause ->
+            debugLogSink.log("LocalServer", "engine failure port=$resolvedPort cause=${cause::class.java.simpleName}: ${cause.message}")
+            running.set(false)
+        }
         engine = embeddedServer(
             factory = CIO,
-            port = resolvedPort,
-            host = "0.0.0.0",
+            environment = applicationEngineEnvironment {
+                parentCoroutineContext = engineFailureHandler
+                connector {
+                    this.port = resolvedPort
+                    host = "0.0.0.0"
+                }
+                module {
+                    install(ContentNegotiation) {
+                        json(json)
+                    }
+                    configureRouting()
+                }
+            },
         ) {
-            install(ContentNegotiation) {
-                json(json)
-            }
-            configureRouting()
+            reuseAddress = true
         }.start(wait = false)
         running.set(true)
         debugLogSink.log("LocalServer", "engine started port=$resolvedPort url=http://$address:$resolvedPort")
@@ -3224,6 +3249,15 @@ class KtorGhostStreamServer(
 
     private fun nextFreePort(): Int {
         return ServerSocket(0).use { socket -> socket.localPort }
+    }
+
+    private fun isPortAvailable(port: Int): Boolean {
+        return runCatching {
+            ServerSocket().use { socket ->
+                socket.reuseAddress = true
+                socket.bind(InetSocketAddress("0.0.0.0", port))
+            }
+        }.isSuccess
     }
 
     private fun buildDecisionCacheKey(

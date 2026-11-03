@@ -3,9 +3,14 @@
 User-facing changes to DirectServe, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
-## Unreleased
+## 1.0.27 - 2026-11-03
 
 - DirectServe is now open source under the Apache License 2.0.
+- Long sharing sessions no longer stop or crash after a few hours on Android 15 and newer.
+- Fixed: a crash when another app was already using DirectServe's port. Sharing now picks a
+  free port automatically.
+- Lower memory use when showing previews of large photos.
+- Smaller, faster app download.
 
 ## 1.0.26 - 2026-08-30
 
