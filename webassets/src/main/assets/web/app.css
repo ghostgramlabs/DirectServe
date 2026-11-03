@@ -1,4 +1,4 @@
-/* DirectServe browser UI. Tokens match the Android app (accent #0369A1, cards on a soft grey). */
+/* DirectServe browser UI. Tokens match the Android app (brand teal, cards on a soft grey). */
 
 :root {
   color-scheme: light;
@@ -9,10 +9,10 @@
   --text: #0f172a;
   --text-secondary: #475569;
   --muted: #64748b;
-  --accent: #0369a1;
-  --accent-pressed: #075985;
-  --accent-soft: #e0f2fe;
-  --accent-soft-ink: #0c4a6e;
+  --accent: #0f766e;
+  --accent-pressed: #115e59;
+  --accent-soft: #ccfbf1;
+  --accent-soft-ink: #134e4a;
   --accent-ink: #ffffff;
   --danger: #b91c1c;
   --success: #15803d;
@@ -23,7 +23,7 @@
   --radius: 16px;
   --radius-sm: 12px;
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --plyr-color-main: #0369a1;
+  --plyr-color-main: #0f766e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,10 +36,10 @@
     --text: #e5e7eb;
     --text-secondary: #9ca3af;
     --muted: #8b95a5;
-    --accent: #7dd3fc;
-    --accent-pressed: #38bdf8;
-    --accent-soft: #0c2d48;
-    --accent-soft-ink: #bae6fd;
+    --accent: #5eead4;
+    --accent-pressed: #2dd4bf;
+    --accent-soft: #042f2e;
+    --accent-soft-ink: #99f6e4;
     --accent-ink: #0b1220;
     --danger: #f87171;
     --success: #4ade80;
@@ -48,7 +48,7 @@
     --border-strong: rgba(255, 255, 255, 0.22);
     --stage: #000000;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --plyr-color-main: #7dd3fc;
+    --plyr-color-main: #5eead4;
   }
 }
 
@@ -57,22 +57,22 @@ body.gs-theme-light {
   color-scheme: light;
   --bg: #f6f8fb; --surface: #ffffff; --surface-rgb: 255, 255, 255; --card: #f1f5f9;
   --text: #0f172a; --text-secondary: #475569; --muted: #64748b;
-  --accent: #0369a1; --accent-pressed: #075985; --accent-soft: #e0f2fe; --accent-soft-ink: #0c4a6e; --accent-ink: #ffffff;
+  --accent: #0f766e; --accent-pressed: #115e59; --accent-soft: #ccfbf1; --accent-soft-ink: #134e4a; --accent-ink: #ffffff;
   --danger: #b91c1c; --success: #15803d; --success-soft: #dcfce7;
   --border: #e2e8f0; --border-strong: #cbd5e1; --stage: #0b1220;
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --plyr-color-main: #0369a1;
+  --plyr-color-main: #0f766e;
 }
 
 body.gs-theme-dark {
   color-scheme: dark;
   --bg: #0b0f14; --surface: #111827; --surface-rgb: 17, 24, 39; --card: #1e293b;
   --text: #e5e7eb; --text-secondary: #9ca3af; --muted: #8b95a5;
-  --accent: #7dd3fc; --accent-pressed: #38bdf8; --accent-soft: #0c2d48; --accent-soft-ink: #bae6fd; --accent-ink: #0b1220;
+  --accent: #5eead4; --accent-pressed: #2dd4bf; --accent-soft: #042f2e; --accent-soft-ink: #99f6e4; --accent-ink: #0b1220;
   --danger: #f87171; --success: #4ade80; --success-soft: #0f2a1a;
   --border: rgba(255, 255, 255, 0.10); --border-strong: rgba(255, 255, 255, 0.22); --stage: #000000;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --plyr-color-main: #7dd3fc;
+  --plyr-color-main: #5eead4;
 }
 
 /* ---------- Base ---------- */
@@ -127,8 +127,8 @@ body.gs-is-immersive {
   --surface: #111827; --surface-rgb: 17, 24, 39; --card: #1e293b;
   --text: #f1f5f9; --text-secondary: #cbd5e1; --muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.12); --border-strong: rgba(255, 255, 255, 0.24);
-  --accent: #7dd3fc; --accent-pressed: #38bdf8; --accent-ink: #0b1220;
-  --accent-soft: #0c2d48; --accent-soft-ink: #bae6fd;
+  --accent: #5eead4; --accent-pressed: #2dd4bf; --accent-ink: #0b1220;
+  --accent-soft: #042f2e; --accent-soft-ink: #99f6e4;
   background: #0b1220;
   color: var(--text);
 }
@@ -161,7 +161,7 @@ body.gs-is-immersive {
   height: 34px;
   border-radius: 10px;
   flex-shrink: 0;
-  background: #0369a1 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='18 18 72 72'%3E%3Cpath d='M32 44h26a6 6 0 0 1 6 6v18a6 6 0 0 1-6 6H32a6 6 0 0 1-6-6V50a6 6 0 0 1 6-6z' fill='none' stroke='%23fff' stroke-width='5'/%3E%3Cpath d='M40.5 52.5v13L51 59z' fill='%23fff'/%3E%3Cpath d='M66 34a8 8 0 0 1 8 8' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M66 27a15 15 0 0 1 15 15' fill='none' stroke='%237dd3fc' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% no-repeat;
+  background: #0d9488 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='18 18 72 72'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M50 30.5h28a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H50a4 4 0 0 1-4-4v-22a4 4 0 0 1 4-4zM59 38.5v14l11-7z'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M31.5 48h9a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3V51a3 3 0 0 1 3-3zM34 69.5h4a1 1 0 0 1 0 2h-4a1 1 0 0 1 0-2z'/%3E%3C/svg%3E") center / 100% no-repeat;
 }
 
 .gs-nav-links {
@@ -877,7 +877,7 @@ iframe.gs-preview { background: #fff; }
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
-  box-shadow: 0 10px 30px rgba(3, 105, 161, 0.35);
+  box-shadow: 0 10px 30px rgba(15, 118, 110, 0.35);
   transition: bottom 180ms ease;
 }
 .gs-send-bar:hover { background: var(--accent-pressed); }

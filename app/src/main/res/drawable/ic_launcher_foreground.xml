@@ -1,29 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- DirectServe mark: a screen with a play button, sending signal waves from its corner,
-     i.e. "play it on another screen". Drawn inside the 66dp safe zone (21..87) of 108dp. -->
+<!-- DirectServe mark: a phone handing off to a big screen with a play button. The play triangle
+     and home bar are even-odd holes, so the same paths work for the monochrome and status icons.
+     Fits the 66dp safe zone (21..87) of the 108dp adaptive-icon canvas. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="5"
-        android:pathData="M32,44 L58,44 A6,6 0 0,1 64,50 L64,68 A6,6 0 0,1 58,74 L32,74 A6,6 0 0,1 26,68 L26,50 A6,6 0 0,1 32,44 Z" />
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M50,30.5 h28 a4,4 0 0 1 4,4 v22 a4,4 0 0 1 -4,4 h-28 a4,4 0 0 1 -4,-4 v-22 a4,4 0 0 1 4,-4 z M59,38.5 L59,52.5 L70,45.5 z" />
     <path
         android:fillColor="#FFFFFF"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="3"
-        android:strokeLineJoin="round"
-        android:pathData="M40.5,52.5 L40.5,65.5 L51,59 Z" />
-    <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:pathData="M66,34 A8,8 0 0,1 74,42" />
-    <path
-        android:strokeColor="#7DD3FC"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:pathData="M66,27 A15,15 0 0,1 81,42" />
+        android:fillType="evenOdd"
+        android:pathData="M31.5,48 h9 a3,3 0 0 1 3,3 v21 a3,3 0 0 1 -3,3 h-9 a3,3 0 0 1 -3,-3 v-21 a3,3 0 0 1 3,-3 z M34,69.5 h4 a1,1 0 0 1 0,2 h-4 a1,1 0 0 1 0,-2 z" />
 </vector>

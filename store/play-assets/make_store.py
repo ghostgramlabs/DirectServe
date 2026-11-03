@@ -7,9 +7,11 @@ import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-BLUE = (3, 105, 161)
-BLUE_DARK = (7, 89, 133)
+BLUE = (30, 41, 59)
+BLUE_DARK = (15, 23, 42)
 SKY = (125, 211, 252)
+TEAL = (13, 148, 136)
+TEAL_DARK = (17, 94, 89)
 WHITE = (255, 255, 255)
 FONTS = "C:/Windows/Fonts/"
 
@@ -87,11 +89,11 @@ def laptop(shot: Image.Image, width: int) -> Image.Image:
     return out
 
 
-def background(size):
+def background(size, base=None, shade=None):
     w, h = size
-    bg = Image.new("RGB", size, BLUE)
+    bg = Image.new("RGB", size, base or BLUE)
     d = ImageDraw.Draw(bg)
-    d.ellipse([w * 0.45, h * 0.55, w * 1.5, h * 1.35], fill=BLUE_DARK)
+    d.ellipse([w * 0.45, h * 0.55, w * 1.5, h * 1.35], fill=shade or BLUE_DARK)
     return bg.convert("RGBA")
 
 
@@ -106,7 +108,7 @@ def screenshot(raw: Path, headline: str, sub: str, out: Path) -> None:
         y += 92
     y += 10
     for line in wrap(d, sub, h2, W - 160):
-        d.text((W / 2, y), line, font=h2, fill=(224, 242, 254), anchor="ma")
+        d.text((W / 2, y), line, font=h2, fill=(203, 213, 225), anchor="ma")
         y += 54
     shot = Image.open(raw)
     if shot.width > shot.height:
@@ -123,19 +125,15 @@ def screenshot(raw: Path, headline: str, sub: str, out: Path) -> None:
     canvas.convert("RGB").save(out, "PNG", optimize=True)
 
 
-def mark(draw, ox, oy, s, wave=SKY):
-    """The launcher mark drawn at scale s (108-unit viewport) with origin (ox, oy)."""
+def mark(draw, ox, oy, s, cut=TEAL):
+    """The launcher mark at scale s (108-unit viewport) with origin (ox, oy): a phone handing off
+    to a big screen. The play triangle and home bar are drawn in `cut` so they read as holes."""
     def p(x, y):
         return (ox + x * s, oy + y * s)
-    # Android centres strokes on the path; PIL draws them inside the box, so grow boxes by half.
-    h = 2.5
-    sw = round(5 * s)
-    draw.rounded_rectangle([*p(26 - h, 44 - h), *p(64 + h, 74 + h)], radius=(6 + h) * s, outline=WHITE, width=sw)
-    draw.polygon([p(40.5, 52.5), p(40.5, 65.5), p(51, 59)], fill=WHITE)
-    for r, color in ((8, WHITE), (15, wave)):
-        draw.arc([*p(66 - r - h, 42 - r - h), *p(66 + r + h, 42 + r + h)], 270, 360, fill=color, width=sw)
-        for cx, cy in ((66, 42 - r), (66 + r, 42)):  # round line caps
-            draw.ellipse([*p(cx - h, cy - h), *p(cx + h, cy + h)], fill=color)
+    draw.rounded_rectangle([*p(46, 30.5), *p(82, 60.5)], radius=4 * s, fill=WHITE)
+    draw.polygon([p(59, 38.5), p(59, 52.5), p(70, 45.5)], fill=cut)
+    draw.rounded_rectangle([*p(28.5, 48), *p(43.5, 75)], radius=3 * s, fill=WHITE)
+    draw.rounded_rectangle([*p(33, 69.5), *p(39, 71.5)], radius=1 * s, fill=cut)
 
 
 def icon(out: Path) -> None:
@@ -143,23 +141,21 @@ def icon(out: Path) -> None:
     size, k = 512, 4
     s = size * k / 72
     off = -18 * s  # the visible region starts 18 units into the 108 canvas
-    big = Image.new("RGB", (size * k, size * k), BLUE)
-    d = ImageDraw.Draw(big)
-    d.ellipse([off + 20 * s, off + 20 * s, off + 88 * s, off + 88 * s], fill=(11, 124, 189))
-    mark(d, off, off, s)
+    big = Image.new("RGB", (size * k, size * k), TEAL)
+    mark(ImageDraw.Draw(big), off, off, s)
     big.resize((size, size), Image.LANCZOS).save(out, "PNG")
 
 
 def feature_graphic(home: Path, out: Path) -> None:
     W, H = 1024, 500
-    canvas = background((W, H))
+    canvas = background((W, H), TEAL, TEAL_DARK)
     big = Image.new("RGBA", (W * 2, H * 2), (0, 0, 0, 0))
-    mark(ImageDraw.Draw(big), 40 * 2, 70 * 2, 2.1 * 2)
+    mark(ImageDraw.Draw(big), 10 * 2, 20 * 2, 3.2 * 2)
     canvas.alpha_composite(big.resize((W, H), Image.LANCZOS))
     d = ImageDraw.Draw(canvas)
     d.text((60, 270), "DirectServe", font=font("segoeuib.ttf", 64), fill=WHITE)
-    d.text((62, 352), "Share files and stream videos", font=font("segoeui.ttf", 32), fill=(224, 242, 254))
-    d.text((62, 394), "to any browser on your Wi-Fi", font=font("segoeui.ttf", 32), fill=(224, 242, 254))
+    d.text((62, 352), "Cast to TV, mirror your screen", font=font("segoeui.ttf", 32), fill=(204, 251, 241))
+    d.text((62, 394), "and share files over Wi-Fi", font=font("segoeui.ttf", 32), fill=(204, 251, 241))
     device = phone(Image.open(home), 470)
     canvas.alpha_composite(device.crop((0, 0, device.width, H - 10)), (W - device.width - 30, 20))
     canvas.convert("RGB").save(out, "PNG", optimize=True)

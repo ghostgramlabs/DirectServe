@@ -4,13 +4,17 @@ Copy each block into Play Console → Grow → Store presence → Main store lis
 Claims follow the "Do-Not-Claim" list in `store/PLAYSTORE_LISTING.md` (no cloud, no internet
 access, no "instant playback for every file", no "most secure").
 
+The title and short description carry the most search weight, so they use the terms people search
+for in this category: "cast", "TV", "mirror screen", "file transfer", "WiFi". "File Transfer" alone
+competes head-on with Xender, ShareMe and Send Anywhere; "Share to Browser" has almost no searches.
+
 ## App name (30 max)
 
-DirectServe: Share to Browser
+DirectServe: Cast & File Share
 
 ## Short description (80 max)
 
-Share files, play videos and mirror your screen to any browser on your Wi-Fi.
+Cast to TV, mirror your screen and transfer files over WiFi. No app needed.
 
 ## Full description (4000 max)
 
