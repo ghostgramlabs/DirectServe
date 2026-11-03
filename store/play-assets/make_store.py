@@ -17,8 +17,9 @@ FONTS = "C:/Windows/Fonts/"
 SHOTS = [
     ("home.png", "Share in 2 taps", "Pick what to share, tap Start. That's it."),
     ("session.png", "Scan and open in any browser", "TV, laptop, tablet or phone. No app needed."),
-    ("browser.png", "Watch and download right in the browser", "Videos, photos, music and files."),
-    ("player.png", "Plays straight from your phone", "Direct play first, smart fallback when needed."),
+    ("laptop.png", "Open it on any screen", "The same share on a laptop or TV browser."),
+    ("browser.png", "Watch and download in the browser", "Videos, photos, music and files."),
+    ("player.png", "Plays straight from your phone", "Direct play first, prepared only when needed."),
     ("mirror.png", "Mirror your screen live", "Show anything on a bigger screen."),
     ("library.png", "Always know what you're sharing", "Search, filter, remove in one tap."),
     ("dark.png", "Private and offline", "Everything stays on your own Wi-Fi."),
@@ -70,6 +71,22 @@ def phone(shot: Image.Image, height: int) -> Image.Image:
     return shadow
 
 
+def laptop(shot: Image.Image, width: int) -> Image.Image:
+    """Landscape browser capture on a simple laptop: dark lid, screen, and a base."""
+    bezel = 18
+    screen_w = width - bezel * 2
+    screen = shot.convert("RGB").resize((screen_w, round(shot.height * screen_w / shot.width)), Image.LANCZOS)
+    lid_h = screen.height + bezel * 2
+    base_h = 26
+    out = Image.new("RGBA", (width, lid_h + base_h + 40), (0, 0, 0, 0))
+    d = ImageDraw.Draw(out)
+    d.rounded_rectangle([0, 0, width - 1, lid_h], 26, fill=(15, 23, 42, 255))
+    out.alpha_composite(rounded(screen, 8), (bezel, bezel))
+    d.rounded_rectangle([-40 + 40, lid_h, width - 1, lid_h + base_h], 12, fill=(203, 213, 225, 255))
+    d.rounded_rectangle([width // 2 - 70, lid_h, width // 2 + 70, lid_h + 8], 4, fill=(148, 163, 184, 255))
+    return out
+
+
 def background(size):
     w, h = size
     bg = Image.new("RGB", size, BLUE)
@@ -91,8 +108,18 @@ def screenshot(raw: Path, headline: str, sub: str, out: Path) -> None:
     for line in wrap(d, sub, h2, W - 160):
         d.text((W / 2, y), line, font=h2, fill=(224, 242, 254), anchor="ma")
         y += 54
-    device = phone(Image.open(raw), H - y - 40)
-    canvas.alpha_composite(device, ((W - device.width) // 2, y + 10))
+    shot = Image.open(raw)
+    if shot.width > shot.height:
+        # Laptop near the top, with the phone's QR screen overlapping its corner: "scan here, open there".
+        device = laptop(shot, W - 40)
+        canvas.alpha_composite(device, (20, y + 40))
+        qr = raw.parent / "session.png"
+        if qr.exists():
+            handset = phone(Image.open(qr), H - y - device.height + 260)
+            canvas.alpha_composite(handset, (W - handset.width + 10, H - handset.height + 40))
+    else:
+        device = phone(shot, H - y - 40)
+        canvas.alpha_composite(device, ((W - device.width) // 2, y + 10))
     canvas.convert("RGB").save(out, "PNG", optimize=True)
 
 
