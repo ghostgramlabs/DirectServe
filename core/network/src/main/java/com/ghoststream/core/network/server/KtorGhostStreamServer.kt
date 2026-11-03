@@ -81,6 +81,8 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
@@ -129,6 +131,11 @@ class KtorGhostStreamServer(
     private val playbackOverrideCache = java.util.concurrent.ConcurrentHashMap<String, PlaybackMode>()
     /** Tracks items whose DIRECT playback has failed for the specific client. */
     private val playbackDirectFailedCache = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    /**
+     * Track inspections by file identity. Listing cards re-inspected every video on every
+     * /api/items request (~0.2s each on a mid phone), so a 30-video share took seconds to load.
+     */
+    private val inspectionCache = java.util.concurrent.ConcurrentHashMap<String, com.ghoststream.core.media.MediaInspection>()
     private val thumbnailPlaceholderBytes by lazy { buildThumbnailPlaceholderBytes() }
 
     override suspend fun start(port: Int): ServerBinding {
@@ -679,6 +686,7 @@ class KtorGhostStreamServer(
                 val cards = mutableListOf<BrowserItemCard>()
                 val allowDownloads = !settings.preventDownload
                 val localizedContext = localizedContext()
+                warmInspections(pagedItems)
                 for (item in pagedItems) {
                     cards += BrowserItemCard.from(
                         context = localizedContext,
@@ -2135,6 +2143,36 @@ class KtorGhostStreamServer(
         return context.createConfigurationContext(configuration)
     }
 
+    private fun inspectionKey(item: SharedItem) = "${item.uri}|${item.sizeBytes}|${item.lastModifiedEpochMs}"
+
+    /** Videos whose stored metadata is too thin to decide playback without reading the file. */
+    private fun needsInspection(item: SharedItem): Boolean =
+        item.category == MediaCategory.VIDEO && (
+            item.metadata["video_codec"].isNullOrBlank() ||
+                item.metadata["video_codec"] == "unknown" ||
+                item.metadata["audio_codec"] == "unknown" ||
+                item.metadata["container"].isNullOrBlank()
+            )
+
+    /**
+     * Fills [inspectionCache] for a page of cards a few files at a time, so the first listing of a
+     * large share isn't one inspection after another. Read-only: nothing is prepared or converted.
+     */
+    private suspend fun warmInspections(items: List<SharedItem>) {
+        val pending = items.filter { needsInspection(it) && !inspectionCache.containsKey(inspectionKey(it)) }
+        if (pending.isEmpty()) return
+        val io = Dispatchers.IO.limitedParallelism(4)
+        kotlinx.coroutines.coroutineScope {
+            pending.map { item ->
+                async(io) {
+                    runCatching { mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName) }
+                        .getOrNull()
+                        ?.let { inspectionCache.putIfAbsent(inspectionKey(item), it) }
+                }
+            }.awaitAll()
+        }
+    }
+
     /**
      * Resolves the current compatibility state for a specific item/client combination.
      * 
@@ -2155,17 +2193,15 @@ class KtorGhostStreamServer(
             item.playbackDecision.mode != PlaybackMode.DIRECT &&
             item.playbackDecision.reason.contains("Browser rejected direct playback", ignoreCase = true)
         val refreshedInspection = runCatching {
-            if (
-                item.category == MediaCategory.VIDEO &&
-                (
-                    triggerPreparation ||
-                        item.metadata["video_codec"].isNullOrBlank() ||
-                        item.metadata["video_codec"] == "unknown" ||
-                        item.metadata["audio_codec"] == "unknown" ||
-                        item.metadata["container"].isNullOrBlank()
-                    )
-            ) {
+            if (triggerPreparation && item.category == MediaCategory.VIDEO) {
+                // Preparation re-inspects (the file may have changed in ways size/date miss).
                 mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName)
+                    .also { inspectionCache[inspectionKey(item)] = it }
+            } else if (needsInspection(item)) {
+                // Passive listing reuses the last result.
+                inspectionCache.getOrPut(inspectionKey(item)) {
+                    mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName)
+                }
             } else {
                 null
             }

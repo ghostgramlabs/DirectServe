@@ -347,6 +347,8 @@ class AndroidStorageRepository(
                 playbackDecision = playbackDecision,
                 metadata = buildMap {
                     put("source", uri.authority ?: "local")
+                    // The server re-inspects any video missing container/codec metadata.
+                    put("container", inspection.container.name)
                     inspection.videoTrackMimeType?.let { put("video_codec", it) }
                     inspection.audioTrackMimeType?.let { put("audio_codec", it) }
                     put("browser_safe", inspection.browserSafe.toString())

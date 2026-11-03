@@ -21,6 +21,8 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 - Converted videos keep their original size instead of being enlarged to 1080p, so they are ready
   sooner.
 - Music the browser can't play now says so, with a download option.
+- The video list opens much faster on large shares (about 1.5 s instead of 6 s for 40 videos, then
+  instant).
 - Fixed: reloading the Send or Folders page in the browser showed "not found".
 - Shorter welcome tour (3 pages instead of 8), and simpler Mirror screen, Send text and History
   screens.
