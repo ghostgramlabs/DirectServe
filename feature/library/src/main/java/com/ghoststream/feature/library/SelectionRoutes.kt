@@ -139,6 +139,17 @@ fun BatchSelectRoute(
     onAddGroup: (List<Uri>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // With groups to show, use the multi-select list (tick groups or Select all, then Add selected).
+    if (hasMediaAccess && !isLoading && groups.isNotEmpty()) {
+        BatchSelectScreen(
+            groups = groups,
+            onBack = onBack,
+            onAddGroup = onAddGroup,
+            onRefresh = onRefresh,
+            modifier = modifier,
+        )
+        return
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()

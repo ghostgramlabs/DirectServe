@@ -36,3 +36,7 @@
 # Media3 muxer
 -keep class androidx.media3.muxer.** { *; }
 -dontwarn androidx.media3.muxer.**
+
+# Play in-app review (review-ktx) references a compile-time-only GMS annotation that isn't
+# shipped; nothing uses it at runtime.
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite

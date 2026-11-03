@@ -19,12 +19,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CheckBox
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CreateNewFolder
 import androidx.compose.material.icons.outlined.DeleteSweep
@@ -39,6 +41,7 @@ import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -57,6 +60,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -68,6 +72,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -112,11 +117,18 @@ fun SharedLibraryScreen(
     var overflowExpanded by remember { mutableStateOf(false) }
     var addMenuExpanded by remember { mutableStateOf(false) }
     var showClearAllDialog by rememberSaveable { mutableStateOf(false) }
+    // Selection mode (from the overflow menu): tick items or Select all, then Remove (N).
+    var selectMode by rememberSaveable { mutableStateOf(false) }
+    val selectedKeys = remember { mutableStateListOf<String>() }
 
     val hasLibraryContent = libraryState.items.isNotEmpty() || libraryState.folders.isNotEmpty()
 
     LaunchedEffect(hasLibraryContent) {
-        if (!hasLibraryContent) showClearAllDialog = false
+        if (!hasLibraryContent) {
+            showClearAllDialog = false
+            selectMode = false
+            selectedKeys.clear()
+        }
     }
 
     val categories = listOf("all", "videos", "photos", "music", "files")
@@ -239,7 +251,14 @@ fun SharedLibraryScreen(
                 if (libraryState.folders.isNotEmpty() && selectedCategory == "all" && query.isBlank()) {
                     item { GhostSectionLabel(stringResource(R.string.library_section_folders), modifier = Modifier.padding(top = 8.dp)) }
                     items(libraryState.folders, key = { "folder-" + it.id }) { folder ->
-                        FolderRow(folder = folder, onRemoveFolder = onRemoveFolder)
+                        val key = FOLDER_KEY_PREFIX + folder.id
+                        FolderRow(
+                            folder = folder,
+                            onRemoveFolder = onRemoveFolder,
+                            selectMode = selectMode,
+                            selected = key in selectedKeys,
+                            onToggleSelected = { if (it) selectedKeys.add(key) else selectedKeys.remove(key) },
+                        )
                     }
                 }
 
@@ -265,6 +284,9 @@ fun SharedLibraryScreen(
                             showThumbnails = showThumbnails,
                             onPrepareItem = onPrepareItem,
                             onRemoveItem = onRemoveItem,
+                            selectMode = selectMode,
+                            selected = item.id in selectedKeys,
+                            onToggleSelected = { if (it) selectedKeys.add(item.id) else selectedKeys.remove(item.id) },
                         )
                     }
                 }
@@ -272,7 +294,54 @@ fun SharedLibraryScreen(
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-        Row(
+        if (selectMode) {
+            val allKeys = filteredItems.map { it.id } +
+                if (selectedCategory == "all" && query.isBlank()) libraryState.folders.map { FOLDER_KEY_PREFIX + it.id } else emptyList()
+            val allSelected = allKeys.isNotEmpty() && selectedKeys.containsAll(allKeys)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = GhostSpacing.screenHorizontal, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = {
+                    selectMode = false
+                    selectedKeys.clear()
+                }) {
+                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.common_cancel))
+                }
+                TextButton(onClick = {
+                    if (allSelected) selectedKeys.clear() else {
+                        selectedKeys.clear()
+                        selectedKeys.addAll(allKeys)
+                    }
+                }) {
+                    Text(stringResource(if (allSelected) R.string.web_btn_clear_selection else R.string.web_btn_select_all))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                // Outlined red, not filled: next to the filled brand button a solid red one reads
+                // like another primary action.
+                OutlinedButton(
+                    onClick = {
+                        selectedKeys.forEach { key ->
+                            if (key.startsWith(FOLDER_KEY_PREFIX)) onRemoveFolder(key.removePrefix(FOLDER_KEY_PREFIX)) else onRemoveItem(key)
+                        }
+                        selectedKeys.clear()
+                        selectMode = false
+                    },
+                    enabled = selectedKeys.isNotEmpty(),
+                    modifier = Modifier.heightIn(min = 52.dp),
+                    shape = GhostUi.buttonShape,
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.error),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Icon(Icons.Outlined.DeleteSweep, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.common_remove) + " (" + selectedKeys.size + ")")
+                }
+            }
+        } else Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = GhostSpacing.screenHorizontal, vertical = 12.dp),
@@ -327,6 +396,15 @@ fun SharedLibraryScreen(
                         Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.library_organize_title))
                     }
                     DropdownMenu(expanded = overflowExpanded, onDismissRequest = { overflowExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.web_action_select)) },
+                            leadingIcon = { Icon(Icons.Outlined.CheckBox, contentDescription = null) },
+                            onClick = {
+                                overflowExpanded = false
+                                selectMode = true
+                            },
+                        )
+                        HorizontalDivider()
                         listOf("newest", "name", "size").forEach { option ->
                             DropdownMenuItem(
                                 text = {
@@ -363,15 +441,12 @@ fun SharedLibraryScreen(
             title = { Text(stringResource(R.string.library_clear_all_title)) },
             text = { Text(stringResource(R.string.library_clear_all_body)) },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         showClearAllDialog = false
                         onClearAll()
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    ),
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
                     Text(stringResource(R.string.library_clear_all_action))
                 }
@@ -401,25 +476,36 @@ internal fun LibraryEmptyState(title: String, description: String) {
 }
 
 @Composable
-private fun RowCard(content: @Composable () -> Unit) {
+private fun RowCard(selected: Boolean = false, content: @Composable () -> Unit) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        border = BorderStroke(
+            if (selected) 2.dp else 1.dp,
+            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+        ),
         modifier = Modifier.fillMaxWidth(),
     ) {
         content()
     }
 }
 
+private const val FOLDER_KEY_PREFIX = "folder:"
+
 @Composable
 private fun FolderRow(
     folder: SharedFolder,
     onRemoveFolder: (String) -> Unit,
+    selectMode: Boolean = false,
+    selected: Boolean = false,
+    onToggleSelected: (Boolean) -> Unit = {},
 ) {
-    RowCard {
+    RowCard(selected = selected) {
         Row(
-            modifier = Modifier.heightIn(min = 60.dp).padding(start = 12.dp, end = 4.dp),
+            modifier = Modifier
+                .then(if (selectMode) Modifier.toggleable(value = selected, role = Role.Checkbox, onValueChange = onToggleSelected) else Modifier)
+                .heightIn(min = 60.dp)
+                .padding(start = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Outlined.Folder, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -435,12 +521,16 @@ private fun FolderRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            IconButton(onClick = { onRemoveFolder(folder.id) }) {
-                Icon(
-                    Icons.Outlined.Close,
-                    contentDescription = stringResource(R.string.common_remove) + " " + folder.displayName,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (selectMode) {
+                Checkbox(checked = selected, onCheckedChange = null, modifier = Modifier.padding(12.dp))
+            } else {
+                IconButton(onClick = { onRemoveFolder(folder.id) }) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.common_remove) + " " + folder.displayName,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -453,12 +543,18 @@ private fun LibraryItemRow(
     showThumbnails: Boolean,
     onPrepareItem: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
+    selectMode: Boolean = false,
+    selected: Boolean = false,
+    onToggleSelected: (Boolean) -> Unit = {},
 ) {
     val needsPreparation = item.category == MediaCategory.VIDEO && item.playbackDecision.mode != PlaybackMode.DIRECT
-    RowCard {
+    RowCard(selected = selected) {
         Column {
             Row(
-                modifier = Modifier.heightIn(min = 64.dp).padding(start = 8.dp, end = 4.dp),
+                modifier = Modifier
+                    .then(if (selectMode) Modifier.toggleable(value = selected, role = Role.Checkbox, onValueChange = onToggleSelected) else Modifier)
+                    .heightIn(min = 64.dp)
+                    .padding(start = 8.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LibraryItemVisual(item = item, showThumbnails = showThumbnails)
@@ -479,12 +575,16 @@ private fun LibraryItemRow(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                IconButton(onClick = { onRemoveItem(item.id) }) {
-                    Icon(
-                        Icons.Outlined.Close,
-                        contentDescription = stringResource(R.string.common_remove) + " " + item.displayName,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                if (selectMode) {
+                    Checkbox(checked = selected, onCheckedChange = null, modifier = Modifier.padding(12.dp))
+                } else {
+                    IconButton(onClick = { onRemoveItem(item.id) }) {
+                        Icon(
+                            Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.common_remove) + " " + item.displayName,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             if (needsPreparation) {

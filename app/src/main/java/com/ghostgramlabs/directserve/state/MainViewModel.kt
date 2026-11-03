@@ -92,6 +92,7 @@ class MainViewModel(
     private val _hasAllFilesAccess = MutableStateFlow(false)
     private val _events = MutableSharedFlow<AppEvent>(extraBufferCapacity = 8)
     private var dlnaAnnouncer: DlnaAnnouncer? = null
+    private val reviewPrompter = com.ghostgramlabs.directserve.review.InAppReviewPrompter(application)
 
 
     val events = _events.asSharedFlow()
@@ -471,6 +472,9 @@ class MainViewModel(
     fun requestStopSharing() {
         viewModelScope.launch {
             container.debugLogRepository.log("MainViewModel", "requestStopSharing")
+            // Read before stopping: stopSharing() clears the connected clients and stats.
+            val session = container.sessionManager.sessionState.value
+            val shareWasUseful = session.connectedClients.isNotEmpty() || session.transferStats.totalBytesSent > 0
             dlnaAnnouncer?.stop()
             dlnaAnnouncer = null
             pendingShareAfterNetworkReady.value = false
@@ -478,7 +482,14 @@ class MainViewModel(
             container.sharingCoordinator.stopSharing()
             _events.emit(AppEvent.StopSharingService)
             _events.emit(AppEvent.NavigateHome)
+            if (reviewPrompter.onShareFinished(shareWasUseful)) {
+                _events.emit(AppEvent.RequestInAppReview)
+            }
         }
+    }
+
+    fun logDebug(message: String) {
+        container.debugLogRepository.log("MainViewModel", message)
     }
 
     fun onServiceStartFailure(message: String) {

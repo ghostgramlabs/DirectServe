@@ -133,6 +133,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.webrtc)
+    implementation(libs.play.review.ktx)
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.muxer)
 

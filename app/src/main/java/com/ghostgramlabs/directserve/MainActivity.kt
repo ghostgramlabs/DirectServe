@@ -21,6 +21,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import com.google.android.play.core.ktx.launchReview
+import com.google.android.play.core.ktx.requestReview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -328,6 +330,20 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                     }
                 }
                 AppEvent.StopSharingService -> runCatching { GhostStreamForegroundService.stop(context) }
+                AppEvent.RequestInAppReview -> {
+                    // Play decides whether the sheet actually appears; failures (e.g. a sideloaded
+                    // build without Play) are expected and ignored.
+                    val activity = context as? android.app.Activity
+                    if (activity != null) {
+                        runCatching {
+                            val manager = com.google.android.play.core.review.ReviewManagerFactory.create(activity)
+                            val reviewInfo = manager.requestReview()
+                            manager.launchReview(activity, reviewInfo)
+                        }.onFailure { error ->
+                            viewModel.logDebug("in-app review unavailable: ${error.message}")
+                        }
+                    }
+                }
                 is AppEvent.ShareDebugLog -> {
                     val emailSelector = Intent(Intent.ACTION_SENDTO).apply {
                         data = android.net.Uri.parse("mailto:")
@@ -934,7 +950,7 @@ private fun SplashRoute() {
             Box(
                 modifier = Modifier
                     .size(88.dp)
-                    .background(Color(0xFF0369A1), RoundedCornerShape(22.dp)),
+                    .background(Color(0xFF0D9488), RoundedCornerShape(22.dp)),
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_foreground),

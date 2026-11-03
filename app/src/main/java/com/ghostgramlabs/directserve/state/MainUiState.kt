@@ -55,4 +55,5 @@ sealed interface AppEvent {
     data object RequestLiveScreenPermission : AppEvent
     data class StartLiveScreenService(val resultCode: Int, val permissionData: android.content.Intent) : AppEvent
     data object StopLiveScreenService : AppEvent
+    data object RequestInAppReview : AppEvent
 }

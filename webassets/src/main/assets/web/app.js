@@ -1787,7 +1787,13 @@ function updateSelectionUi() {
     selectCount.textContent = gsStr("web_selection_count", `${count} selected`, count);
   }
   document.querySelectorAll("[data-select-card]").forEach((cardElement) => {
-    cardElement.classList.toggle("is-selected", state.selected.has(cardElement.dataset.selectCard));
+    const selected = state.selected.has(cardElement.dataset.selectCard);
+    cardElement.classList.toggle("is-selected", selected);
+    // Keep the badge text in step too; Select all / Clear used to leave it saying "Select".
+    const toggle = cardElement.querySelector("[data-select-toggle]");
+    if (toggle) {
+      toggle.textContent = selected ? gsStr("web_status_selected", "Selected") : gsStr("web_action_select", "Select");
+    }
   });
 }
 
