@@ -2080,6 +2080,30 @@ function isIosDevice() {
   return ua.includes("Mac") && "ontouchend" in document;
 }
 
+// Phones held upright would show a wide video as a thin strip in fullscreen, so turn the
+// screen to match the video while it is fullscreen. Browsers without the API just ignore it.
+function matchFullscreenOrientation(video) {
+  const orientation = screen.orientation;
+  if (!orientation?.lock) return;
+  if (!video) {
+    try { orientation.unlock(); } catch (_) {}
+    return;
+  }
+  const width = video.videoWidth || 0;
+  const height = video.videoHeight || 0;
+  if (!width || !height) return;
+  orientation.lock(width >= height ? "landscape" : "portrait").catch(() => {});
+}
+
+function fullscreenVideo() {
+  const element = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!element) return null;
+  return element.tagName === "VIDEO" ? element : element.querySelector("video");
+}
+
+document.addEventListener("fullscreenchange", () => matchFullscreenOrientation(fullscreenVideo()));
+document.addEventListener("webkitfullscreenchange", () => matchFullscreenOrientation(fullscreenVideo()));
+
 function toggleVideoFullscreen(video) {
   if (!video) return;
   const wrap = video.closest(".gs-video-wrap");
@@ -2249,6 +2273,9 @@ function hydrateVideoPlayer(item, options = {}) {
     
     state.plyr = new window.Plyr(video, plyrOptions);
     state.plyrItemId = item.id;
+    // Plyr's own fullscreen fallback does not fire fullscreenchange.
+    state.plyr.on("enterfullscreen", () => matchFullscreenOrientation(video));
+    state.plyr.on("exitfullscreen", () => matchFullscreenOrientation(null));
     
     // Explicitly set ratio from metadata if available
     if (item.width && item.height) {
