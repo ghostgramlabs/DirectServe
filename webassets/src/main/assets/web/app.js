@@ -1,8 +1,9 @@
 const app = document.getElementById("app");
 const sessionTitle = app.dataset.title || "DirectServe";
 const sessionSubtitle = app.dataset.subtitle || "Local-only streaming";
-const LIBRARY_BATCH_SIZE = 60;
-const LIBRARY_SHOW_ALL_CONFIRM_THRESHOLD = 500;
+const LIBRARY_PAGE_SIZE = 24;
+const BROWSE_ROW_SIZE = 20;
+const BROWSE_MAX_FOLDER_ROWS = 12;
 const LIBRARY_BULK_FETCH_SIZE = 100;
 const THUMBNAIL_MAX_CONCURRENT = 4;
 const THUMBNAIL_PLACEHOLDER_SRC = "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=";
@@ -17,9 +18,7 @@ const state = {
   libraryCategory: "media",
   libraryTitle: "",
   libraryTotalCount: 0,
-  libraryHasMore: false,
-  libraryLoadingMore: false,
-  libraryShowingAll: false,
+  libraryPage: 1,
   libraryDownloadsAllowed: null,
   nowPlaying: null,
   plyr: null,
@@ -72,17 +71,16 @@ const state = {
   quickTextNotificationPermissionRequested: false,
 };
 
-function libraryCacheKey(category, query, folderId) {
-  return `${category}|${query || ""}|${folderId || ""}`;
+function libraryCacheKey(category, query, folderId, page = 1) {
+  return `${category}|${query || ""}|${folderId || ""}|${page}`;
 }
 
 function saveLibraryScroll() {
   if (!state.libraryCategory || !state.libraryItems.length) return;
-  const key = libraryCacheKey(state.libraryCategory, state.query, state.folderId);
+  const key = libraryCacheKey(state.libraryCategory, state.query, state.folderId, state.libraryPage);
   state.libraryCache.set(key, {
     items: state.libraryItems.slice(),
     totalCount: state.libraryTotalCount,
-    hasMore: state.libraryHasMore,
     allowDownloads: state.libraryDownloadsAllowed,
     scrollY: window.scrollY || window.pageYOffset || 0,
   });
@@ -100,14 +98,55 @@ function syncLibraryDownloadControls() {
   });
 }
 
+/*
+ * Watch progress lives in this browser only, so each viewer gets their own "Continue watching".
+ * Storage can be missing (private windows), in which case the rows simply leave it out.
+ */
+const WATCH_PROGRESS_KEY = "ds.watchProgress";
+const WATCH_PROGRESS_LIMIT = 50;
+
+function readWatchProgress() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(WATCH_PROGRESS_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function recordWatchProgress(itemId, seconds, duration) {
+  if (!itemId || !Number.isFinite(seconds) || !Number.isFinite(duration) || duration <= 0) return;
+  // The first seconds are not worth resuming; nearly finished counts as watched.
+  if (seconds < 5) return;
+  const progress = readWatchProgress();
+  if (seconds > duration * 0.95) {
+    if (!progress[itemId]) return;
+    delete progress[itemId];
+  } else {
+    progress[itemId] = { t: Math.round(seconds), d: Math.round(duration), at: Date.now() };
+  }
+  try {
+    const newest = Object.entries(progress).sort((a, b) => b[1].at - a[1].at).slice(0, WATCH_PROGRESS_LIMIT);
+    localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(Object.fromEntries(newest)));
+  } catch (_) {}
+}
+
+function watchFraction(itemId, progress) {
+  const entry = progress?.[itemId];
+  return entry && entry.d > 0 ? Math.min(1, entry.t / entry.d) : 0;
+}
+
 const routes = {
   "/": () => {
     const e = state.bootstrap?.enabledCategories;
     if (e && !e.videos && !e.photos && !e.music && e.files) {
       return renderLibrary("files", titleForPath("/files"));
-    } else {
+    }
+    // A folder or a search shows a plain grid; otherwise the streaming-style home.
+    if (new URLSearchParams(location.search).get("folderId") || state.query) {
       return renderLibrary("media", titleForPath("/"));
     }
+    return renderBrowse();
   },
   "/login": () => renderLogin(),
   "/videos": () => {
@@ -474,6 +513,7 @@ function startLibraryWatch() {
     if (version === state.libraryVersion || !LIST_ROUTES.has(location.pathname)) return;
     const busy = state.selectMode ||
       document.activeElement?.matches?.("input, textarea") ||
+      (state.rowAudio && !state.rowAudio.paused) ||
       [...document.querySelectorAll("audio, video")].some((m) => !m.paused && !m.ended);
     if (busy) return;
     state.libraryVersion = version;
@@ -484,6 +524,7 @@ function startLibraryWatch() {
       applyBootstrapUi();
       destroyMusicPlayers();
       resetThumbnailLoader();
+      state.libraryCache.clear();
       await (routes[location.pathname] || routes["/"])();
       window.scrollTo(0, scrollY);
     } catch (_) {}
@@ -1342,61 +1383,297 @@ function shell(content, options = {}) {
   renderNowPlayingBar();
 }
 
-function renderHome() {
-  const bootstrap = state.bootstrap;
-  const e = bootstrap?.enabledCategories || { videos: true, photos: true, music: true, files: true };
+const PLAY_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>`;
+const CHEVRON_LEFT = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`;
+const CHEVRON_RIGHT = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>`;
 
-  const allCategories = [
-    { key: "videos", label: gsStr("web_cat_videos", "Videos"), count: bootstrap.categories.videos, href: "/videos" },
-    { key: "photos", label: gsStr("web_cat_photos", "Photos"), count: bootstrap.categories.photos, href: "/photos" },
-    { key: "music", label: gsStr("web_cat_music", "Music"), count: bootstrap.categories.music, href: "/music" },
-    { key: "files", label: gsStr("web_cat_files", "Files"), count: bootstrap.categories.files, href: "/files" },
-  ];
-  const categories = allCategories.filter(c => e[c.key]);
-  const mediaCategories = categories.filter(c => c.key !== "files");
-  const total = categories.reduce((sum, c) => sum + c.count, 0);
-
-  const hasAnyContent = total > 0;
-  const filesEnabled = e.files;
-
+/*
+ * The home page reads like a streaming app: a featured video, then rows to swipe through.
+ * Only thumbnails load here; nothing is prepared until someone presses Play. Rows further
+ * down fetch their items when they scroll into view.
+ */
+async function renderBrowse() {
+  state.libraryCategory = "browse";
+  const counts = state.bootstrap?.categories || {};
   shell(`
-    <section class="gs-hero">
-      <div class="gs-hero-copy">
-        <span class="gs-eyebrow">${total} ${gsStr("web_items", "items")} · ${gsStr("web_hero_stat_shared", "Shared now")}</span>
-        <h1>${gsStr("web_hero_title", "Media")}</h1>
-        <p>${gsStr("web_hero_desc1", "Watch videos, open photos, and play music from this share.")}
-        ${gsStr("web_hero_desc3", "Everything stays on the same local network.")}</p>
+    <div class="gs-browse">
+      <div class="gs-browse-search">
+        <input class="gs-search" id="browseSearch" type="search" placeholder="${esc(gsStr("web_search_placeholder", "Search"))}" value="">
       </div>
-      <div class="gs-hero-actions">
-        ${filesEnabled ? `<a class="gs-btn" data-link href="/files">${gsStr("web_nav_files", "Files")}</a>` : ""}
-        <a class="gs-btn gs-btn-accent" data-link href="/upload">${gsStr("web_send_floating_title", "Send to device")}</a>
-      </div>
-    </section>
-
-    ${categories.length > 0 ? `
-      <section class="gs-category-grid">
-        ${categories.map((category) => `
-          <a class="gs-category-card gs-category-card--icon" data-link href="${category.href}">
-            <span class="gs-category-icon">${CATEGORY_ICONS[category.key] || CATEGORY_ICONS.media}</span>
-            <span class="gs-category-kicker">${category.label}</span>
-            <strong>${category.count}</strong>
-            <span class="gs-category-meta">${gsStr("web_media_open_category", "Open %1$s", category.label)}</span>
-          </a>
-        `).join("")}
-      </section>
-    ` : `<section class="gs-section"><div class="gs-empty">${gsStr("web_media_empty", "No media is shared right now.")}</div></section>`}
-
-    ${bootstrap.recent.length ? `
-      <section class="gs-section">
-        <div class="gs-section-head">
-          <h2>${gsStr("web_recent_title", "Recently added")}</h2>
-          <span class="gs-section-meta">${bootstrap.recent.length} ${gsStr("web_recent_meta", "highlighted items")}</span>
-        </div>
-        <div class="gs-grid">${bootstrap.recent.map((item) => card(item)).join("")}</div>
-      </section>
-    ` : (hasAnyContent ? "" : `<section class="gs-section"><div class="gs-empty">${gsStr("web_media_empty", "No media is shared right now.")}</div></section>`)}
+      <div id="browseHero"><div class="gs-hero-feature gs-hero-feature--loading"></div></div>
+      <div class="gs-browse-rows" id="browseRows">${browseRowMarkup({ title: "" }, "Skeleton", {})}</div>
+    </div>
   `);
-  initDeferredThumbnails(app);
+  bindBrowseSearch();
+
+  const wantVideos = isCategoryEnabled("videos") && counts.videos > 0;
+  const [videosPage, folders] = await Promise.all([
+    wantVideos ? fetchLibraryPage("videos", "", 0, 100) : Promise.resolve({ items: [], totalCount: 0 }),
+    counts.folders > 0 ? api("/api/folders").catch(() => []) : Promise.resolve([]),
+  ]);
+  const rowsRoot = document.getElementById("browseRows");
+  const heroRoot = document.getElementById("browseHero");
+  if (!rowsRoot || !heroRoot) return;
+
+  const videos = videosPage.items;
+  const progress = readWatchProgress();
+  const continueItems = videos
+    .filter((item) => progress[item.id])
+    .sort((a, b) => progress[b.id].at - progress[a.id].at)
+    .slice(0, BROWSE_ROW_SIZE);
+
+  const rows = [];
+  if (continueItems.length) {
+    rows.push({ title: gsStr("web_row_continue", "Continue watching"), items: continueItems });
+  }
+  if (videos.length) {
+    rows.push({ title: gsStr("web_row_new_videos", "New videos"), items: videos.slice(0, BROWSE_ROW_SIZE), href: "/videos" });
+  }
+  (Array.isArray(folders) ? folders : []).slice(0, BROWSE_MAX_FOLDER_ROWS).forEach((folder) => rows.push({
+    title: folder.displayName,
+    source: { category: "media", folderId: folder.id },
+    href: `/?folderId=${encodeURIComponent(folder.id)}&folderName=${encodeURIComponent(folder.displayName)}`,
+  }));
+  if (isCategoryEnabled("photos") && counts.photos > 0) {
+    rows.push({ title: gsStr("web_cat_photos", "Photos"), source: { category: "photos" }, href: "/photos" });
+  }
+  if (isCategoryEnabled("music") && counts.music > 0) {
+    rows.push({ title: gsStr("web_cat_music", "Music"), source: { category: "music" }, href: "/music" });
+  }
+
+  const hero = continueItems[0] || videos[0];
+  heroRoot.innerHTML = hero ? browseHeroMarkup(hero, progress, Boolean(continueItems[0])) : "";
+  if (!rows.length) {
+    rowsRoot.innerHTML = `<div class="gs-empty">${gsStr("web_media_empty", "No media is shared right now.")}</div>`;
+    return;
+  }
+  rowsRoot.innerHTML = rows.map((row, index) => browseRowMarkup(row, index, progress)).join("");
+  rows.forEach((row, index) => bindBrowseRow(row, index, progress));
+  initDeferredThumbnails(rowsRoot);
+}
+
+function bindBrowseSearch() {
+  const input = document.getElementById("browseSearch");
+  if (!input) return;
+  if (state.focusSearch) {
+    state.focusSearch = false;
+    input.focus();
+  }
+  input.addEventListener("input", () => {
+    clearTimeout(state.searchTimer);
+    state.searchTimer = setTimeout(() => {
+      if (!input.value.trim()) return;
+      // Results use the regular grid, which keeps the search box focused.
+      state.query = input.value;
+      state.focusSearch = true;
+      navigate("/", true);
+    }, 300);
+  });
+}
+
+function browseHeroMarkup(item, progress, resuming) {
+  const poster = item.thumbnailUrl ? item.thumbnailUrl.replace(/size=\d+/, "size=640") : null;
+  const entry = progress[item.id];
+  const meta = [item.durationMs ? fmtDur(item.durationMs) : null, fmtBytes(item.sizeBytes)].filter(Boolean);
+  if (resuming && entry) {
+    meta.push(gsStr("web_hero_time_left", "%1$s left", fmtDur(Math.max(0, entry.d - entry.t) * 1000)));
+  }
+  const href = `/player/video/${item.id}`;
+  return `
+    <section class="gs-hero-feature">
+      ${poster ? `<img class="gs-hero-backdrop" src="${poster}" alt="" decoding="async">` : ""}
+      <div class="gs-hero-feature-inner${poster ? "" : " is-text-only"}">
+        <div class="gs-hero-feature-copy">
+          <span class="gs-hero-kicker">${resuming ? gsStr("web_row_continue", "Continue watching") : gsStr("web_hero_newest", "Newest video")}</span>
+          <h1>${esc(item.title)}</h1>
+          <p class="gs-hero-meta">${meta.map(esc).join(" · ")}</p>
+          ${resuming ? `<div class="gs-progress-line"><span style="width:${(watchFraction(item.id, progress) * 100).toFixed(1)}%"></span></div>` : ""}
+          <div class="gs-hero-feature-actions">
+            <a class="gs-btn gs-btn-accent gs-btn-hero" data-link href="${href}">${PLAY_ICON}${resuming ? gsStr("common_resume", "Resume") : gsStr("common_play", "Play")}</a>
+            <a class="gs-btn gs-btn-glass" data-link href="/videos">${gsStr("web_hero_all_videos", "All videos")}</a>
+          </div>
+        </div>
+        ${poster ? `
+          <a class="gs-hero-poster" data-link href="${href}" tabindex="-1" aria-hidden="true">
+            <img src="${poster}" alt="" decoding="async">
+            <span class="gs-card-play"></span>
+          </a>
+        ` : ""}
+      </div>
+    </section>`;
+}
+
+function browseRowMarkup(row, index, progress) {
+  const tiles = row.items
+    ? row.items.map((item) => browseTile(item, progress)).join("")
+    : Array.from({ length: 6 }, () => `<span class="gs-tile gs-tile--skeleton"><span class="gs-tile-media gs-skel"></span><span class="gs-skel gs-skel-line" style="width:70%"></span></span>`).join("");
+  return `
+    <section class="gs-row${row.items ? browseRowShape(row.items) : ""}" id="browseRow${index}">
+      <div class="gs-row-head">
+        <h2>${row.title ? esc(row.title) : `<span class="gs-skel gs-skel-line" style="display:block;width:160px"></span>`}</h2>
+        ${row.href ? `<a class="gs-row-more" data-link href="${row.href}">${gsStr("web_row_see_all", "See all")}${CHEVRON_RIGHT}</a>` : ""}
+      </div>
+      <div class="gs-row-scroller">
+        <button class="gs-row-arrow is-prev" type="button" aria-label="${esc(gsStr("web_row_scroll_back", "Scroll back"))}" hidden>${CHEVRON_LEFT}</button>
+        <div class="gs-row-track">${tiles}</div>
+        <button class="gs-row-arrow is-next" type="button" aria-label="${esc(gsStr("web_row_scroll_forward", "Scroll forward"))}" hidden>${CHEVRON_RIGHT}</button>
+      </div>
+    </section>`;
+}
+
+// Photos and music read better as squares; anything with video uses wide tiles.
+function browseRowShape(items) {
+  return items.length && items.every((item) => item.category === "photo" || item.category === "music")
+    ? " gs-row--square"
+    : "";
+}
+
+function browseTile(item, progress) {
+  const iconKey = { video: "videos", photo: "photos", music: "music" }[item.category] || "files";
+  const thumb = item.thumbnailUrl
+    ? `<img class="gs-card-img" loading="lazy" decoding="async" fetchpriority="low" src="${THUMBNAIL_PLACEHOLDER_SRC}" data-thumb-src="${item.thumbnailUrl}" data-thumb-state="idle" alt="">`
+    : `<span class="gs-tile-placeholder">${CATEGORY_ICONS[iconKey]}</span>`;
+  const fraction = item.category === "video" ? watchFraction(item.id, progress) : 0;
+  const overlay = [
+    item.category === "video" && item.durationMs ? `<span class="gs-card-duration">${fmtDur(item.durationMs)}</span>` : "",
+    fraction ? `<span class="gs-tile-progress"><span style="width:${(fraction * 100).toFixed(1)}%"></span></span>` : "",
+    item.category === "music" ? `<span class="gs-card-play"></span>` : "",
+  ].join("");
+  const body = `<span class="gs-tile-media">${thumb}${overlay}</span><span class="gs-tile-title">${esc(item.title)}</span>`;
+  if (item.category === "music") {
+    return `<button class="gs-tile gs-tile--music" type="button" data-track-src="${esc(item.streamUrl)}" data-track-title="${esc(item.title)}">${body}</button>`;
+  }
+  const href = item.category === "video" ? `/player/video/${item.id}` : `/photo/${item.id}`;
+  return `<a class="gs-tile gs-tile--${item.category}" data-link href="${href}" title="${esc(item.title)}">${body}</a>`;
+}
+
+function bindBrowseRow(row, index, progress) {
+  const section = document.getElementById(`browseRow${index}`);
+  const track = section?.querySelector(".gs-row-track");
+  if (!track) return;
+  const prev = section.querySelector(".is-prev");
+  const next = section.querySelector(".is-next");
+  const syncArrows = () => {
+    prev.hidden = track.scrollLeft <= 4;
+    next.hidden = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
+  };
+  const scrollPage = (direction) => track.scrollBy({ left: direction * track.clientWidth * 0.9, behavior: "smooth" });
+  prev.addEventListener("click", () => scrollPage(-1));
+  next.addEventListener("click", () => scrollPage(1));
+  track.addEventListener("scroll", syncArrows, { passive: true });
+  bindMusicTiles(section);
+  if (!row.source) {
+    syncArrows();
+    return;
+  }
+
+  const load = async () => {
+    try {
+      const page = await fetchLibraryPage(row.source.category, "", 0, BROWSE_ROW_SIZE, row.source.folderId);
+      if (!section.isConnected) return;
+      if (!page.items.length) {
+        section.remove();
+        return;
+      }
+      if (browseRowShape(page.items)) section.classList.add("gs-row--square");
+      track.innerHTML = page.items.map((item) => browseTile(item, progress)).join("");
+      initDeferredThumbnails(track);
+      bindMusicTiles(section);
+      syncArrows();
+    } catch (_) {
+      section.remove();
+    }
+  };
+  if (!("IntersectionObserver" in window)) {
+    load();
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    observer.disconnect();
+    load();
+  }, { rootMargin: "400px 0px" });
+  observer.observe(section);
+}
+
+// Music tiles share one audio element and show in the Now playing bar, like the Music page.
+function bindMusicTiles(root) {
+  root.querySelectorAll(".gs-tile--music").forEach((tile) => {
+    tile.addEventListener("click", () => {
+      const src = tile.dataset.trackSrc;
+      let audio = state.rowAudio;
+      if (audio && audio.dataset.src === src && !audio.paused) {
+        audio.pause();
+        return;
+      }
+      if (!audio) {
+        audio = new Audio();
+        audio.preload = "none";
+        state.rowAudio = audio;
+        const syncTiles = () => document.querySelectorAll(".gs-tile--music").forEach((element) => {
+          element.classList.toggle("is-playing", !audio.paused && element.dataset.trackSrc === audio.dataset.src);
+        });
+        audio.addEventListener("play", syncTiles);
+        audio.addEventListener("pause", () => {
+          syncTiles();
+          clearNowPlaying(audio);
+        });
+        audio.addEventListener("ended", syncTiles);
+        audio.addEventListener("error", () => {
+          syncTiles();
+          clearNowPlaying(audio);
+          showToast(gsStr("web_music_unsupported", "This browser can't play this track. Download it to listen."));
+        });
+      }
+      if (audio.dataset.src !== src) {
+        audio.dataset.src = src;
+        audio.src = src;
+      }
+      audio.play().then(() => setNowPlaying({
+        type: gsStr("web_cat_music", "Music"),
+        title: tile.dataset.trackTitle,
+        element: audio,
+        route: location.pathname,
+      })).catch(() => {});
+    });
+  });
+}
+
+function libraryPageHref(pageNumber) {
+  const params = new URLSearchParams(location.search);
+  if (pageNumber > 1) {
+    params.set("page", String(pageNumber));
+  } else {
+    params.delete("page");
+  }
+  const query = params.toString();
+  return `${location.pathname}${query ? `?${query}` : ""}`;
+}
+
+// Numbered pages with the first, last and nearby pages, so any page is a tap or two away.
+function paginationMarkup(current, total) {
+  const wanted = new Set([1, total, current - 1, current, current + 1]);
+  if (current <= 3) [2, 3, 4].forEach((n) => wanted.add(n));
+  if (current >= total - 2) [total - 1, total - 2, total - 3].forEach((n) => wanted.add(n));
+  const pages = [...wanted].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
+  let numbers = "";
+  let previous = 0;
+  pages.forEach((n) => {
+    if (n - previous > 1) numbers += `<span class="gs-page-gap" aria-hidden="true">…</span>`;
+    numbers += n === current
+      ? `<span class="gs-page is-current" aria-current="page">${n}</span>`
+      : `<a class="gs-page" data-link href="${libraryPageHref(n)}" aria-label="${esc(gsStr("web_page_number", "Page %1$d", n))}">${n}</a>`;
+    previous = n;
+  });
+  const step = (target, icon, label) => target >= 1 && target <= total
+    ? `<a class="gs-page gs-page-step" data-link href="${libraryPageHref(target)}" aria-label="${esc(label)}">${icon}</a>`
+    : `<span class="gs-page gs-page-step is-disabled" aria-hidden="true">${icon}</span>`;
+  return `
+    <nav class="gs-pagination" aria-label="${esc(gsStr("web_pages", "Pages"))}">
+      ${step(current - 1, CHEVRON_LEFT, gsStr("web_page_prev", "Previous page"))}
+      ${numbers}
+      ${step(current + 1, CHEVRON_RIGHT, gsStr("web_page_next", "Next page"))}
+    </nav>`;
 }
 
 async function renderLibrary(category, title) {
@@ -1407,8 +1684,10 @@ async function renderLibrary(category, title) {
   const params = new URLSearchParams(location.search);
   const folderId = params.get("folderId");
   const folderName = params.get("folderName");
+  const page = Math.max(1, Number.parseInt(params.get("page"), 10) || 1);
   state.folderId = folderId;
   state.folderName = folderName;
+  state.libraryPage = page;
   state.libraryDownloadsAllowed = !state.bootstrap?.preventDownload;
 
   const allowDownloads = downloadsAllowedForLibrary();
@@ -1452,38 +1731,48 @@ async function renderLibrary(category, title) {
           </div>
         </div>
       </div>
-      <div class="gs-grid" id="grid">${skeletons(6)}</div>
+      <div class="gs-grid gs-grid--${category}" id="grid">${skeletons(6)}</div>
       <div class="gs-library-footer" id="libraryFooter"></div>
     </section>
   `);
 
-  document.getElementById("libSearch")?.addEventListener("input", (event) => {
+  const searchInput = document.getElementById("libSearch");
+  if (searchInput && state.focusSearch) {
+    state.focusSearch = false;
+    searchInput.focus();
+    searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+  }
+  searchInput?.addEventListener("input", (event) => {
     state.query = event.target.value;
     clearTimeout(state.searchTimer);
     state.searchTimer = setTimeout(async () => {
+      // An empty search on the home page goes back to the rows.
+      if (!state.query.trim() && category === "media" && !folderId) {
+        state.query = "";
+        state.focusSearch = true;
+        navigate("/", true);
+        return;
+      }
       const seq = ++state.searchSeq;
-      state.libraryCache.delete(libraryCacheKey(category, state.query, folderId));
+      state.libraryPage = 1;
+      history.replaceState({}, "", libraryPageHref(1));
       const grid = document.getElementById("grid");
       if (grid) grid.innerHTML = skeletons(6);
-      const page = await fetchLibraryPage(category, state.query, 0, LIBRARY_BATCH_SIZE, folderId);
+      const result = await fetchLibraryPage(category, state.query, 0, LIBRARY_PAGE_SIZE, folderId);
       if (seq !== state.searchSeq) return;
-      state.libraryItems = page.items;
-      state.libraryTotalCount = page.totalCount;
-      state.libraryHasMore = page.hasMore;
-      state.libraryLoadingMore = false;
+      state.libraryItems = result.items;
+      state.libraryTotalCount = result.totalCount;
       renderLibraryGrid();
       syncLibraryDownloadControls();
     }, 300);
   });
 
-  const cacheKey = libraryCacheKey(category, state.query, folderId);
+  const cacheKey = libraryCacheKey(category, state.query, folderId, page);
   const cached = state.libraryCache.get(cacheKey);
   if (cached && cached.items.length) {
     state.libraryItems = cached.items.slice();
     state.libraryTotalCount = cached.totalCount;
-    state.libraryHasMore = cached.hasMore;
     if (typeof cached.allowDownloads === "boolean") state.libraryDownloadsAllowed = cached.allowDownloads;
-    state.libraryLoadingMore = false;
     renderLibraryGrid();
     syncLibraryDownloadControls();
     bindLibraryControls();
@@ -1491,18 +1780,24 @@ async function renderLibrary(category, title) {
     return;
   }
 
-  const page = await fetchLibraryPage(category, state.query, 0, LIBRARY_BATCH_SIZE, folderId);
+  const result = await fetchLibraryPage(category, state.query, (page - 1) * LIBRARY_PAGE_SIZE, LIBRARY_PAGE_SIZE, folderId);
   if (downloadsAllowedForLibrary() && !allowDownloads) {
     renderLibrary(category, title);
     return;
   }
-  state.libraryItems = page.items;
-  state.libraryTotalCount = page.totalCount;
-  state.libraryHasMore = page.hasMore;
-  state.libraryLoadingMore = false;
+  // Removing files can leave a page past the end; show the last one instead.
+  const lastPage = Math.max(1, Math.ceil(result.totalCount / LIBRARY_PAGE_SIZE));
+  if (page > lastPage) {
+    history.replaceState({}, "", libraryPageHref(lastPage));
+    renderLibrary(category, title);
+    return;
+  }
+  state.libraryItems = result.items;
+  state.libraryTotalCount = result.totalCount;
   renderLibraryGrid();
   syncLibraryDownloadControls();
   bindLibraryControls();
+  window.scrollTo(0, 0);
 }
 
 async function renderFolders(title) {
@@ -1678,64 +1973,6 @@ async function fetchAllLibraryItems(category, query, folderId) {
   return items;
 }
 
-async function loadMoreLibraryItems() {
-  if (state.libraryLoadingMore || !state.libraryHasMore) return;
-  state.libraryLoadingMore = true;
-  renderLibraryGrid();
-  try {
-    const page = await fetchLibraryPage(
-      state.libraryCategory,
-      state.query,
-      state.libraryItems.length,
-      LIBRARY_BATCH_SIZE,
-      state.folderId
-    );
-    state.libraryItems = state.libraryItems.concat(page.items);
-    state.libraryTotalCount = page.totalCount;
-    state.libraryHasMore = page.hasMore;
-  } finally {
-    state.libraryLoadingMore = false;
-    renderLibraryGrid();
-    syncLibraryDownloadControls();
-  }
-}
-
-async function loadAllLibraryItems() {
-  if (state.libraryLoadingMore || !state.libraryHasMore) return;
-  const remaining = Math.max(0, (state.libraryTotalCount || 0) - state.libraryItems.length);
-  if (remaining >= LIBRARY_SHOW_ALL_CONFIRM_THRESHOLD) {
-    const message = gsStr(
-      "web_show_all_confirm",
-      "Show all %1$d items? Large libraries may take a moment to render.",
-      remaining,
-    );
-    if (!window.confirm(message)) return;
-  }
-  state.libraryLoadingMore = true;
-  state.libraryShowingAll = true;
-  renderLibraryGrid();
-  try {
-    while (state.libraryHasMore) {
-      const page = await fetchLibraryPage(
-        state.libraryCategory,
-        state.query,
-        state.libraryItems.length,
-        LIBRARY_BATCH_SIZE,
-        state.folderId,
-      );
-      if (!page.items.length) break;
-      state.libraryItems = state.libraryItems.concat(page.items);
-      state.libraryTotalCount = page.totalCount;
-      state.libraryHasMore = page.hasMore;
-    }
-  } finally {
-    state.libraryLoadingMore = false;
-    state.libraryShowingAll = false;
-    renderLibraryGrid();
-    syncLibraryDownloadControls();
-  }
-}
-
 function bindLibraryControls() {
   document.getElementById("selectBtn")?.addEventListener("click", () => {
     state.selectMode = !state.selectMode;
@@ -1746,15 +1983,14 @@ function bindLibraryControls() {
   });
 
   document.getElementById("downloadAllBtn")?.addEventListener("click", async () => {
-    const items = state.libraryHasMore
+    const items = state.libraryTotalCount > state.libraryItems.length
       ? await fetchAllLibraryItems(state.libraryCategory, state.query, state.folderId)
       : state.libraryItems;
     downloadItems(items);
   });
 
   document.getElementById("selectAllBtn")?.addEventListener("click", () => {
-    // Select only what is currently loaded to avoid massive background fetches.
-    // The user can load more if they need more.
+    // Select the page on screen; selections carry over as the viewer moves between pages.
     state.libraryItems.forEach((item) => state.selected.add(item.id));
     updateSelectionUi();
   });
@@ -1850,35 +2086,19 @@ function renderLibraryGrid() {
     return;
   }
 
+  state.watchProgress = readWatchProgress();
   grid.innerHTML = state.libraryItems.map((item) => card(item, true)).join("");
-  const showingCount = gsStr(
-    "web_library_showing_count",
-    "Showing %1$d of %2$d",
-    state.libraryItems.length,
-    state.libraryTotalCount,
-  );
-  const loadMoreLabel = state.libraryLoadingMore && !state.libraryShowingAll
-    ? gsStr("web_player_status_opening", "Preparing")
-    : gsStr("web_btn_load_more", "Load more");
-  const showAllLabel = state.libraryShowingAll
-    ? gsStr("web_btn_showing_all", "Loading all…")
-    : gsStr("web_btn_show_all", "Show all");
-  footer.innerHTML = state.libraryHasMore
-    ? `
-      <span class="gs-meta">${showingCount}</span>
-      <div class="gs-toolbar-actions">
-        <button class="gs-btn" id="loadMoreBtn" ${state.libraryLoadingMore ? "disabled" : ""}>${loadMoreLabel}</button>
-        <button class="gs-btn" id="showAllBtn" ${state.libraryLoadingMore ? "disabled" : ""}>${showAllLabel}</button>
-      </div>
-    `
-    : `<span class="gs-meta">${showingCount}</span>`;
+  const totalPages = Math.max(1, Math.ceil(state.libraryTotalCount / LIBRARY_PAGE_SIZE));
+  const first = (state.libraryPage - 1) * LIBRARY_PAGE_SIZE + 1;
+  footer.innerHTML = `
+    ${totalPages > 1 ? paginationMarkup(state.libraryPage, totalPages) : ""}
+    <span class="gs-meta">${gsStr("web_page_range", "%1$d–%2$d of %3$d", first, first + state.libraryItems.length - 1, state.libraryTotalCount)}</span>
+  `;
 
   attachMusicPlayers();
   initDeferredThumbnails(grid);
   bindSelectableCards();
   updateSelectionUi();
-  document.getElementById("loadMoreBtn")?.addEventListener("click", loadMoreLibraryItems);
-  document.getElementById("showAllBtn")?.addEventListener("click", loadAllLibraryItems);
 }
 
 function downloadItems(items) {
@@ -2258,6 +2478,31 @@ function hydrateVideoPlayer(item, options = {}) {
         video.play().catch(() => {});
       }
     }, { once: true });
+  }
+
+  // Remember where the viewer stops, for Continue watching. Only for sources that are the whole
+  // file: a converted stream can restart its clock after a seek.
+  const tracksWholeTimeline = selectedSource.kind === "direct" ||
+    (selectedSource.kind === "prepared_mp4" && Boolean(item.compatibilityComplete));
+  if (tracksWholeTimeline) {
+    const totalSeconds = () => (item.durationMs ? item.durationMs / 1000 : video.duration);
+    let lastSavedAt = 0;
+    const save = (force) => {
+      if (!force && Date.now() - lastSavedAt < 5000) return;
+      lastSavedAt = Date.now();
+      recordWatchProgress(item.id, video.currentTime, totalSeconds());
+    };
+    video.addEventListener("timeupdate", () => save(false));
+    video.addEventListener("pause", () => save(true));
+    video.addEventListener("ended", () => recordWatchProgress(item.id, totalSeconds(), totalSeconds()));
+    const resumeAt = readWatchProgress()[item.id]?.t;
+    if (!(Number.isFinite(pendingSeekOffset) && pendingSeekOffset >= 0) && resumeAt > 0) {
+      const resume = () => {
+        if (video.currentTime < 1) video.currentTime = resumeAt;
+      };
+      if (video.readyState >= 1) resume();
+      else video.addEventListener("loadedmetadata", resume, { once: true });
+    }
   }
 
   if (!useNativePlayer && typeof window.Plyr === "function") {
@@ -3164,27 +3409,9 @@ function card(item, selectable = false) {
   const downloadBtnClass = state.bootstrap?.prominentDownloadButton
     ? "gs-btn gs-btn-download gs-btn-sm gs-btn-square"
     : "gs-btn gs-btn-sm gs-btn-square";
+  // Videos play from the picture like a streaming app, so they need no separate button.
   const action = item.category === "video"
-    ? (() => {
-        if (
-          item.playbackMode === "DIRECT" ||
-          item.compatibilityStatus === "READY" ||
-          item.compatibilityStatus === "PLAYABLE_NOW" ||
-          item.effectivePlaybackMode === "PREPARED_MP4" ||
-          item.effectivePlaybackMode === "LIVE_HLS"
-        ) {
-          return `<a class="${actionBtnClass}" data-link href="/player/video/${item.id}">${gsStr("common_play", "Play")}</a>`;
-        }
-        if (item.compatibilityStatus === "FAILED" || item.compatibilityStatus === "STALLED") {
-          return `<a class="${actionBtnClass}" data-link href="/player/video/${item.id}">${gsStr("web_player_try_again", "Retry")}</a>`;
-        }
-        if (isPreparationActiveStatus(item.compatibilityStatus)) {
-          return `<span class="${actionBtnClass}" aria-disabled="true">${gsStr("web_player_status_opening", "Preparing")}</span>`;
-        }
-        // Opening the player is not a prepare request: if this browser can't play the file
-        // directly, the player page offers "Prepare for browser" itself.
-        return `<a class="${actionBtnClass}" data-link href="/player/video/${item.id}">${gsStr("common_play", "Play")}</a>`;
-      })()
+    ? ""
     : item.category === "photo"
       ? `<a class="${actionBtnClass}" data-link href="/photo/${item.id}">${gsStr("web_photo_view", "View")}</a>`
       : item.category === "music"
@@ -3199,9 +3426,11 @@ function card(item, selectable = false) {
   const thumb = item.thumbnailUrl
     ? `<img class="gs-card-img" loading="lazy" decoding="async" fetchpriority="low" src="${THUMBNAIL_PLACEHOLDER_SRC}" data-thumb-src="${item.thumbnailUrl}" data-thumb-state="idle" alt="">`
     : `<div class="gs-card-img gs-card-placeholder">${item.category === "music" ? CATEGORY_ICONS.music : CATEGORY_ICONS.files || ""}<span>${item.category === "file" ? fileTypeLabel(item.mimeType, item.title) : esc(gsStr(item.category === "music" ? "web_cat_music" : "web_cat_files", item.category))}</span></div>`;
+  const watched = item.category === "video" ? watchFraction(item.id, state.watchProgress) : 0;
   const thumbOverlay = item.category === "video"
-    ? `<span class="gs-card-play" aria-hidden="true"></span>${item.durationMs ? `<span class="gs-card-duration">${fmtDur(item.durationMs)}</span>` : ""}`
+    ? `<span class="gs-card-play" aria-hidden="true"></span>${item.durationMs ? `<span class="gs-card-duration">${fmtDur(item.durationMs)}</span>` : ""}${watched ? `<span class="gs-tile-progress"><span style="width:${(watched * 100).toFixed(1)}%"></span></span>` : ""}`
     : "";
+  const titleText = esc(item.title);
 
   return `
     <article class="gs-card gs-card--${item.category}${selectable && state.selectMode ? " gs-card-selectable" : ""}${state.selected.has(item.id) ? " is-selected" : ""}" data-select-card="${selectable ? item.id : ""}">
@@ -3210,7 +3439,7 @@ function card(item, selectable = false) {
         ? `<a class="gs-card-thumb" data-link href="${openHref}" tabindex="-1" aria-hidden="true">${thumb}${thumbOverlay}</a>`
         : `<div class="gs-card-thumb">${thumb}${thumbOverlay}</div>`}
       <div class="gs-card-body">
-        <div class="gs-card-title">${esc(item.title)}</div>
+        <div class="gs-card-title">${openHref && !state.selectMode ? `<a data-link href="${openHref}">${titleText}</a>` : titleText}</div>
         <div class="gs-meta">${fmtBytes(item.sizeBytes)}${item.durationMs && item.category !== "video" ? ` · ${fmtDur(item.durationMs)}` : ""}</div>
         ${renderCardProgress(item)}
         ${item.category === "music" ? `
@@ -3584,6 +3813,7 @@ function getUploadDisplayFiles() {
 }
 
 function destroyMusicPlayers() {
+  state.rowAudio?.pause();
   state.musicPlayers.forEach((player) => {
     try {
       player.destroy();

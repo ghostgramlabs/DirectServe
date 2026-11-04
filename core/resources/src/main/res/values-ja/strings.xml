@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">%d 件追加しました</item>
     </plurals>
+    <string name="web_row_continue">続きを見る</string>
+    <string name="web_row_new_videos">新しい動画</string>
+    <string name="web_row_see_all">すべて表示</string>
+    <string name="web_row_scroll_back">前へスクロール</string>
+    <string name="web_row_scroll_forward">次へスクロール</string>
+    <string name="web_hero_newest">最新の動画</string>
+    <string name="web_hero_all_videos">すべての動画</string>
+    <string name="web_hero_time_left">残り %1$s</string>
+    <string name="web_page_range">%1$d～%2$d / %3$d 件</string>
+    <string name="web_page_number">%1$d ページ</string>
+    <string name="web_page_prev">前のページ</string>
+    <string name="web_page_next">次のページ</string>
+    <string name="web_pages">ページ</string>
 </resources>

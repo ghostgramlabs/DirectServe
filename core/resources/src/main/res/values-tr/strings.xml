@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">%d öğe eklendi</item>
     </plurals>
+    <string name="web_row_continue">İzlemeye devam et</string>
+    <string name="web_row_new_videos">Yeni videolar</string>
+    <string name="web_row_see_all">Tümünü gör</string>
+    <string name="web_row_scroll_back">Geri kaydır</string>
+    <string name="web_row_scroll_forward">İleri kaydır</string>
+    <string name="web_hero_newest">En yeni video</string>
+    <string name="web_hero_all_videos">Tüm videolar</string>
+    <string name="web_hero_time_left">%1$s kaldı</string>
+    <string name="web_page_range">%1$d–%2$d / %3$d</string>
+    <string name="web_page_number">Sayfa %1$d</string>
+    <string name="web_page_prev">Önceki sayfa</string>
+    <string name="web_page_next">Sonraki sayfa</string>
+    <string name="web_pages">Sayfalar</string>
 </resources>

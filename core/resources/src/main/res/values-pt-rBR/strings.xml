@@ -1031,4 +1031,17 @@
         <item quantity="one">%d item adicionado</item>
         <item quantity="other">%d itens adicionados</item>
     </plurals>
+    <string name="web_row_continue">Continuar assistindo</string>
+    <string name="web_row_new_videos">Vídeos novos</string>
+    <string name="web_row_see_all">Ver tudo</string>
+    <string name="web_row_scroll_back">Rolar para trás</string>
+    <string name="web_row_scroll_forward">Rolar para frente</string>
+    <string name="web_hero_newest">Vídeo mais recente</string>
+    <string name="web_hero_all_videos">Todos os vídeos</string>
+    <string name="web_hero_time_left">Faltam %1$s</string>
+    <string name="web_page_range">%1$d–%2$d de %3$d</string>
+    <string name="web_page_number">Página %1$d</string>
+    <string name="web_page_prev">Página anterior</string>
+    <string name="web_page_next">Próxima página</string>
+    <string name="web_pages">Páginas</string>
 </resources>

@@ -1031,4 +1031,17 @@
         <item quantity="one">Добавлен %d элемент</item>
         <item quantity="other">Добавлено элементов: %d</item>
     </plurals>
+    <string name="web_row_continue">Продолжить просмотр</string>
+    <string name="web_row_new_videos">Новые видео</string>
+    <string name="web_row_see_all">Показать все</string>
+    <string name="web_row_scroll_back">Прокрутить назад</string>
+    <string name="web_row_scroll_forward">Прокрутить вперёд</string>
+    <string name="web_hero_newest">Самое новое видео</string>
+    <string name="web_hero_all_videos">Все видео</string>
+    <string name="web_hero_time_left">Осталось %1$s</string>
+    <string name="web_page_range">%1$d–%2$d из %3$d</string>
+    <string name="web_page_number">Страница %1$d</string>
+    <string name="web_page_prev">Предыдущая страница</string>
+    <string name="web_page_next">Следующая страница</string>
+    <string name="web_pages">Страницы</string>
 </resources>

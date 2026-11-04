@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">已添加 %d 项</item>
     </plurals>
+    <string name="web_row_continue">继续观看</string>
+    <string name="web_row_new_videos">新视频</string>
+    <string name="web_row_see_all">查看全部</string>
+    <string name="web_row_scroll_back">向后滚动</string>
+    <string name="web_row_scroll_forward">向前滚动</string>
+    <string name="web_hero_newest">最新视频</string>
+    <string name="web_hero_all_videos">所有视频</string>
+    <string name="web_hero_time_left">剩余 %1$s</string>
+    <string name="web_page_range">第 %1$d–%2$d 项，共 %3$d 项</string>
+    <string name="web_page_number">第 %1$d 页</string>
+    <string name="web_page_prev">上一页</string>
+    <string name="web_page_next">下一页</string>
+    <string name="web_pages">页面</string>
 </resources>

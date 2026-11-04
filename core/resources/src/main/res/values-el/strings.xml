@@ -1031,4 +1031,17 @@
         <item quantity="one">Προστέθηκε %d στοιχείο</item>
         <item quantity="other">Προστέθηκαν %d στοιχεία</item>
     </plurals>
+    <string name="web_row_continue">Συνέχεια παρακολούθησης</string>
+    <string name="web_row_new_videos">Νέα βίντεο</string>
+    <string name="web_row_see_all">Προβολή όλων</string>
+    <string name="web_row_scroll_back">Κύλιση πίσω</string>
+    <string name="web_row_scroll_forward">Κύλιση εμπρός</string>
+    <string name="web_hero_newest">Νεότερο βίντεο</string>
+    <string name="web_hero_all_videos">Όλα τα βίντεο</string>
+    <string name="web_hero_time_left">Απομένουν %1$s</string>
+    <string name="web_page_range">%1$d–%2$d από %3$d</string>
+    <string name="web_page_number">Σελίδα %1$d</string>
+    <string name="web_page_prev">Προηγούμενη σελίδα</string>
+    <string name="web_page_next">Επόμενη σελίδα</string>
+    <string name="web_pages">Σελίδες</string>
 </resources>

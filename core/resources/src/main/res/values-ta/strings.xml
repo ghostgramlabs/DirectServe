@@ -1031,4 +1031,17 @@
         <item quantity="one">%d உருப்படி சேர்க்கப்பட்டது</item>
         <item quantity="other">%d உருப்படிகள் சேர்க்கப்பட்டன</item>
     </plurals>
+    <string name="web_row_continue">தொடர்ந்து பார்க்க</string>
+    <string name="web_row_new_videos">புதிய வீடியோக்கள்</string>
+    <string name="web_row_see_all">அனைத்தையும் காண்க</string>
+    <string name="web_row_scroll_back">பின்னோக்கி உருட்டு</string>
+    <string name="web_row_scroll_forward">முன்னோக்கி உருட்டு</string>
+    <string name="web_hero_newest">புதிய வீடியோ</string>
+    <string name="web_hero_all_videos">அனைத்து வீடியோக்கள்</string>
+    <string name="web_hero_time_left">%1$s மீதம்</string>
+    <string name="web_page_range">%3$d இல் %1$d–%2$d</string>
+    <string name="web_page_number">பக்கம் %1$d</string>
+    <string name="web_page_prev">முந்தைய பக்கம்</string>
+    <string name="web_page_next">அடுத்த பக்கம்</string>
+    <string name="web_pages">பக்கங்கள்</string>
 </resources>

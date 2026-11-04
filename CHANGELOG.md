@@ -13,6 +13,10 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
   choose, with no extra confirm screen. "+ Add" lists every way to add, and you see how many
   items were added.
 - While sharing, files you add or remove on the phone update in the browser on their own.
+- New browser home in the style of a streaming app: a featured video with Play, then rows to swipe
+  through (Continue watching, New videos, each shared folder, Photos, Music) with See all.
+- Continue watching: the browser remembers where you stopped and Resume picks up from there.
+- Video, photo and music pages use numbered pages (24 per page) instead of Load more.
 - Wide videos turn the phone to landscape when played full screen in the browser.
 - The share address always fits on one line, and menus and popups match the app's colours.
 - DirectServe may ask for a rating after a couple of successful shares (at most once every few

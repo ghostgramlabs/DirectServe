@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">Đã thêm %d mục</item>
     </plurals>
+    <string name="web_row_continue">Xem tiếp</string>
+    <string name="web_row_new_videos">Video mới</string>
+    <string name="web_row_see_all">Xem tất cả</string>
+    <string name="web_row_scroll_back">Cuộn lại</string>
+    <string name="web_row_scroll_forward">Cuộn tới</string>
+    <string name="web_hero_newest">Video mới nhất</string>
+    <string name="web_hero_all_videos">Tất cả video</string>
+    <string name="web_hero_time_left">Còn %1$s</string>
+    <string name="web_page_range">%1$d–%2$d trong số %3$d</string>
+    <string name="web_page_number">Trang %1$d</string>
+    <string name="web_page_prev">Trang trước</string>
+    <string name="web_page_next">Trang sau</string>
+    <string name="web_pages">Các trang</string>
 </resources>

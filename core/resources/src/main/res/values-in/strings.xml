@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">%d item ditambahkan</item>
     </plurals>
+    <string name="web_row_continue">Lanjutkan menonton</string>
+    <string name="web_row_new_videos">Video baru</string>
+    <string name="web_row_see_all">Lihat semua</string>
+    <string name="web_row_scroll_back">Gulir mundur</string>
+    <string name="web_row_scroll_forward">Gulir maju</string>
+    <string name="web_hero_newest">Video terbaru</string>
+    <string name="web_hero_all_videos">Semua video</string>
+    <string name="web_hero_time_left">Sisa %1$s</string>
+    <string name="web_page_range">%1$d–%2$d dari %3$d</string>
+    <string name="web_page_number">Halaman %1$d</string>
+    <string name="web_page_prev">Halaman sebelumnya</string>
+    <string name="web_page_next">Halaman berikutnya</string>
+    <string name="web_pages">Halaman</string>
 </resources>

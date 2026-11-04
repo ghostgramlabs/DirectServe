@@ -1031,4 +1031,17 @@
         <item quantity="one">%d objekt har lagts till</item>
         <item quantity="other">%d objekt har lagts till</item>
     </plurals>
+    <string name="web_row_continue">Fortsätt titta</string>
+    <string name="web_row_new_videos">Nya videor</string>
+    <string name="web_row_see_all">Visa alla</string>
+    <string name="web_row_scroll_back">Rulla bakåt</string>
+    <string name="web_row_scroll_forward">Rulla framåt</string>
+    <string name="web_hero_newest">Senaste videon</string>
+    <string name="web_hero_all_videos">Alla videor</string>
+    <string name="web_hero_time_left">%1$s kvar</string>
+    <string name="web_page_range">%1$d–%2$d av %3$d</string>
+    <string name="web_page_number">Sida %1$d</string>
+    <string name="web_page_prev">Föregående sida</string>
+    <string name="web_page_next">Nästa sida</string>
+    <string name="web_pages">Sidor</string>
 </resources>

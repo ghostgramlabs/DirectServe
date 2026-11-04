@@ -1031,4 +1031,17 @@
         <item quantity="one">تمت إضافة عنصر واحد</item>
         <item quantity="other">تمت إضافة %d عنصر</item>
     </plurals>
+    <string name="web_row_continue">متابعة المشاهدة</string>
+    <string name="web_row_new_videos">فيديوهات جديدة</string>
+    <string name="web_row_see_all">عرض الكل</string>
+    <string name="web_row_scroll_back">التمرير للخلف</string>
+    <string name="web_row_scroll_forward">التمرير للأمام</string>
+    <string name="web_hero_newest">أحدث فيديو</string>
+    <string name="web_hero_all_videos">كل الفيديوهات</string>
+    <string name="web_hero_time_left">متبقٍ %1$s</string>
+    <string name="web_page_range">%1$d–%2$d من %3$d</string>
+    <string name="web_page_number">الصفحة %1$d</string>
+    <string name="web_page_prev">الصفحة السابقة</string>
+    <string name="web_page_next">الصفحة التالية</string>
+    <string name="web_pages">الصفحات</string>
 </resources>

@@ -1031,4 +1031,17 @@
         <item quantity="one">%d आइटम जोड़ा गया</item>
         <item quantity="other">%d आइटम जोड़े गए</item>
     </plurals>
+    <string name="web_row_continue">देखना जारी रखें</string>
+    <string name="web_row_new_videos">नए वीडियो</string>
+    <string name="web_row_see_all">सभी देखें</string>
+    <string name="web_row_scroll_back">पीछे स्क्रॉल करें</string>
+    <string name="web_row_scroll_forward">आगे स्क्रॉल करें</string>
+    <string name="web_hero_newest">सबसे नया वीडियो</string>
+    <string name="web_hero_all_videos">सभी वीडियो</string>
+    <string name="web_hero_time_left">%1$s बाकी</string>
+    <string name="web_page_range">%3$d में से %1$d–%2$d</string>
+    <string name="web_page_number">पेज %1$d</string>
+    <string name="web_page_prev">पिछला पेज</string>
+    <string name="web_page_next">अगला पेज</string>
+    <string name="web_pages">पेज</string>
 </resources>

@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">เพิ่ม %d รายการแล้ว</item>
     </plurals>
+    <string name="web_row_continue">ดูต่อ</string>
+    <string name="web_row_new_videos">วิดีโอใหม่</string>
+    <string name="web_row_see_all">ดูทั้งหมด</string>
+    <string name="web_row_scroll_back">เลื่อนกลับ</string>
+    <string name="web_row_scroll_forward">เลื่อนไปข้างหน้า</string>
+    <string name="web_hero_newest">วิดีโอล่าสุด</string>
+    <string name="web_hero_all_videos">วิดีโอทั้งหมด</string>
+    <string name="web_hero_time_left">เหลือ %1$s</string>
+    <string name="web_page_range">%1$d–%2$d จาก %3$d</string>
+    <string name="web_page_number">หน้า %1$d</string>
+    <string name="web_page_prev">หน้าก่อนหน้า</string>
+    <string name="web_page_next">หน้าถัดไป</string>
+    <string name="web_pages">หน้า</string>
 </resources>

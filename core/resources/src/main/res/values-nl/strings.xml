@@ -1031,4 +1031,17 @@
         <item quantity="one">%d item toegevoegd</item>
         <item quantity="other">%d items toegevoegd</item>
     </plurals>
+    <string name="web_row_continue">Verder kijken</string>
+    <string name="web_row_new_videos">Nieuwe video\'s</string>
+    <string name="web_row_see_all">Alles bekijken</string>
+    <string name="web_row_scroll_back">Terug scrollen</string>
+    <string name="web_row_scroll_forward">Verder scrollen</string>
+    <string name="web_hero_newest">Nieuwste video</string>
+    <string name="web_hero_all_videos">Alle video\'s</string>
+    <string name="web_hero_time_left">Nog %1$s</string>
+    <string name="web_page_range">%1$d–%2$d van %3$d</string>
+    <string name="web_page_number">Pagina %1$d</string>
+    <string name="web_page_prev">Vorige pagina</string>
+    <string name="web_page_next">Volgende pagina</string>
+    <string name="web_pages">Pagina\'s</string>
 </resources>

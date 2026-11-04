@@ -1031,4 +1031,17 @@
         <item quantity="one">%d అంశం జోడించబడింది</item>
         <item quantity="other">%d అంశాలు జోడించబడ్డాయి</item>
     </plurals>
+    <string name="web_row_continue">చూడటం కొనసాగించండి</string>
+    <string name="web_row_new_videos">కొత్త వీడియోలు</string>
+    <string name="web_row_see_all">అన్నీ చూడండి</string>
+    <string name="web_row_scroll_back">వెనక్కి స్క్రోల్ చేయండి</string>
+    <string name="web_row_scroll_forward">ముందుకు స్క్రోల్ చేయండి</string>
+    <string name="web_hero_newest">తాజా వీడియో</string>
+    <string name="web_hero_all_videos">అన్ని వీడియోలు</string>
+    <string name="web_hero_time_left">%1$s మిగిలి ఉంది</string>
+    <string name="web_page_range">%3$dలో %1$d–%2$d</string>
+    <string name="web_page_number">పేజీ %1$d</string>
+    <string name="web_page_prev">మునుపటి పేజీ</string>
+    <string name="web_page_next">తదుపరి పేజీ</string>
+    <string name="web_pages">పేజీలు</string>
 </resources>

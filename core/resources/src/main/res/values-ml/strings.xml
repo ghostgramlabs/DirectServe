@@ -1031,4 +1031,17 @@
         <item quantity="one">%d ഇനം ചേർത്തു</item>
         <item quantity="other">%d ഇനങ്ങൾ ചേർത്തു</item>
     </plurals>
+    <string name="web_row_continue">കാണുന്നത് തുടരുക</string>
+    <string name="web_row_new_videos">പുതിയ വീഡിയോകൾ</string>
+    <string name="web_row_see_all">എല്ലാം കാണുക</string>
+    <string name="web_row_scroll_back">പിന്നിലേക്ക് സ്ക്രോൾ ചെയ്യുക</string>
+    <string name="web_row_scroll_forward">മുന്നോട്ട് സ്ക്രോൾ ചെയ്യുക</string>
+    <string name="web_hero_newest">ഏറ്റവും പുതിയ വീഡിയോ</string>
+    <string name="web_hero_all_videos">എല്ലാ വീഡിയോകളും</string>
+    <string name="web_hero_time_left">%1$s ബാക്കി</string>
+    <string name="web_page_range">%3$d-ൽ %1$d–%2$d</string>
+    <string name="web_page_number">പേജ് %1$d</string>
+    <string name="web_page_prev">മുമ്പത്തെ പേജ്</string>
+    <string name="web_page_next">അടുത്ത പേജ്</string>
+    <string name="web_pages">പേജുകൾ</string>
 </resources>

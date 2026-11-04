@@ -1030,4 +1030,17 @@
     <plurals name="library_added_items">
         <item quantity="other">%d개 항목을 추가했습니다</item>
     </plurals>
+    <string name="web_row_continue">이어서 보기</string>
+    <string name="web_row_new_videos">새 동영상</string>
+    <string name="web_row_see_all">모두 보기</string>
+    <string name="web_row_scroll_back">뒤로 스크롤</string>
+    <string name="web_row_scroll_forward">앞으로 스크롤</string>
+    <string name="web_hero_newest">최신 동영상</string>
+    <string name="web_hero_all_videos">모든 동영상</string>
+    <string name="web_hero_time_left">%1$s 남음</string>
+    <string name="web_page_range">%3$d개 중 %1$d–%2$d</string>
+    <string name="web_page_number">%1$d페이지</string>
+    <string name="web_page_prev">이전 페이지</string>
+    <string name="web_page_next">다음 페이지</string>
+    <string name="web_pages">페이지</string>
 </resources>
