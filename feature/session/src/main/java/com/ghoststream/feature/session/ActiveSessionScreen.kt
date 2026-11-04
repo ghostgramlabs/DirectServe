@@ -60,11 +60,14 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ghostgramlabs.directserve.core.resources.R
 import com.ghostgramlabs.directserve.core.resources.ui.GhostCard
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
@@ -356,16 +359,39 @@ internal fun ScanCard(
                 modifier = Modifier.padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    // Browsers accept the address without the scheme, and it is easier to type.
-                    text = accessUrl?.removePrefix("http://")?.trimEnd('/') ?: stringResource(R.string.session_waiting_local_link),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                // Browsers accept the address without the scheme, and it is easier to type.
+                val address = accessUrl?.removePrefix("http://")?.trimEnd('/')
+                if (address != null) {
+                    // An address split over two lines is easy to mistype, so shrink it to fit one line.
+                    val baseSize = MaterialTheme.typography.titleMedium.fontSize
+                    var fontSize by remember(address) { mutableStateOf(baseSize) }
+                    var fitted by remember(address) { mutableStateOf(false) }
+                    Text(
+                        text = address,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = fontSize,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f).clipToBounds().drawWithContent { if (fitted) drawContent() },
+                        maxLines = 1,
+                        softWrap = false,
+                        onTextLayout = { layout ->
+                            if (layout.hasVisualOverflow && fontSize.value > 8f) {
+                                fontSize = (fontSize.value * 0.92f).sp
+                            } else {
+                                fitted = true
+                            }
+                        },
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.session_waiting_local_link),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Button(onClick = onCopyLink, shape = RoundedCornerShape(10.dp)) {
                     Text(stringResource(R.string.session_copy_short))
                 }
