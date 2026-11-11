@@ -21,7 +21,7 @@ SHOTS = [
     ("home.png", "Share in 2 taps", "Pick what to share, tap Start. That's it."),
     ("session.png", "Scan and open in any browser", "TV, laptop, tablet or phone. No app needed."),
     ("laptop.png", "Open it on any screen", "The same share on a laptop or TV browser."),
-    ("browser.png", "Watch and download in the browser", "Videos, photos, music and files."),
+    ("browser.png", "Your own streaming page", "Continue watching, swipe through rows, tap Play."),
     ("player.png", "Plays straight from your phone", "Direct play first, prepared only when needed."),
     ("mirror.png", "Mirror your screen live", "Show anything on a bigger screen.", "mirror_phone.png"),
     ("library.png", "Always know what you're sharing", "Search, filter, remove in one tap."),
@@ -182,6 +182,10 @@ def main(raw_dir: str, out_dir: str) -> None:
         if (raw / name).exists():
             n += 1
             screenshot(raw / name, headline, sub, out / f"phone_{n:02d}_{name}", *companion)
+        elif (out / f"phone_{n + 1:02d}_{name}").exists():
+            # Not recaptured this time: keep the existing screenshot in its place.
+            n += 1
+            print("keep:", name)
         else:
             print("skip (no capture):", name)
     icon(out / "icon_512.png")
