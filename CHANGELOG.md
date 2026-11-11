@@ -17,6 +17,7 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
   through (Continue watching, New videos, each shared folder, Photos, Music) with See all.
 - Continue watching: the browser remembers where you stopped and Resume picks up from there.
 - Video, photo and music pages use numbered pages (24 per page) instead of Load more.
+- Back in the browser returns to the page you came from, scrolled where you left it.
 - Wide videos turn the phone to landscape when played full screen in the browser.
 - The share address always fits on one line, and menus and popups match the app's colours.
 - DirectServe may ask for a rating after a couple of successful shares (at most once every few

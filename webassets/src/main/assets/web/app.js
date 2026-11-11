@@ -259,11 +259,28 @@ function gsStr(key, defaultVal, ...args) {
   return s;
 }
 
-window.addEventListener("popstate", () => boot());
+/*
+ * Going back returns to the page the viewer came from, scrolled where they left it. Each history
+ * entry keeps its own scroll position, and depth counts the steps taken inside this page so
+ * Back links know whether there is somewhere to go back to.
+ */
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+window.addEventListener("popstate", async () => {
+  const scrollY = history.state?.scrollY;
+  await boot();
+  if (Number.isFinite(scrollY)) {
+    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+  }
+});
 document.addEventListener("click", (event) => {
   const link = event.target.closest("[data-link]");
   if (!link) return;
   event.preventDefault();
+  if (link.hasAttribute("data-back") && history.state?.depth > 0) {
+    history.back();
+    return;
+  }
   navigate(link.getAttribute("href"));
 });
 
@@ -563,7 +580,13 @@ function debugTrace(event, details = "") {
 function navigate(path, replace = false) {
   cancelCompatPolling();
   if (isMediaPath(location.pathname)) saveLibraryScroll();
-  history[replace ? "replaceState" : "pushState"]({}, "", path);
+  const depth = history.state?.depth || 0;
+  if (replace) {
+    history.replaceState({ depth }, "", path);
+  } else {
+    history.replaceState({ ...(history.state || {}), depth, scrollY: window.scrollY }, "");
+    history.pushState({ depth: depth + 1 }, "", path);
+  }
   boot();
 }
 
@@ -2194,7 +2217,7 @@ async function renderVideoPlayer(id) {
     <section class="gs-section gs-player-page">
       <div class="gs-player">
         <div class="gs-player-bar">
-          <a class="gs-back-link" data-link href="/videos">${BACK_ICON}${gsStr("web_btn_back", "Back to videos")}</a>
+          <a class="gs-back-link" data-link data-back href="/videos">${BACK_ICON}${history.state?.depth > 0 ? gsStr("common_back", "Back") : gsStr("web_btn_back", "Back to videos")}</a>
         </div>
         <div id="playerStage" class="gs-stage">${renderVideoStage(item, showPlayerImmediately)}</div>
         <div class="gs-player-top">
@@ -3309,7 +3332,7 @@ async function renderPhotoViewer(id) {
     <section class="gs-section gs-player-page">
       <div class="gs-player">
         <div class="gs-player-bar">
-          <a class="gs-back-link" data-link href="/photos">${BACK_ICON}${gsStr("web_btn_back_to_photos", "Back to photos")}</a>
+          <a class="gs-back-link" data-link data-back href="/photos">${BACK_ICON}${history.state?.depth > 0 ? gsStr("common_back", "Back") : gsStr("web_btn_back_to_photos", "Back to photos")}</a>
         </div>
         <div class="gs-stage" style="position:relative;">
           ${isPdf

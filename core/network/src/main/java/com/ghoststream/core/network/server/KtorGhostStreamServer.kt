@@ -607,6 +607,7 @@ class KtorGhostStreamServer(
                             "web_btn_back" to localizedContext.getString(R.string.web_btn_back),
                             "web_status_subtitles_available" to localizedContext.getString(R.string.web_status_subtitles_available),
                             "web_now_playing" to localizedContext.getString(R.string.web_now_playing),
+                            "common_back" to localizedContext.getString(R.string.common_back),
                             "common_play" to localizedContext.getString(R.string.common_play),
                             "common_pause" to localizedContext.getString(R.string.common_pause),
                             "common_resume" to localizedContext.getString(R.string.common_resume),
