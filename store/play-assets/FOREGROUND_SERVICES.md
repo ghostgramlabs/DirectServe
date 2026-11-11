@@ -9,10 +9,18 @@ They match `app/src/main/AndroidManifest.xml`; the merged release manifest adds 
 |---|---|---|
 | Connected device | `GhostStreamForegroundService` | The user taps Start sharing |
 | Media projection | `LiveScreenCaptureService` | The user starts Mirror screen and accepts Android's screen-capture prompt |
-| Microphone | `LiveScreenCaptureService` | Same as above, only when the user allows sound |
+| Microphone | `LiveScreenCaptureService` | The same Mirror screen session, after the user grants Android's audio permission |
 
-Each type needs a description and a link to a short video that shows the feature (an unlisted
-YouTube link or a shared Google Drive link works).
+Declare **all three** in the same declaration. Leaving one out is what Play reports as "Permission use
+is either not declared or incorrectly declared".
+
+Each type needs a task, a description and a link to a video. Upload the videos to YouTube as
+Unlisted (or share them from Google Drive with "anyone with the link") and paste the links:
+
+| Video | Use it for |
+|---|---|
+| `fgs_connected_device_demo.mp4` | Connected device |
+| `fgs_mirror_screen_demo.mp4` | Media projection **and** Microphone (same link for both) |
 
 ---
 
@@ -41,6 +49,8 @@ access. Upload it to YouTube as Unlisted (or share it from Google Drive) and pas
 
 ## Media projection (`FOREGROUND_SERVICE_MEDIA_PROJECTION`)
 
+**Task to select:** the screen sharing / projecting the screen to another device option.
+
 **Description**
 
 ```
@@ -53,17 +63,22 @@ DirectServe's "Mirror screen" feature shows the phone's screen live in a web bro
 The live view on the other device freezes or goes black and the presentation stops. Mirroring must run continuously while the user uses other apps, so it cannot be deferred.
 ```
 
-**Video should show:** Mirror screen → Start → Android's "Start recording or casting?" prompt →
-the phone screen appearing live in a laptop browser → switching apps on the phone → Stop.
+**Video:** `fgs_mirror_screen_demo.mp4` (83 s, captioned). The user opens Mirror screen and taps
+Start → allows audio → chooses Share entire screen in Android's prompt → the red status-bar chip and
+the "Screen sharing in progress" notification appear → a laptop browser shows the phone screen live
+→ a video plays on the phone and on the laptop → the user taps Stop in the notification → the laptop
+loses the view.
 
 ---
 
 ## Microphone (`FOREGROUND_SERVICE_MICROPHONE`)
 
+**Task to select:** the option for capturing or recording audio. Do not pick voice calls.
+
 **Description**
 
 ```
-DirectServe does not record the microphone. During Mirror screen, when the user chooses to include sound, it captures the audio that other apps are playing (Android's AudioPlaybackCapture API) so the viewer hears it with the mirrored picture. Android requires the RECORD_AUDIO permission and the microphone foreground service type for playback capture. Sound capture starts only inside a mirroring session the user started, and stops when mirroring stops.
+DirectServe does not record the microphone. During a Mirror screen session the user started, after the user allows Android's audio permission, it captures the audio that other apps are playing (Android's AudioPlaybackCapture API) so the viewer hears it with the mirrored picture. Android requires the RECORD_AUDIO permission and the microphone foreground service type for playback capture. Sound capture starts only inside a mirroring session the user started, and stops when mirroring stops.
 ```
 
 **Impact if the task is deferred or interrupted**
@@ -72,10 +87,7 @@ DirectServe does not record the microphone. During Mirror screen, when the user 
 The mirrored picture continues but the viewer hears no sound, or sound drifts out of step with the picture. Audio must be captured in real time alongside the screen, so it cannot be deferred.
 ```
 
-**Video should show:** the same mirroring session with a video playing on the phone and its sound
-heard on the laptop.
+**Video:** the same `fgs_mirror_screen_demo.mp4`. It shows the audio permission prompt the user
+accepts, and a video playing on the phone reaching the laptop while the notification is shown.
 
 ---
-
-One video can cover all three: start sharing, play a video on the laptop, then start Mirror screen
-with sound, and stop both. Use the same link for each type.
