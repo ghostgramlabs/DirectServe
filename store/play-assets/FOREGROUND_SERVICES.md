@@ -18,6 +18,8 @@ YouTube link or a shared Google Drive link works).
 
 ## Connected device (`FOREGROUND_SERVICE_CONNECTED_DEVICE`)
 
+**Task to select:** Continuous data transfer to an external device (not "Automotive key").
+
 **Description**
 
 ```
