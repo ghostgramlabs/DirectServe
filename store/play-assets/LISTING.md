@@ -27,7 +27,8 @@ HOW IT WORKS
 That's it. The other device only needs a web browser. No app to install there.
 
 PLAY AND DOWNLOAD IN THE BROWSER
-• Videos play straight from your phone. When a browser can't play a file as it is, tap "Prepare for browser" and DirectServe makes a compatible version on request.
+• A home page like your own streaming app: a featured video, rows to swipe through, and Continue watching that picks up where you stopped.
+• Videos play straight from your phone. When a browser can't play a file as it is, DirectServe makes a compatible version when you press Play.
 • Photos open full size, with next and previous.
 • Music plays right in the page.
 • Download single files, everything, or a ZIP.
@@ -57,11 +58,13 @@ Note: speed depends on your Wi-Fi or hotspot. Some apps block screen and sound c
 ## What's new in 1.0.27 (500 max)
 
 • A simpler app: choose what to share, tap Start, scan the code.
-• Redesigned browser pages and video player.
+• Browser home like a streaming app, with Continue watching.
+• Add files in one step; the browser updates by itself.
+• Wide videos turn the phone sideways in full screen.
 • New app icon.
 • Mirror screen sound now stays in step with the picture.
 • Long sharing sessions no longer stop after a few hours.
-• Fixes for a crash when the port was busy and when a viewer refreshed Live Screen.
+• Crash fixes for a busy port and Live Screen refresh.
 • Lower memory use with large photos, and a smaller download.
 
 ## Screenshot captions (same order as phone_01 … phone_08)
@@ -69,7 +72,7 @@ Note: speed depends on your Wi-Fi or hotspot. Some apps block screen and sound c
 1. Share in 2 taps — Pick what to share, tap Start. That's it.
 2. Scan and open in any browser — TV, laptop, tablet or phone. No app needed.
 3. Open it on any screen — The same share on a laptop or TV browser.
-4. Watch and download in the browser — Videos, photos, music and files.
+4. Your own streaming page — Continue watching, swipe through rows, tap Play.
 5. Plays straight from your phone — Direct play first, prepared only when needed.
 6. Mirror your screen live — Show anything on a bigger screen.
 7. Always know what you're sharing — Search, filter, remove in one tap.
