@@ -30,8 +30,10 @@ DirectServe turns the phone into a local media server so other devices on the sa
 Connected devices immediately lose access: videos stop mid-playback, downloads and uploads fail, and the TV or laptop shows the share as unavailable. The task cannot be deferred because the other device is actively requesting files in real time.
 ```
 
-**Video should show:** choosing files → Start sharing → the notification → opening the address on
-another device → playing a video there while the phone is on another app → tapping Stop.
+**Video:** `fgs_connected_device_demo.mp4` (65 s, 1080p, captioned). It shows Start sharing → the
+notification with Stop → a laptop opening the share and playing a video → the user switching to
+another app while the video keeps streaming → tapping Stop in the notification → the laptop losing
+access. Upload it to YouTube as Unlisted (or share it from Google Drive) and paste that link.
 
 ---
 
