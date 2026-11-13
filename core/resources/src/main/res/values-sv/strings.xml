@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Håller liveskärmsspegling aktiv i bakgrunden.</string>
     <string name="live_screen_notification_title">Skärmdelning pågår</string>
     <string name="live_screen_notification_body">DirectServe speglar din skärm till webbläsaren.</string>
+    <string name="live_screen_notification_body_sound">DirectServe speglar din skärm och ditt ljud till webbläsaren.</string>
+    <string name="live_screen_share_sound">Dela ljud</string>
+    <string name="live_screen_share_sound_desc">Skicka även ljudet som appar spelar upp. Android ber om mikrofonbehörighet och visar mikrofonindikatorn medan ljud delas.</string>
     <string name="live_screen_pin_label">PIN för att gå med: %1$s</string>
     <string name="live_screen_pin_hint">Tittare kommer att tillfrågas om denna PIN innan de kan titta.</string>
     <string name="quick_text_title">Snabbtext</string>

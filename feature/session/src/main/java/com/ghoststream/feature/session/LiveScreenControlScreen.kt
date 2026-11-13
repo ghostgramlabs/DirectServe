@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -25,11 +26,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,6 +45,7 @@ import com.ghostgramlabs.directserve.core.resources.ui.GhostCard
 import com.ghostgramlabs.directserve.core.resources.ui.GhostSpacing
 import com.ghostgramlabs.directserve.core.resources.ui.GhostUi
 import com.ghostgramlabs.directserve.core.resources.ui.ghostStatusColors
+import com.ghostgramlabs.directserve.core.resources.ui.ghostSwitchColors
 import com.ghoststream.core.model.LiveAudioStatus
 import com.ghoststream.core.model.LiveScreenSessionState
 import com.ghoststream.core.model.LiveScreenStatus
@@ -45,13 +53,15 @@ import com.ghoststream.core.model.LiveScreenStatus
 /**
  * Mirror screen: one big Start button while stopped; while live it mirrors the sharing screen
  * (status bar with Stop, QR code and address, PIN switch) so both flows feel the same.
+ * Sound is opt-in: the microphone permission and service type are only used after the user
+ * turns on Share sound.
  */
 @Composable
 fun LiveScreenControlScreen(
     state: LiveScreenSessionState,
     pinProtectionEnabled: Boolean,
     onBack: () -> Unit,
-    onStart: () -> Unit,
+    onStart: (shareSound: Boolean) -> Unit,
     onStop: () -> Unit,
     onCopyLink: () -> Unit,
     onTogglePinProtection: (Boolean) -> Unit,
@@ -180,8 +190,9 @@ private fun LiveStatusBar(
 @Composable
 private fun StartCard(
     state: LiveScreenSessionState,
-    onStart: () -> Unit,
+    onStart: (shareSound: Boolean) -> Unit,
 ) {
+    var shareSound by rememberSaveable { mutableStateOf(false) }
     GhostCard {
         Box(
             modifier = Modifier
@@ -195,16 +206,31 @@ private fun StartCard(
             stringResource(R.string.live_screen_intro),
             style = MaterialTheme.typography.titleMedium,
         )
-        Text(
-            stringResource(R.string.live_screen_audio_limit),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(value = shareSound, role = Role.Switch, onValueChange = { shareSound = it }),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.live_screen_share_sound),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    stringResource(R.string.live_screen_share_sound_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = shareSound, onCheckedChange = null, colors = ghostSwitchColors())
+        }
         state.lastError?.takeIf { it.isNotBlank() }?.let { message ->
             Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
         Button(
-            onClick = onStart,
+            onClick = { onStart(shareSound) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             shape = GhostUi.buttonShape,
         ) {

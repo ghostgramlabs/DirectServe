@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">백그라운드에서 라이브 스크린 미러링을 유지합니다.</string>
     <string name="live_screen_notification_title">화면 공유 중</string>
     <string name="live_screen_notification_body">DirectServe가 브라우저에 화면을 미러링하고 있습니다.</string>
+    <string name="live_screen_notification_body_sound">DirectServe가 화면과 소리를 브라우저로 미러링하고 있습니다.</string>
+    <string name="live_screen_share_sound">소리 공유</string>
+    <string name="live_screen_share_sound_desc">앱에서 재생 중인 소리도 보냅니다. Android가 마이크 권한을 요청하며, 소리를 공유하는 동안 마이크 표시기가 나타납니다.</string>
     <string name="live_screen_pin_label">참여 PIN: %1$s</string>
     <string name="live_screen_pin_hint">시청자는 시청을 시작하기 전에 이 PIN을 입력해야 합니다.</string>
     <string name="quick_text_title">퀵 텍스트</string>

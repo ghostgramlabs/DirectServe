@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Houdt live-scherm spiegeling actief op de achtergrond.</string>
     <string name="live_screen_notification_title">Scherm delen in uitvoering</string>
     <string name="live_screen_notification_body">DirectServe spiegelt uw scherm naar de browser.</string>
+    <string name="live_screen_notification_body_sound">DirectServe spiegelt je scherm en geluid naar de browser.</string>
+    <string name="live_screen_share_sound">Geluid delen</string>
+    <string name="live_screen_share_sound_desc">Stuur ook het geluid dat apps afspelen. Android vraagt om de microfoonmachtiging en toont de microfoonindicator zolang geluid wordt gedeeld.</string>
     <string name="live_screen_pin_label">PIN om deel te nemen: %1$s</string>
     <string name="live_screen_pin_hint">Kijkers wordt om deze PIN gevraagd voordat ze kunnen kijken.</string>
     <string name="quick_text_title">Snelle tekst</string>

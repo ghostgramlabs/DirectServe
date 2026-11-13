@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">బ్యాక్‌గ్రౌండ్‌లో ప్రత్యక్ష ప్రసార స్క్రీన్ మిర్రరింగ్‌ను యాక్టివ్‌గా ఉంచుతుంది.</string>
     <string name="live_screen_notification_title">స్క్రీన్ షేరింగ్ జరుగుతోంది</string>
     <string name="live_screen_notification_body">డైరెక్ట్‌సర్వ్ (DirectServe) మీ స్క్రీన్‌ను బ్రౌజర్‌కు మిర్రర్ చేస్తోంది.</string>
+    <string name="live_screen_notification_body_sound">DirectServe మీ స్క్రీన్‌ను, ధ్వనిని బ్రౌజర్‌కు మిర్రర్ చేస్తోంది.</string>
+    <string name="live_screen_share_sound">ధ్వనిని షేర్ చేయండి</string>
+    <string name="live_screen_share_sound_desc">యాప్‌లు ప్లే చేస్తున్న ధ్వనిని కూడా పంపుతుంది. Android మైక్రోఫోన్ అనుమతిని అడుగుతుంది, ధ్వని షేర్ అవుతున్నంత సేపు మైక్రోఫోన్ సూచికను చూపుతుంది.</string>
     <string name="live_screen_pin_label">చేరడానికి PIN: %1$s</string>
     <string name="live_screen_pin_hint">వీక్షకులు చూడటానికి ముందు ఈ PIN అడగబడుతుంది.</string>
     <string name="quick_text_title">త్వరిత వచనం</string>

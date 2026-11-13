@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Поддерживает трансляцию экрана активной в фоновом режиме.</string>
     <string name="live_screen_notification_title">Идет трансляция экрана</string>
     <string name="live_screen_notification_body">DirectServe транслирует ваш экран в браузер.</string>
+    <string name="live_screen_notification_body_sound">DirectServe транслирует экран и звук в браузер.</string>
+    <string name="live_screen_share_sound">Передавать звук</string>
+    <string name="live_screen_share_sound_desc">Передавать и звук, который воспроизводят приложения. Android запросит доступ к микрофону и покажет значок микрофона, пока звук передаётся.</string>
     <string name="live_screen_pin_label">PIN для подключения: %1$s</string>
     <string name="live_screen_pin_hint">Зрителям потребуется ввести этот PIN-код перед просмотром.</string>
     <string name="quick_text_title">Быстрый текст</string>

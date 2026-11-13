@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Mantém o espelhamento da tela em tempo real ativo em segundo plano.</string>
     <string name="live_screen_notification_title">Compartilhamento de tela em curso</string>
     <string name="live_screen_notification_body">O DirectServe está espelhando sua tela no navegador.</string>
+    <string name="live_screen_notification_body_sound">O DirectServe está espelhando sua tela e som no navegador.</string>
+    <string name="live_screen_share_sound">Compartilhar som</string>
+    <string name="live_screen_share_sound_desc">Envia também o som que os apps estão tocando. O Android pede a permissão do microfone e mostra o indicador do microfone enquanto o som é compartilhado.</string>
     <string name="live_screen_pin_label">PIN para participar: %1$s</string>
     <string name="live_screen_pin_hint">Os espectadores deverão inserir este PIN antes de poderem assistir.</string>
     <string name="quick_text_title">Texto rápido</string>

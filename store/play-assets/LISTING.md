@@ -66,13 +66,13 @@ Good to know: speed depends on your Wi-Fi or hotspot. Some apps block screen and
 
 ```
 DirectServe 1.0.27 is completely redesigned.
-• A simpler app with a fresh look and icon: choose what to share, tap Start, scan the code.
-• New browser home like a streaming app, with rows and Continue watching.
+• A simpler app with a fresh look: choose what to share, tap Start, scan the code.
+• New browser home like a streaming app, with Continue watching.
 • Add files or folders in one step; open browsers update by themselves.
 • Videos that need converting start as soon as you press Play.
 • Wide videos turn sideways in full screen.
-• Mirror screen sound stays in sync.
-• Long sessions no longer stop, plus crash fixes and a smaller download.
+• Mirror screen: sound is now optional and stays in sync.
+• Long sessions no longer stop. Crash fixes and a smaller download.
 ```
 
 ---

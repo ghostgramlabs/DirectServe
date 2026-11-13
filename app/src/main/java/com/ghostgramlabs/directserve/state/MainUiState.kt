@@ -52,7 +52,7 @@ sealed interface AppEvent {
     data class OpenFile(val fileUri: String) : AppEvent
     data object RequestAllFilesAccess : AppEvent
     data object RequestBatteryOptimizationExemption : AppEvent
-    data object RequestLiveScreenPermission : AppEvent
+    data class RequestLiveScreenPermission(val shareSound: Boolean) : AppEvent
     data class StartLiveScreenService(val resultCode: Int, val permissionData: android.content.Intent) : AppEvent
     data object StopLiveScreenService : AppEvent
     data object RequestInAppReview : AppEvent

@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Hält die Live-Bildschirmspiegelung im Hintergrund aktiv.</string>
     <string name="live_screen_notification_title">Bildschirmfreigabe läuft</string>
     <string name="live_screen_notification_body">DirectServe spiegelt Ihren Bildschirm im Browser.</string>
+    <string name="live_screen_notification_body_sound">DirectServe spiegelt Ihren Bildschirm und Ton im Browser.</string>
+    <string name="live_screen_share_sound">Ton teilen</string>
+    <string name="live_screen_share_sound_desc">Auch den Ton senden, den Apps abspielen. Android fragt nach der Mikrofonberechtigung und zeigt die Mikrofonanzeige, solange Ton geteilt wird.</string>
     <string name="live_screen_pin_label">PIN für den Beitritt: %1$s</string>
     <string name="live_screen_pin_hint">Zuschauer werden nach dieser PIN gefragt, bevor sie zuschauen können.</string>
     <string name="quick_text_title">Schneller Text</string>

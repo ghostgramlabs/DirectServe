@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">在后台保持实时屏幕镜像处于活动状态。</string>
     <string name="live_screen_notification_title">正在共享屏幕</string>
     <string name="live_screen_notification_body">DirectServe 正在将您的屏幕镜像到浏览器。</string>
+    <string name="live_screen_notification_body_sound">DirectServe 正在将您的屏幕和声音镜像到浏览器。</string>
+    <string name="live_screen_share_sound">共享声音</string>
+    <string name="live_screen_share_sound_desc">同时发送应用正在播放的声音。Android 会请求麦克风权限，并在共享声音期间显示麦克风指示标志。</string>
     <string name="live_screen_pin_label">加入 PIN： %1$s</string>
     <string name="live_screen_pin_hint">观众在观看前将被要求输入此 PIN。</string>
     <string name="quick_text_title">快速文本</string>

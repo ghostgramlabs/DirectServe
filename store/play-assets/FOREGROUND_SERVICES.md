@@ -9,7 +9,7 @@ They match `app/src/main/AndroidManifest.xml`; the merged release manifest adds 
 |---|---|---|
 | Connected device | `GhostStreamForegroundService` | The user taps Start sharing |
 | Media projection | `LiveScreenCaptureService` | The user starts Mirror screen and accepts Android's screen-capture prompt |
-| Microphone | `LiveScreenCaptureService` | The same Mirror screen session, after the user grants Android's audio permission |
+| Microphone | `LiveScreenCaptureService` | Only when the user turns on **Share sound** before starting Mirror screen and grants Android's audio permission (from versionCode 30) |
 
 Declare **all three** in the same declaration. Leaving one out is what Play reports as "Permission use
 is either not declared or incorrectly declared".
@@ -20,7 +20,7 @@ Unlisted (or share them from Google Drive with "anyone with the link") and paste
 | Video | Use it for |
 |---|---|
 | `fgs_connected_device_demo.mp4` | Connected device |
-| `fgs_mirror_screen_demo.mp4` | Media projection **and** Microphone (same link for both) |
+| `fgs_mirror_sound_demo.mp4` | Media projection **and** Microphone (same link for both; recorded on versionCode 30) |
 
 ---
 
@@ -73,21 +73,36 @@ loses the view.
 
 ## Microphone (`FOREGROUND_SERVICE_MICROPHONE`)
 
-**Task to select:** the option for capturing or recording audio. Do not pick voice calls.
+Play rejected versionCode 28 for this type: "Your in-app experience or video does not match the
+Microphone - Background Audio Input in your declaration" and "Use of FGS is not perceptible to the
+user". In that build sound was captured on every mirroring session, with nothing on screen saying so.
+
+From versionCode 30, sound is opt-in. The Mirror screen has a **Share sound** switch, off by default.
+Only when the user turns it on does the app ask for the microphone permission and start the service
+with the microphone type. The notification then reads "DirectServe is mirroring your screen and sound
+to the browser". With the switch off the service runs as media projection only (checked on the
+emulator: `types=0x20` off, `0xA0` on).
+
+**Task to select:** the option for capturing or recording audio (Background audio input). Do not pick voice calls.
 
 **Description**
 
 ```
-DirectServe does not record the microphone. During a Mirror screen session the user started, after the user allows Android's audio permission, it captures the audio that other apps are playing (Android's AudioPlaybackCapture API) so the viewer hears it with the mirrored picture. Android requires the RECORD_AUDIO permission and the microphone foreground service type for playback capture. Sound capture starts only inside a mirroring session the user started, and stops when mirroring stops.
+Microphone use is opt-in. On the Mirror screen page the user turns on the "Share sound" switch (off by default), which explains that Android will ask for the microphone permission and show the microphone indicator. Only then does DirectServe request RECORD_AUDIO and run its mirroring foreground service with the microphone type, so the viewer's browser hears the sound other apps are playing (Android's AudioPlaybackCapture) together with the mirrored picture. The WebRTC audio pipeline opens the microphone only as a timing source; its samples are replaced with the captured playback sound, and no microphone audio is sent or stored. While sound is shared, Android's microphone indicator is on and the notification says "DirectServe is mirroring your screen and sound to the browser" with a Stop button. Sound capture ends when the user taps Stop. With the switch off, mirroring runs without the microphone type.
 ```
 
 **Impact if the task is deferred or interrupted**
 
 ```
-The mirrored picture continues but the viewer hears no sound, or sound drifts out of step with the picture. Audio must be captured in real time alongside the screen, so it cannot be deferred.
+The mirrored picture continues but the viewer hears no sound, or sound drifts out of step with the picture. Audio must be captured in real time alongside the screen the user is sharing, so it cannot be deferred.
 ```
 
-**Video:** the same `fgs_mirror_screen_demo.mp4`. It shows the audio permission prompt the user
-accepts, and a video playing on the phone reaching the laptop while the notification is shown.
+**Video:** `fgs_mirror_sound_demo.mp4` (99 s, captioned, recorded on the versionCode 30 build). It shows, in order:
+1. The Mirror screen page with **Share sound** off, then the user turning it on (the switch text is readable).
+2. Tapping Start → Android's "Allow DirectServe to record audio?" prompt → While using the app.
+3. Android's screen-capture prompt → Entire screen → Start.
+4. The status bar's microphone/privacy indicator, and the pulled-down notification reading
+   "mirroring your screen and sound" with Stop.
+5. A laptop browser showing the phone screen while a video plays on the phone, with its sound.
+6. Tapping Stop in the notification: the indicator goes away and the laptop view ends.
 
----

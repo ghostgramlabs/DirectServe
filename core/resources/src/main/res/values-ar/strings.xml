@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">يحافظ على انعكاس الشاشة المباشرة نشطًا في الخلفية.</string>
     <string name="live_screen_notification_title">مشاركة الشاشة قيد التقدم</string>
     <string name="live_screen_notification_body">DirectServe يعكس شاشتك على المتصفح.</string>
+    <string name="live_screen_notification_body_sound">يعرض DirectServe شاشتك وصوتها في المتصفح.</string>
+    <string name="live_screen_share_sound">مشاركة الصوت</string>
+    <string name="live_screen_share_sound_desc">أرسل أيضًا الصوت الذي تشغّله التطبيقات. يطلب Android إذن الميكروفون ويعرض مؤشر الميكروفون أثناء مشاركة الصوت.</string>
     <string name="live_screen_pin_label">رقم التعريف الشخصي للانضمام: %1$s</string>
     <string name="live_screen_pin_hint">سيُطلب من المشاهدين إدخال رقم التعريف الشخصي هذا قبل أن يتمكنوا من المشاهدة.</string>
     <string name="quick_text_title">نص سريع</string>

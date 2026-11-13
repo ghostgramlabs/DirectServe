@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Hou lewendige skermspieëling aktief in die agtergrond.</string>
     <string name="live_screen_notification_title">Skermdeling is aan die gang</string>
     <string name="live_screen_notification_body">DirectServe weerspieël jou skerm na die blaaier.</string>
+    <string name="live_screen_notification_body_sound">DirectServe spieël jou skerm en klank na die blaaier.</string>
+    <string name="live_screen_share_sound">Deel klank</string>
+    <string name="live_screen_share_sound_desc">Stuur ook die klank wat programme speel. Android vra vir die mikrofoontoestemming en wys die mikrofoon-aanwyser terwyl klank gedeel word.</string>
     <string name="live_screen_pin_label">PIN vir aansluiting: %1$s</string>
     <string name="live_screen_pin_hint">Kykers sal vir hierdie PIN gevra word voordat hulle kan kyk.</string>
     <string name="quick_text_title">Vinnige teks</string>

@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Maintient la diffusion de l\'écran en direct active en arrière-plan.</string>
     <string name="live_screen_notification_title">Partage d\'écran en cours</string>
     <string name="live_screen_notification_body">DirectServe diffuse votre écran sur le navigateur.</string>
+    <string name="live_screen_notification_body_sound">DirectServe diffuse votre écran et le son dans le navigateur.</string>
+    <string name="live_screen_share_sound">Partager le son</string>
+    <string name="live_screen_share_sound_desc">Envoie aussi le son lu par les applis. Android demande l\'autorisation du micro et affiche l\'indicateur du micro pendant le partage du son.</string>
     <string name="live_screen_pin_label">Code PIN pour rejoindre : %1$s</string>
     <string name="live_screen_pin_hint">Les spectateurs devront saisir ce code PIN avant de pouvoir regarder.</string>
     <string name="quick_text_title">Texte rapide</string>

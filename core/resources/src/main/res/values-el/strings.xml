@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Διατηρεί την αντικατοπτρισμό ζωντανής οθόνης ενεργή στο παρασκήνιο.</string>
     <string name="live_screen_notification_title">Κοινή χρήση οθόνης σε εξέλιξη</string>
     <string name="live_screen_notification_body">Το DirectServe αντικατοπτρίζει την οθόνη σας στο πρόγραμμα περιήγησης.</string>
+    <string name="live_screen_notification_body_sound">Το DirectServe αντικατοπτρίζει την οθόνη και τον ήχο σας στο πρόγραμμα περιήγησης.</string>
+    <string name="live_screen_share_sound">Κοινή χρήση ήχου</string>
+    <string name="live_screen_share_sound_desc">Στέλνει και τον ήχο που παίζουν οι εφαρμογές. Το Android ζητά την άδεια μικροφώνου και δείχνει την ένδειξη μικροφώνου όσο μοιράζεται ο ήχος.</string>
     <string name="live_screen_pin_label">PIN για συμμετοχή: %1$s</string>
     <string name="live_screen_pin_hint">Θα ζητηθεί από τους θεατές αυτό το PIN πριν μπορέσουν να παρακολουθήσουν.</string>
     <string name="quick_text_title">Γρήγορο κείμενο</string>

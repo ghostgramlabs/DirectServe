@@ -670,7 +670,7 @@ class MainViewModel(
         }
     }
 
-    fun requestLiveScreenStart() {
+    fun requestLiveScreenStart(shareSound: Boolean) {
         viewModelScope.launch {
             val current = container.liveScreenManager.state.value
             if (current.isActive) {
@@ -705,7 +705,7 @@ class MainViewModel(
                 return@launch
             }
             container.debugLogRepository.log("MainViewModel", "requestLiveScreenStart requesting MediaProjection permission")
-            _events.emit(AppEvent.RequestLiveScreenPermission)
+            _events.emit(AppEvent.RequestLiveScreenPermission(shareSound))
         }
     }
 

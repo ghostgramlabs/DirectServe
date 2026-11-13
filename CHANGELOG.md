@@ -8,6 +8,8 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 - A simpler app: choose what to share, tap Start, and scan the QR code. Settings are grouped,
   with expert options under Advanced.
 - New ice-blue look and app icon.
+- Mirror screen sound is now your choice: turn on Share sound before you start. Android only asks
+  for the microphone permission when you do, and mirroring works without it.
 - Select all when adding from your phone library or removing shared items.
 - Simpler adding: Pick Files and Pick Folder open the picker straight away and add what you
   choose, with no extra confirm screen. "+ Add" lists every way to add, and you see how many

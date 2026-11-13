@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Giữ cho tính năng phản chiếu màn hình trực tiếp hoạt động trong nền.</string>
     <string name="live_screen_notification_title">Đang chia sẻ màn hình</string>
     <string name="live_screen_notification_body">DirectServe đang phản chiếu màn hình của bạn lên trình duyệt.</string>
+    <string name="live_screen_notification_body_sound">DirectServe đang phản chiếu màn hình và âm thanh của bạn lên trình duyệt.</string>
+    <string name="live_screen_share_sound">Chia sẻ âm thanh</string>
+    <string name="live_screen_share_sound_desc">Gửi cả âm thanh mà ứng dụng đang phát. Android sẽ xin quyền micrô và hiện chỉ báo micrô trong khi chia sẻ âm thanh.</string>
     <string name="live_screen_pin_label">Mã PIN để tham gia: %1$s</string>
     <string name="live_screen_pin_hint">Người xem sẽ được yêu cầu nhập mã PIN này trước khi họ có thể xem.</string>
     <string name="quick_text_title">Văn bản nhanh</string>

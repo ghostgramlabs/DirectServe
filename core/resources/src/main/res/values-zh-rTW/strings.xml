@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">在背景保持即時螢幕映射處於活動狀態。</string>
     <string name="live_screen_notification_title">正在共享螢幕</string>
     <string name="live_screen_notification_body">DirectServe 正在將您的螢幕映射到瀏覽器。</string>
+    <string name="live_screen_notification_body_sound">DirectServe 正在將你的螢幕和聲音鏡像到瀏覽器。</string>
+    <string name="live_screen_share_sound">分享聲音</string>
+    <string name="live_screen_share_sound_desc">同時傳送應用程式正在播放的聲音。Android 會要求麥克風權限，並在分享聲音期間顯示麥克風指示標誌。</string>
     <string name="live_screen_pin_label">加入 PIN： %1$s</string>
     <string name="live_screen_pin_hint">觀眾在觀看前將被要求輸入此 PIN。</string>
     <string name="quick_text_title">快速文字</string>

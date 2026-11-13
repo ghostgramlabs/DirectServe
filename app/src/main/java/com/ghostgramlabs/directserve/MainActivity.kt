@@ -140,6 +140,7 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
     val scope = rememberCoroutineScope()
     var pendingStartService by remember { mutableStateOf(false) }
     var pendingLiveScreenStartAfterNotificationPermission by remember { mutableStateOf(false) }
+    var liveScreenShareSound by remember { mutableStateOf(false) }
     var pendingBatchSelectNavigation by remember { mutableStateOf(false) }
     var launchHandled by remember { mutableStateOf(false) }
     var lastSessionMessage by remember { mutableStateOf<String?>(uiState.sessionState.message) }
@@ -228,18 +229,15 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
         val projectionManager = context.getSystemService(android.content.Context.MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
         liveScreenPermissionLauncher.launch(projectionManager.createScreenCaptureIntent())
     }
+    // Without the audio permission the mirror still starts, just without sound.
     val liveScreenAudioPermissionLauncher = rememberLauncherForActivityResult(RequestPermission()) { granted ->
-        if (granted) {
-            requestLiveScreenProjection()
-        } else {
-            scope.launch {
-                snackbarHostState.showSnackbar(context.getString(SharedR.string.live_screen_permission_denied))
-            }
-        }
+        if (!granted) liveScreenShareSound = false
+        requestLiveScreenProjection()
     }
     val requestLiveScreenPermissions = {
         val needsAudioPermission =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            liveScreenShareSound &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
         if (needsAudioPermission) {
             liveScreenAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -450,7 +448,8 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                         }
                     }
                 }
-                AppEvent.RequestLiveScreenPermission -> {
+                is AppEvent.RequestLiveScreenPermission -> {
+                    liveScreenShareSound = event.shareSound
                     val needsNotificationPermission =
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -463,7 +462,7 @@ private fun GhostStreamApp(viewModel: MainViewModel, uiState: com.ghostgramlabs.
                 }
                 is AppEvent.StartLiveScreenService -> {
                     runCatching {
-                        LiveScreenCaptureService.start(context, event.resultCode, event.permissionData)
+                        LiveScreenCaptureService.start(context, event.resultCode, event.permissionData, liveScreenShareSound)
                     }.onFailure {
                         scope.launch {
                             snackbarHostState.showSnackbar(context.getString(SharedR.string.live_screen_failed))

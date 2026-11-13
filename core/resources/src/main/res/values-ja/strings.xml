@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">バックグラウンドでライブスクリーンのミラーリングを維持します。</string>
     <string name="live_screen_notification_title">画面共有中</string>
     <string name="live_screen_notification_body">DirectServeがブラウザに画面をミラーリングしています。</string>
+    <string name="live_screen_notification_body_sound">DirectServe が画面と音声をブラウザにミラーリングしています。</string>
+    <string name="live_screen_share_sound">音声を共有</string>
+    <string name="live_screen_share_sound_desc">アプリで再生中の音声も送ります。Android がマイクの権限を求め、音声の共有中はマイクのインジケーターが表示されます。</string>
     <string name="live_screen_pin_label">参加用PIN: %1$s</string>
     <string name="live_screen_pin_hint">視聴者は、視聴を開始する前にこのPINの入力を求められます。</string>
     <string name="quick_text_title">クイックテキスト</string>

@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">ทำให้การมิเรอร์หน้าจอสดทำงานในพื้นหลัง</string>
     <string name="live_screen_notification_title">กำลังแชร์หน้าจอ</string>
     <string name="live_screen_notification_body">DirectServe กำลังมิเรอร์หน้าจอของคุณไปยังเบราว์เซอร์</string>
+    <string name="live_screen_notification_body_sound">DirectServe กำลังมิเรอร์หน้าจอและเสียงของคุณไปยังเบราว์เซอร์</string>
+    <string name="live_screen_share_sound">แชร์เสียง</string>
+    <string name="live_screen_share_sound_desc">ส่งเสียงที่แอปกำลังเล่นไปด้วย Android จะขอสิทธิ์ไมโครโฟนและแสดงตัวบ่งชี้ไมโครโฟนขณะแชร์เสียง</string>
     <string name="live_screen_pin_label">PIN เพื่อเข้าร่วม: %1$s</string>
     <string name="live_screen_pin_hint">ผู้ชมจะถูกถามถึง PIN นี้ก่อนที่จะสามารถรับชมได้</string>
     <string name="quick_text_title">ข้อความด่วน</string>

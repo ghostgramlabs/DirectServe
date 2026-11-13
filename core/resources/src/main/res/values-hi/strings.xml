@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">लाइव स्क्रीन मिररिंग को पृष्ठभूमि में सक्रिय रखता है।</string>
     <string name="live_screen_notification_title">स्क्रीन शेयरिंग प्रगति पर है</string>
     <string name="live_screen_notification_body">DirectServe आपकी स्क्रीन को ब्राउज़र पर मिरर कर रहा है।</string>
+    <string name="live_screen_notification_body_sound">DirectServe आपकी स्क्रीन और आवाज़ ब्राउज़र में मिरर कर रहा है।</string>
+    <string name="live_screen_share_sound">आवाज़ शेयर करें</string>
+    <string name="live_screen_share_sound_desc">ऐप्स में चल रही आवाज़ भी भेजें। Android माइक्रोफ़ोन की अनुमति मांगता है और आवाज़ शेयर होने तक माइक्रोफ़ोन संकेतक दिखाता है।</string>
     <string name="live_screen_pin_label">शामिल होने के लिए पिन: %1$s</string>
     <string name="live_screen_pin_hint">दर्शकों को देखने से पहले यह पिन दर्ज करने के लिए कहा जाएगा।</string>
     <string name="quick_text_title">त्वरित टेक्स्ट</string>

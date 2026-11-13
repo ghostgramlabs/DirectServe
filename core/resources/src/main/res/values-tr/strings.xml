@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Arka planda canlı ekran yansıtmayı aktif tutar.</string>
     <string name="live_screen_notification_title">Ekran paylaşımı devam ediyor</string>
     <string name="live_screen_notification_body">DirectServe ekranınızı tarayıcıya yansıtıyor.</string>
+    <string name="live_screen_notification_body_sound">DirectServe ekranınızı ve sesinizi tarayıcıya yansıtıyor.</string>
+    <string name="live_screen_share_sound">Sesi paylaş</string>
+    <string name="live_screen_share_sound_desc">Uygulamaların çaldığı sesi de gönderir. Android mikrofon iznini ister ve ses paylaşılırken mikrofon göstergesini gösterir.</string>
     <string name="live_screen_pin_label">Katılmak için PIN: %1$s</string>
     <string name="live_screen_pin_hint">İzleyicilerin izleyebilmesi için bu PIN\'i girmeleri istenecektir.</string>
     <string name="quick_text_title">Hızlı Metin</string>

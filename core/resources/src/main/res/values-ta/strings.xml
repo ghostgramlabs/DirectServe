@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">பின்னணியில் நேரலைத் திரை பிரதிபலிப்பைச் செயலில் வைத்திருக்கும்.</string>
     <string name="live_screen_notification_title">திரை பகிர்வு நடைபெறுகிறது</string>
     <string name="live_screen_notification_body">டைரக்ட்சர்வ் (DirectServe) உங்கள் திரையை உலாவியில் பிரதிபலிக்கிறது.</string>
+    <string name="live_screen_notification_body_sound">DirectServe உங்கள் திரையையும் ஒலியையும் உலாவியில் மிரர் செய்கிறது.</string>
+    <string name="live_screen_share_sound">ஒலியைப் பகிர்</string>
+    <string name="live_screen_share_sound_desc">ஆப்ஸ் இயக்கும் ஒலியையும் அனுப்பும். Android மைக்ரோஃபோன் அனுமதியைக் கேட்கும், ஒலி பகிரப்படும்போது மைக்ரோஃபோன் குறிகாட்டியைக் காட்டும்.</string>
     <string name="live_screen_pin_label">சேருவதற்கான PIN: %1$s</string>
     <string name="live_screen_pin_hint">பார்வையாளர்கள் பார்ப்பதற்கு முன் இந்த PIN கேட்கப்படும்.</string>
     <string name="quick_text_title">விரைவான உரை</string>

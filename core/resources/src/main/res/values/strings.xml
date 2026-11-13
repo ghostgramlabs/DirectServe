@@ -856,6 +856,9 @@
     <string name="live_screen_notification_channel_desc">Keeps live screen mirroring active in the background.</string>
     <string name="live_screen_notification_title">Screen sharing in progress</string>
     <string name="live_screen_notification_body">DirectServe is mirroring your screen to the browser.</string>
+    <string name="live_screen_notification_body_sound">DirectServe is mirroring your screen and sound to the browser.</string>
+    <string name="live_screen_share_sound">Share sound</string>
+    <string name="live_screen_share_sound_desc">Also send the sound apps are playing. Android asks for the microphone permission and shows the microphone indicator while sound is shared.</string>
     <string name="live_screen_pin_label">PIN for join: %1$s</string>
     <string name="live_screen_pin_hint">Viewers will be asked for this PIN before they can watch.</string>
     <string name="quick_text_title">Quick Text</string>

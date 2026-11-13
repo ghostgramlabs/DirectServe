@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">പശ്ചാത്തലത്തിൽ ലൈവ് സ്ക്രീൻ മിററിംഗ് സജീവമായി നിലനിർത്തുന്നു.</string>
     <string name="live_screen_notification_title">സ്‌ക്രീൻ പങ്കിടൽ നടക്കുന്നു</string>
     <string name="live_screen_notification_body">DirectServe നിങ്ങളുടെ സ്‌ക്രീൻ ബ്രൗസറിലേക്ക് മിറർ ചെയ്യുന്നു.</string>
+    <string name="live_screen_notification_body_sound">DirectServe നിങ്ങളുടെ സ്ക്രീനും ശബ്ദവും ബ്രൗസറിലേക്ക് മിറർ ചെയ്യുന്നു.</string>
+    <string name="live_screen_share_sound">ശബ്ദം പങ്കിടുക</string>
+    <string name="live_screen_share_sound_desc">ആപ്പുകൾ പ്ലേ ചെയ്യുന്ന ശബ്ദവും അയയ്ക്കുക. Android മൈക്രോഫോൺ അനുമതി ചോദിക്കും, ശബ്ദം പങ്കിടുമ്പോൾ മൈക്രോഫോൺ സൂചകം കാണിക്കും.</string>
     <string name="live_screen_pin_label">ചേരാനുള്ള PIN: %1$s</string>
     <string name="live_screen_pin_hint">കാണുന്നതിന് മുമ്പ് കാഴ്ചക്കാരോട് ഈ PIN ആവശ്യപ്പെടും.</string>
     <string name="quick_text_title">ക്വിക്ക് ടെക്സ്റ്റ്</string>

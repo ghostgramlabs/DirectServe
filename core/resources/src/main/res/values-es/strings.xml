@@ -828,6 +828,9 @@
     <string name="live_screen_notification_channel_desc">Mantiene activa la duplicación de pantalla en vivo en segundo plano.</string>
     <string name="live_screen_notification_title">Compartir pantalla en progreso</string>
     <string name="live_screen_notification_body">DirectServe está reflejando su pantalla en el navegador.</string>
+    <string name="live_screen_notification_body_sound">DirectServe está duplicando tu pantalla y sonido en el navegador.</string>
+    <string name="live_screen_share_sound">Compartir sonido</string>
+    <string name="live_screen_share_sound_desc">Envía también el sonido que reproducen las apps. Android pide el permiso del micrófono y muestra el indicador del micrófono mientras se comparte el sonido.</string>
     <string name="live_screen_pin_label">PIN para unirse: %1$s</string>
     <string name="live_screen_pin_hint">A los espectadores se les pedirá este PIN antes de poder mirar.</string>
     <string name="quick_text_title">Texto rápido</string>

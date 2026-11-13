@@ -95,6 +95,8 @@ class LiveScreenCaptureService : Service() {
     private var webrtcAudioFormat: WebRtcAudioFormat? = null
     @Volatile
     private var audioObserved: Boolean = false
+    // Set from the Share sound switch; sound is never captured unless the user turned it on.
+    private var shareSound: Boolean = false
     @Volatile
     private var videoFrameObserved: Boolean = false
     @Volatile
@@ -167,6 +169,7 @@ class LiveScreenCaptureService : Service() {
                     stopCapture(getString(SharedR.string.live_screen_permission_denied))
                     return START_NOT_STICKY
                 }
+                shareSound = intent.getBooleanExtra(EXTRA_SHARE_SOUND, false)
                 startForegroundNotification()
                 startCapture(resultCode, permissionData)
             }
@@ -201,7 +204,11 @@ class LiveScreenCaptureService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_directserve)
             .setContentTitle(getString(SharedR.string.live_screen_notification_title))
-            .setContentText(getString(SharedR.string.live_screen_notification_body))
+            .setContentText(
+                getString(
+                    if (soundRequested()) SharedR.string.live_screen_notification_body_sound else SharedR.string.live_screen_notification_body,
+                ),
+            )
             .setContentIntent(openAppIntent)
             .setOngoing(true)
             .setAutoCancel(false)
@@ -463,13 +470,13 @@ class LiveScreenCaptureService : Service() {
         val localAudioSource = if (
             WEBRTC_AUDIO_ENABLED &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            hasRecordAudioPermission()
+            soundRequested()
         ) {
             container.debugLogRepository.log("LiveScreen", "creating local WebRTC audio source")
             factory.createAudioSource(audioMediaConstraints())
         } else {
             if (WEBRTC_AUDIO_ENABLED && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                container.debugLogRepository.log("LiveScreen", "skipping WebRTC audio source because RECORD_AUDIO is not granted")
+                container.debugLogRepository.log("LiveScreen", "skipping WebRTC audio source because sound is off or RECORD_AUDIO is not granted")
             }
             null
         }
@@ -1361,12 +1368,14 @@ class LiveScreenCaptureService : Service() {
             container.debugLogRepository.log("LiveScreen", "audio unavailable because playback capture requires Android 10+")
             return LiveAudioStatus.AUDIO_UNAVAILABLE
         }
-        if (!hasRecordAudioPermission()) {
-            container.debugLogRepository.log("LiveScreen", "audio unavailable because RECORD_AUDIO is not granted")
+        if (!soundRequested()) {
+            container.debugLogRepository.log("LiveScreen", "audio unavailable because sound is off or RECORD_AUDIO is not granted")
             return LiveAudioStatus.AUDIO_UNAVAILABLE
         }
         return LiveAudioStatus.AUDIO_SUPPORTED
     }
+
+    private fun soundRequested(): Boolean = shareSound && hasRecordAudioPermission()
 
     private fun hasRecordAudioPermission(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
@@ -1431,7 +1440,7 @@ class LiveScreenCaptureService : Service() {
 
     private fun liveScreenForegroundType(): Int {
         var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && hasRecordAudioPermission()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && soundRequested()) {
             type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
         }
         return type
@@ -1559,6 +1568,7 @@ class LiveScreenCaptureService : Service() {
         private const val ACTION_STOP = "com.ghostgramlabs.directserve.action.STOP_LIVE_SCREEN"
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_PERMISSION_DATA = "permission_data"
+        private const val EXTRA_SHARE_SOUND = "share_sound"
         private const val STREAM_ID = "directserve-live"
         private const val VIDEO_TRACK_ID = "directserve-live-video"
         private const val AUDIO_TRACK_ID = "directserve-live-audio"
@@ -1585,11 +1595,12 @@ class LiveScreenCaptureService : Service() {
         private const val WEBRTC_AUDIO_ENABLED = true
         private const val MUXED_LIVE_STREAM_ENABLED = false
 
-        fun start(context: Context, resultCode: Int, permissionData: Intent) {
+        fun start(context: Context, resultCode: Int, permissionData: Intent, shareSound: Boolean) {
             val intent = Intent(context, LiveScreenCaptureService::class.java)
                 .setAction(ACTION_START)
                 .putExtra(EXTRA_RESULT_CODE, resultCode)
                 .putExtra(EXTRA_PERMISSION_DATA, permissionData)
+                .putExtra(EXTRA_SHARE_SOUND, shareSound)
             ContextCompat.startForegroundService(context, intent)
         }
 
