@@ -23,6 +23,8 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 - Fixed: files shared from a picked folder lost their date.
 - Fixed: "Add everything on this phone" and the phone library left out PDFs, Word, Excel,
   PowerPoint and text files (and subtitles); only ZIPs, APKs and similar were added.
+- Fixed: a file added both from a picked folder and from the phone library showed twice. It now
+  shows once, and removing it removes both.
 - Fixed: a file that briefly couldn't be read when the app started stayed "Unavailable" (and
   "no longer available" in the browser) even though it was there. The app now looks again
   shortly after starting, and the browser checks again before giving up.

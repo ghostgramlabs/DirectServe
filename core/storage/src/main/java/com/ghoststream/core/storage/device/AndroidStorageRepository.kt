@@ -130,8 +130,18 @@ class AndroidStorageRepository(
     override suspend fun removeItem(itemId: String) {
         stateMutex.withLock {
             val current = currentPersistedState()
-            val merged = current.copy(items = current.items.filterNot { it.id == itemId })
-                .withSummary()
+            // The list shows each file once; remove every saved link to it, or the hidden copy
+            // would appear in its place.
+            val target = current.items.firstOrNull { it.id == itemId }
+            val identity = target?.let {
+                withContext(Dispatchers.IO) { resolveFileIdentities(current.items) }
+                fileIdentityByUri[it.uri].orEmpty()
+            }.orEmpty()
+            val merged = current.copy(
+                items = current.items.filterNot { item ->
+                    item.id == itemId || (identity.isNotEmpty() && fileIdentityByUri[item.uri] == identity)
+                },
+            ).withSummary()
             persistAndPublish(merged)
         }
     }
@@ -431,7 +441,7 @@ class AndroidStorageRepository(
                 "GhostLibrary",
                 "Skipping persist: previous library decode failed; original encoded JSON preserved.",
             )
-            _libraryState.value = state
+            publish(state)
             return
         }
         persistence.edit { preferences ->
@@ -440,7 +450,136 @@ class AndroidStorageRepository(
                 PersistedLibrary.from(state),
             )
         }
-        _libraryState.value = state
+        publish(state)
+    }
+
+    /*
+     * The same file can be added through two links: a picked folder or file (documents provider,
+     * e.g. primary:Download/x.pdf) and the phone library (content://media/.../233). Each link is a
+     * separate saved item, so the file showed twice. What is shown and shared lists it once; what
+     * is saved keeps both, so removing the folder still leaves the phone-library copy shared.
+     */
+    private suspend fun publish(state: LibraryState) {
+        _libraryState.value = withContext(Dispatchers.IO) { withoutDuplicateFiles(state) }
+    }
+
+    /** uri -> physical identity ("primary/download/x.pdf"); "" when it can't be told. */
+    private val fileIdentityByUri = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private fun withoutDuplicateFiles(state: LibraryState): LibraryState {
+        if (state.items.size < 2) return state
+        resolveFileIdentities(state.items)
+        val keptByIdentity = HashMap<String, SharedItem>()
+        state.items.forEach { item ->
+            val identity = fileIdentityByUri[item.uri].orEmpty()
+            if (identity.isEmpty()) return@forEach
+            val kept = keptByIdentity[identity]
+            if (kept == null || preferForDisplay(item, kept)) keptByIdentity[identity] = item
+        }
+        val items = state.items.filter { item ->
+            val identity = fileIdentityByUri[item.uri].orEmpty()
+            identity.isEmpty() || keptByIdentity[identity] === item
+        }
+        if (items.size == state.items.size) return state
+        // Re-pair subtitles so a video never points at a subtitle copy that was hidden.
+        return state.copy(items = pairSubtitles(items)).withSummary()
+    }
+
+    // Keep the copy that can be read, then the one the user picked directly (folder or file).
+    private fun preferForDisplay(candidate: SharedItem, kept: SharedItem): Boolean {
+        if (candidate.isAvailable != kept.isAvailable) return candidate.isAvailable
+        val candidatePicked = candidate.uri.toUri().authority != MediaStore.AUTHORITY
+        val keptPicked = kept.uri.toUri().authority != MediaStore.AUTHORITY
+        return candidatePicked && !keptPicked
+    }
+
+    private fun resolveFileIdentities(items: List<SharedItem>) {
+        val pendingMedia = HashMap<Long, MutableList<String>>()
+        items.forEach { item ->
+            if (fileIdentityByUri.containsKey(item.uri)) return@forEach
+            val uri = item.uri.toUri()
+            val documentId = runCatching { DocumentsContract.getDocumentId(uri) }.getOrNull()
+            val identity: String? = when {
+                uri.authority == MediaStore.AUTHORITY -> {
+                    uri.lastPathSegment?.toLongOrNull()?.let { pendingMedia.getOrPut(it) { mutableListOf() }.add(item.uri) }
+                    null
+                }
+                documentId == null -> ""
+                uri.authority == EXTERNAL_STORAGE_DOCUMENTS -> identityFromDocumentId(documentId)
+                uri.authority == DOWNLOADS_DOCUMENTS && documentId.startsWith("raw:") ->
+                    identityFromAbsolutePath(documentId.removePrefix("raw:"))
+                uri.authority == DOWNLOADS_DOCUMENTS && documentId.startsWith("msf:") -> {
+                    documentId.removePrefix("msf:").toLongOrNull()?.let { pendingMedia.getOrPut(it) { mutableListOf() }.add(item.uri) }
+                    null
+                }
+                uri.authority == MEDIA_DOCUMENTS -> {
+                    // image:233, video:233, audio:233, document:233 share MediaStore row ids.
+                    documentId.substringAfter(':', "").toLongOrNull()?.let { pendingMedia.getOrPut(it) { mutableListOf() }.add(item.uri) }
+                    null
+                }
+                else -> ""
+            }
+            if (identity != null) fileIdentityByUri[item.uri] = identity
+        }
+        if (pendingMedia.isEmpty()) return
+        pendingMedia.keys.chunked(400).forEach { ids ->
+            val projection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                arrayOf(
+                    MediaStore.MediaColumns._ID,
+                    MediaStore.MediaColumns.VOLUME_NAME,
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    MediaStore.MediaColumns.DISPLAY_NAME,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA)
+            }
+            runCatching {
+                context.contentResolver.query(
+                    MediaStore.Files.getContentUri("external"),
+                    projection,
+                    "${MediaStore.MediaColumns._ID} IN (${ids.joinToString(",")})",
+                    null,
+                    null,
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val id = cursor.getLong(0)
+                        val identity = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            val volume = cursor.getString(1).orEmpty()
+                            val relativePath = cursor.getString(2).orEmpty()
+                            val name = cursor.getString(3).orEmpty()
+                            if (name.isEmpty()) "" else {
+                                val volumeKey = if (volume == MediaStore.VOLUME_EXTERNAL_PRIMARY) "primary" else volume
+                                "$volumeKey/$relativePath$name".lowercase()
+                            }
+                        } else {
+                            identityFromAbsolutePath(cursor.getString(1).orEmpty())
+                        }
+                        pendingMedia[id]?.forEach { uriString -> fileIdentityByUri[uriString] = identity }
+                    }
+                }
+            }
+        }
+        // Rows that no longer exist (or could not be read) can't be matched.
+        pendingMedia.values.flatten().forEach { uriString -> fileIdentityByUri.putIfAbsent(uriString, "") }
+    }
+
+    // "primary:Download/DSTest/x.pdf" or "1234-ABCD:Movies/clip.mp4"
+    private fun identityFromDocumentId(documentId: String): String {
+        val volume = documentId.substringBefore(':', "")
+        val path = documentId.substringAfter(':', "")
+        if (volume.isEmpty() || path.isEmpty()) return ""
+        return "$volume/$path".lowercase()
+    }
+
+    // "/storage/emulated/0/Download/x.pdf" or "/storage/1234-ABCD/Movies/clip.mp4"
+    private fun identityFromAbsolutePath(path: String): String {
+        val primaryPrefix = "/storage/emulated/0/"
+        return when {
+            path.startsWith(primaryPrefix) -> "primary/${path.removePrefix(primaryPrefix)}".lowercase()
+            path.startsWith("/storage/") -> path.removePrefix("/storage/").lowercase()
+            else -> ""
+        }
     }
 
     private fun mergeState(items: List<SharedItem>, folders: List<SharedFolder>): LibraryState {
@@ -614,13 +753,13 @@ class AndroidStorageRepository(
         launch {
             val restored = currentPersistedState().withSummary()
             // Publish persisted state immediately so the UI never blanks out during refresh.
-            _libraryState.value = restored
+            publish(restored)
             val refreshed = refreshExistingState(restored)
             // Only update in-memory state. Availability flags are ephemeral runtime state
             // and must never overwrite the persisted JSON — early-startup SAF providers can
             // briefly return "unavailable" for valid URIs, which previously wiped the library
             // on every app update.
-            _libraryState.value = refreshed
+            publish(refreshed)
             recheckUnavailableAfterStartup()
         }
     }
@@ -641,7 +780,7 @@ class AndroidStorageRepository(
                     current.items.map { item -> if (item.isAvailable) item else refreshExistingItemSync(item) }
                 }
                 if (rechecked.count { it.isAvailable } != current.items.count { it.isAvailable }) {
-                    _libraryState.value = mergeState(items = rechecked, folders = current.folders)
+                    publish(mergeState(items = rechecked, folders = current.folders))
                 }
             }
         }
@@ -774,5 +913,8 @@ class AndroidStorageRepository(
     private companion object {
         val LIBRARY_KEY = stringPreferencesKey("shared_library_json")
         val UNAVAILABLE_RECHECK_DELAYS_MS = listOf(3_000L, 15_000L)
+        const val EXTERNAL_STORAGE_DOCUMENTS = "com.android.externalstorage.documents"
+        const val DOWNLOADS_DOCUMENTS = "com.android.providers.downloads.documents"
+        const val MEDIA_DOCUMENTS = "com.android.providers.media.documents"
     }
 }
