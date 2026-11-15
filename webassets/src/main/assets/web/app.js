@@ -4949,22 +4949,24 @@ async function pollCompat(id, item, options = {}) {
       const forceParam = options.forceCompat ? "?force=true" : "";
       debugTrace("compat_prepare_request", `id=${id} force=${!!options.forceCompat}`);
       const prepareJob = await api(`/api/compat/${id}/prepare${forceParam}`, { method: "POST" });
+      // A "direct, ready" answer often means the first attempt only hit a moment when the stream
+      // was not ready yet, so try it again first (applyCompatState mounts it).
+      if (token === state.compatPollToken && location.pathname === route && await applyCompatState(prepareJob)) {
+        return;
+      }
       // The browser could not play the original, and the phone has no other version to make
-      // (it still answers "direct" with nothing preparing). Say so plainly instead of showing
-      // a "needs preparation" card with nothing to press.
+      // (it still answers "direct" with nothing preparing and nothing to play). Say so plainly
+      // instead of showing a "needs preparation" card with nothing to press.
       if (
         options.forceCompat &&
         state.directPlaybackFailed?.[id] &&
         prepareJob?.playbackMode === "DIRECT" &&
-        !isPreparationActiveStatus(prepareJob?.status)
+        !isPreparationActiveStatus(prepareJob?.status) &&
+        token === state.compatPollToken &&
+        location.pathname === route
       ) {
-        if (token === state.compatPollToken && location.pathname === route) {
-          cancelCompatPolling();
-          showBrowserCannotPlay(item);
-        }
-        return;
-      }
-      if (token === state.compatPollToken && location.pathname === route && await applyCompatState(prepareJob)) {
+        cancelCompatPolling();
+        showBrowserCannotPlay(item);
         return;
       }
     } catch (_) {}

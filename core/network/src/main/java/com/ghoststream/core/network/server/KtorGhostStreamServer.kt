@@ -1408,6 +1408,10 @@ class KtorGhostStreamServer(
                     itemId = itemId,
                     asAttachment = false,
                     activity = activity,
+                    // This browser can play the original (or asked for it). Serve it as is instead
+                    // of re-deciding without the browser's codecs, which answered 202 "not ready"
+                    // whenever the list had loaded before the browser reported what it can play.
+                    serveOriginal = effectiveJob.decision.mode == PlaybackMode.DIRECT || userRequestedOriginal,
                 )
             }
 
@@ -2365,6 +2369,7 @@ class KtorGhostStreamServer(
         itemId: String?,
         asAttachment: Boolean,
         activity: ClientActivity,
+        serveOriginal: Boolean = false,
     ) {
         response.apply {
             header("contentFeatures.dlna.org", "DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000")
@@ -2380,7 +2385,7 @@ class KtorGhostStreamServer(
             return
         }
 
-        val playbackSource = if (asAttachment) {
+        val playbackSource = if (asAttachment || serveOriginal) {
             PlaybackSource.OriginalUri(
                 uriString = item.uri,
                 mimeType = item.mimeType ?: "application/octet-stream",

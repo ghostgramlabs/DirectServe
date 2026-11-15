@@ -18,6 +18,8 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 - The browser says when it can't reach the phone and recovers by itself when it can again.
 - Home and Back on every viewer, and a Retry / Home choice instead of a dead-end error page.
 - Fixed: a video still being prepared stopped a few seconds in and never continued.
+- Fixed: videos the browser can play as they are (such as WebM and AV1) sometimes failed to
+  start the first time the browser opened the share.
 - Fixed: files shared from a picked folder lost their date.
 - Fixed: the home page was empty right after entering the PIN.
 - Fixed: some videos with known size lost player controls such as keyboard shortcuts.
