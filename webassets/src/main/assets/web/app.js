@@ -2611,6 +2611,77 @@ function showUpNextCard() {
   card.querySelector("a")?.focus({ preventScroll: true });
 }
 
+/*
+ * A prepared MP4 that is still being written "ends" wherever the writer currently is. It is a
+ * real end only once the phone says the file is complete, or playback is at the full length.
+ */
+function isPrematureVideoEnd(video, item) {
+  if (!video || video.dataset.sourceType !== "prepared_mp4") return false;
+  const latest = state.compatItem && state.compatItem.id === item.id ? state.compatItem : item;
+  const fullSeconds = (latest.totalDurationMs || latest.durationMs || item.durationMs || 0) / 1000;
+  if (fullSeconds > 0 && video.currentTime >= fullSeconds - 1.5) return false;
+  if (latest.compatibilityComplete === true && !(fullSeconds > 0)) return false;
+  return true;
+}
+
+function continueGrowingPreparedMp4(video, item, resumeAt) {
+  if (state.growingResume?.itemId === item.id) return;
+  const run = { itemId: item.id, startedAt: Date.now(), lastProgress: null };
+  state.growingResume = run;
+  const host = playerOverlayHost(video);
+  host?.querySelector(".gs-resume-chip")?.remove();
+  const chip = document.createElement("div");
+  chip.className = "gs-resume-chip gs-growing-chip";
+  chip.setAttribute("role", "status");
+  chip.innerHTML = `<span>${esc(gsStr("web_player_finalizing_desc", "Almost ready. Completing the browser-compatible stream."))}</span>`;
+  host?.appendChild(chip);
+  debugTrace("prepared_mp4_premature_end", `id=${item.id} at=${resumeAt.toFixed(1)}s`);
+
+  const finish = () => {
+    if (state.growingResume === run) state.growingResume = null;
+    chip.remove();
+  };
+  const reload = (url) => {
+    const src = `${url}${url.includes("?") ? "&" : "?"}r=${Date.now()}`;
+    video.addEventListener("loadedmetadata", () => {
+      try { video.currentTime = Math.max(0, resumeAt - 0.2); } catch (_) {}
+      video.play().catch(() => {});
+    }, { once: true });
+    video.src = src;
+    video.load();
+  };
+
+  const tick = async () => {
+    if (state.growingResume !== run || location.pathname !== `/player/video/${item.id}` || !video.isConnected) {
+      finish();
+      return;
+    }
+    try {
+      const job = await api(`/api/compat/${item.id}`);
+      const complete = Boolean(job.complete || job.compatibilityComplete || job.status === "READY");
+      const url = job.preparedMp4Url || item.preparedMp4Url;
+      if (job.status === "FAILED" || job.status === "STALLED") {
+        finish();
+        return;
+      }
+      if (state.compatItem && state.compatItem.id === item.id) {
+        state.compatItem = { ...state.compatItem, compatibilityComplete: complete, compatibilityStatus: job.status, compatibilityProgressPercent: job.progressPercent };
+      }
+      const progress = Number(job.progressPercent);
+      if (run.lastProgress === null) run.lastProgress = Number.isFinite(progress) ? progress : 0;
+      // Reload when finished, or once a good chunk more has been written.
+      if (url && (complete || (Number.isFinite(progress) && progress >= run.lastProgress + 15))) {
+        finish();
+        reload(url);
+        return;
+      }
+    } catch (_) {}
+    if (Date.now() - run.startedAt < 10 * 60 * 1000) setTimeout(tick, 1500);
+    else finish();
+  };
+  setTimeout(tick, 800);
+}
+
 // Overlays inside the player sit in Plyr's container so they stay visible in full screen.
 function playerOverlayHost(video) {
   return video?.closest(".plyr") || video?.closest(".gs-video-wrap") || null;
@@ -2687,7 +2758,11 @@ function showSeekRipple(container, side, seconds) {
 }
 
 document.addEventListener("ended", (event) => {
-  if (event.target?.id === "vPlayer" && location.pathname.startsWith("/player/video/")) showUpNextCard();
+  if (event.target?.id !== "vPlayer" || !location.pathname.startsWith("/player/video/")) return;
+  // An early "end" of a video still being converted is not the end; it continues on its own.
+  const item = state.compatItem;
+  if (item && isPrematureVideoEnd(event.target, item)) return;
+  showUpNextCard();
 }, true);
 document.addEventListener("play", (event) => {
   if (event.target?.id === "vPlayer") document.querySelector(".gs-up-next-card")?.remove();
@@ -3391,6 +3466,16 @@ function hydrateVideoPlayer(item, options = {}) {
     debugTrace("video_playing", `id=${item.id} currentTime=${video.currentTime.toFixed(2)}`);
   });
 
+  // While the phone is still converting, the browser plays the part written so far and then
+  // reports "ended" at that point. Keep going: wait for more of the file, then continue from
+  // the same spot. Without this, playback froze a few seconds in until the page was reloaded.
+  if (selectedSource.kind === "prepared_mp4") {
+    video.addEventListener("ended", () => {
+      if (!isPrematureVideoEnd(video, item)) return;
+      continueGrowingPreparedMp4(video, item, video.currentTime);
+    });
+  }
+
   video.addEventListener("seeked", async () => {
     // DIRECT playback is satisfied by normal byte-range requests.
     // Compatibility playback may need an explicit restart when the seek target
@@ -3399,7 +3484,10 @@ function hydrateVideoPlayer(item, options = {}) {
 
     const sourceType = video.dataset.sourceType || selectedSource.kind;
     const usingManagedHls = Boolean(state.hls && state.hlsItemId === item.id);
-    const usingGrowingPreparedMp4 = sourceType === "prepared_mp4" && !item.compatibilityComplete;
+    // The file may have finished since this player started (see continueGrowingPreparedMp4).
+    const nowComplete = item.compatibilityComplete ||
+      (state.compatItem?.id === item.id && state.compatItem.compatibilityComplete === true);
+    const usingGrowingPreparedMp4 = sourceType === "prepared_mp4" && !nowComplete;
     if (!usingManagedHls && !usingGrowingPreparedMp4) return;
 
     const currentTime = video.currentTime;
@@ -4861,6 +4949,21 @@ async function pollCompat(id, item, options = {}) {
       const forceParam = options.forceCompat ? "?force=true" : "";
       debugTrace("compat_prepare_request", `id=${id} force=${!!options.forceCompat}`);
       const prepareJob = await api(`/api/compat/${id}/prepare${forceParam}`, { method: "POST" });
+      // The browser could not play the original, and the phone has no other version to make
+      // (it still answers "direct" with nothing preparing). Say so plainly instead of showing
+      // a "needs preparation" card with nothing to press.
+      if (
+        options.forceCompat &&
+        state.directPlaybackFailed?.[id] &&
+        prepareJob?.playbackMode === "DIRECT" &&
+        !isPreparationActiveStatus(prepareJob?.status)
+      ) {
+        if (token === state.compatPollToken && location.pathname === route) {
+          cancelCompatPolling();
+          showBrowserCannotPlay(item);
+        }
+        return;
+      }
       if (token === state.compatPollToken && location.pathname === route && await applyCompatState(prepareJob)) {
         return;
       }
@@ -4909,6 +5012,31 @@ async function pollCompat(id, item, options = {}) {
   }
 
   state.compatPollTimer = setTimeout(tick, 500);
+}
+
+function showBrowserCannotPlay(item) {
+  const stage = document.getElementById("playerStage");
+  if (!stage) return;
+  destroyPlyr();
+  destroyHls();
+  const allowDownloads = !state.bootstrap?.preventDownload && Boolean(item.downloadUrl);
+  debugTrace("browser_cannot_play", `id=${item.id} mime=${item.mimeType || ""}`);
+  stage.innerHTML = `
+    <div class="gs-compat-card">
+      <span class="gs-badge">${esc(gsStr("web_player_status_failed", "Playback unavailable"))}</span>
+      <h3>${esc(gsStr("web_player_error_open", "This video could not be opened"))}</h3>
+      <p>${esc(gsStr("web_error_video_decode", "This browser could not decode the video stream. Try downloading the original file."))}</p>
+      <div class="gs-toolbar-actions gs-mt-2">
+        ${allowDownloads ? `<a class="gs-btn gs-btn-accent gs-btn-sm" href="${item.downloadUrl}">${DOWNLOAD_ICON}${esc(gsStr("web_btn_download_original", "Download original"))}</a>` : ""}
+        <button class="gs-btn gs-btn-sm" type="button" id="cannotPlayRetryBtn">${esc(gsStr("web_player_try_again", "Try again"))}</button>
+      </div>
+    </div>`;
+  document.getElementById("cannotPlayRetryBtn")?.addEventListener("click", () => {
+    if (state.directPlaybackFailed) delete state.directPlaybackFailed[item.id];
+    if (state.compatPlaybackFailures) delete state.compatPlaybackFailures[item.id];
+    if (state.compatAutoRetries) delete state.compatAutoRetries[item.id];
+    boot();
+  });
 }
 
 async function startPreparation(id, forceCompat = false) {

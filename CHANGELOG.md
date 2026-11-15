@@ -3,6 +3,25 @@
 User-facing changes to DirectServe, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
+## 1.0.28 - 2026-11-15
+
+- Photos open full screen in the browser: swipe or use the arrow keys to browse, pinch or
+  double-tap to zoom, a filmstrip of nearby photos, slideshow, details (with the date) and
+  download. Next keeps going across pages, and one Back returns to the page you were on.
+- Videos in the browser have Previous / Next, an Up next row, and offer the next video when one
+  ends (it only starts when you choose it). Reopening a video says where it resumed, with Start
+  over. On phones, double-tap the left or right side to skip 10 seconds.
+- Sort any list by newest, oldest, name or size; the photo viewer and video player follow it.
+- Files show as a clear list with a type badge, size, date, View and Download.
+- Music plays as a queue: the next track starts by itself, with Previous / Next in the Now
+  playing bar and on the lock screen.
+- The browser says when it can't reach the phone and recovers by itself when it can again.
+- Home and Back on every viewer, and a Retry / Home choice instead of a dead-end error page.
+- Fixed: a video still being prepared stopped a few seconds in and never continued.
+- Fixed: files shared from a picked folder lost their date.
+- Fixed: the home page was empty right after entering the PIN.
+- Fixed: some videos with known size lost player controls such as keyboard shortcuts.
+
 ## 1.0.27 - 2026-11-03
 
 - A simpler app: choose what to share, tap Start, and scan the QR code. Settings are grouped,
