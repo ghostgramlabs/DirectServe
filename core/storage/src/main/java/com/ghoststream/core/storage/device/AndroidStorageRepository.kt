@@ -33,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -620,6 +621,29 @@ class AndroidStorageRepository(
             // briefly return "unavailable" for valid URIs, which previously wiped the library
             // on every app update.
             _libraryState.value = refreshed
+            recheckUnavailableAfterStartup()
+        }
+    }
+
+    /**
+     * The startup check above runs once, and a file that failed it only because a provider was
+     * not ready yet stayed "Unavailable" for the whole session even though it was there. Look at
+     * just those files again, twice, shortly after startup. Bounded, and in memory only.
+     */
+    private suspend fun recheckUnavailableAfterStartup() {
+        for (waitMs in UNAVAILABLE_RECHECK_DELAYS_MS) {
+            if (_libraryState.value.items.all { it.isAvailable }) return
+            delay(waitMs)
+            stateMutex.withLock {
+                val current = _libraryState.value
+                if (current.items.all { it.isAvailable }) return
+                val rechecked = withContext(Dispatchers.IO) {
+                    current.items.map { item -> if (item.isAvailable) item else refreshExistingItemSync(item) }
+                }
+                if (rechecked.count { it.isAvailable } != current.items.count { it.isAvailable }) {
+                    _libraryState.value = mergeState(items = rechecked, folders = current.folders)
+                }
+            }
         }
     }
 
@@ -749,5 +773,6 @@ class AndroidStorageRepository(
 
     private companion object {
         val LIBRARY_KEY = stringPreferencesKey("shared_library_json")
+        val UNAVAILABLE_RECHECK_DELAYS_MS = listOf(3_000L, 15_000L)
     }
 }

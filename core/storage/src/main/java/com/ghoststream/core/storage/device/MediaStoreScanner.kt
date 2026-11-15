@@ -55,7 +55,11 @@ class MediaStoreScanner(
             category = MediaCategory.FILE,
             items = items,
             foldersMap = foldersMap,
-            selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} = ${MediaStore.Files.FileColumns.MEDIA_TYPE_NONE}"
+            // Android 11+ files PDFs, office documents and text files as DOCUMENT (6) and
+            // subtitles as SUBTITLE (5), not NONE (0). Matching only NONE left them all out, so
+            // "Add everything" shared ZIPs and APKs but not a single PDF or Word file.
+            selection = "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN " +
+                "(${MediaStore.Files.FileColumns.MEDIA_TYPE_NONE}, $MEDIA_TYPE_SUBTITLE, $MEDIA_TYPE_DOCUMENT)"
         )
 
         Log.d(TAG, "Scan complete. Found ${items.size} items across ${foldersMap.size} folders.")
@@ -201,6 +205,11 @@ class MediaStoreScanner(
     }
 
     companion object {
+        // MediaStore.Files.FileColumns.MEDIA_TYPE_SUBTITLE / MEDIA_TYPE_DOCUMENT (API 30). Older
+        // versions never use these values, so matching them there is harmless.
+        private const val MEDIA_TYPE_SUBTITLE = 5
+        private const val MEDIA_TYPE_DOCUMENT = 6
+
         private val SHAREABLE_MIME_PREFIXES = listOf(
             "text/",
             "application/pdf",

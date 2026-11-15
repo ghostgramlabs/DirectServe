@@ -2380,7 +2380,10 @@ class KtorGhostStreamServer(
             respond(HttpStatusCode.NotFound, ErrorPayload(this@KtorGhostStreamServer.context.getString(R.string.browser_file_unavailable)))
             return
         }
-        if (!item.isAvailable) {
+        // The library can mark a file unavailable when a startup check briefly failed; look again
+        // before telling the browser the file is gone, as the HLS path already does.
+        if (!item.isAvailable && !storageRepository.verifyAvailability(item)) {
+            debugLogSink.log("WebStream/410", "item truly gone id=${item.id} name=${item.displayName}")
             respond(HttpStatusCode.Gone, ErrorPayload(this@KtorGhostStreamServer.context.getString(R.string.browser_file_unavailable)))
             return
         }

@@ -21,6 +21,11 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 - Fixed: videos the browser can play as they are (such as WebM and AV1) sometimes failed to
   start the first time the browser opened the share.
 - Fixed: files shared from a picked folder lost their date.
+- Fixed: "Add everything on this phone" and the phone library left out PDFs, Word, Excel,
+  PowerPoint and text files (and subtitles); only ZIPs, APKs and similar were added.
+- Fixed: a file that briefly couldn't be read when the app started stayed "Unavailable" (and
+  "no longer available" in the browser) even though it was there. The app now looks again
+  shortly after starting, and the browser checks again before giving up.
 - Fixed: the home page was empty right after entering the PIN.
 - Fixed: some videos with known size lost player controls such as keyboard shortcuts.
 
