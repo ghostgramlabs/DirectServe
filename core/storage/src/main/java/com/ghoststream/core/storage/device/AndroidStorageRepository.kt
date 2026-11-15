@@ -8,6 +8,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import androidx.core.net.toUri
@@ -683,13 +684,23 @@ class AndroidStorageRepository(
         var displayName = fallbackName
         var sizeBytes = 0L
         var lastModified: Long? = null
+        // Files from a picked folder come from a documents provider, which names the column
+        // last_modified (milliseconds); MediaStore calls it date_modified (seconds). Asking a
+        // documents provider for date_modified silently returned nothing, so those files lost
+        // their own date.
+        val isDocument = DocumentsContract.isDocumentUri(context, uri)
+        val modifiedColumn = if (isDocument) {
+            DocumentsContract.Document.COLUMN_LAST_MODIFIED
+        } else {
+            MediaStore.MediaColumns.DATE_MODIFIED
+        }
 
         query(
             uri,
             arrayOf(
                 OpenableColumns.DISPLAY_NAME,
                 OpenableColumns.SIZE,
-                MediaStore.MediaColumns.DATE_MODIFIED,
+                modifiedColumn,
             ),
             null,
             null,
@@ -698,7 +709,8 @@ class AndroidStorageRepository(
             if (cursor.moveToFirst()) {
                 displayName = cursor.getStringOrNull(OpenableColumns.DISPLAY_NAME) ?: fallbackName
                 sizeBytes = cursor.getLongOrNull(OpenableColumns.SIZE) ?: 0L
-                lastModified = cursor.getLongOrNull(MediaStore.MediaColumns.DATE_MODIFIED)?.times(1_000L)
+                val modified = cursor.getLongOrNull(modifiedColumn)
+                lastModified = if (isDocument) modified else modified?.times(1_000L)
             }
         }
 

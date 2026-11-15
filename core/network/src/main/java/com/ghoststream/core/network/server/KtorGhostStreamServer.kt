@@ -520,6 +520,34 @@ class KtorGhostStreamServer(
                             "web_action_previous" to localizedContext.getString(R.string.web_action_previous),
                             "web_action_next" to localizedContext.getString(R.string.web_action_next),
                             "web_btn_back_to_photos" to localizedContext.getString(R.string.web_btn_back_to_photos),
+                            "web_photo_load_failed" to localizedContext.getString(R.string.web_photo_load_failed),
+                            "web_photo_slideshow" to localizedContext.getString(R.string.web_photo_slideshow),
+                            "web_photo_details" to localizedContext.getString(R.string.web_photo_details),
+                            "web_photo_info_name" to localizedContext.getString(R.string.web_photo_info_name),
+                            "web_photo_info_size" to localizedContext.getString(R.string.web_photo_info_size),
+                            "web_photo_info_dimensions" to localizedContext.getString(R.string.web_photo_info_dimensions),
+                            "web_photo_info_type" to localizedContext.getString(R.string.web_photo_info_type),
+                            "web_photo_info_position" to localizedContext.getString(R.string.web_photo_info_position),
+                            "web_photo_zoom_in" to localizedContext.getString(R.string.web_photo_zoom_in),
+                            "web_photo_zoom_out" to localizedContext.getString(R.string.web_photo_zoom_out),
+                            "web_photo_zoom_reset" to localizedContext.getString(R.string.web_photo_zoom_reset),
+                            "web_photo_close" to localizedContext.getString(R.string.web_photo_close),
+                            "web_video_up_next" to localizedContext.getString(R.string.web_video_up_next),
+                            "web_video_play_next" to localizedContext.getString(R.string.web_video_play_next),
+                            "web_video_replay" to localizedContext.getString(R.string.web_video_replay),
+                            "web_photo_info_date" to localizedContext.getString(R.string.web_photo_info_date),
+                            "web_photo_hint" to localizedContext.getString(R.string.web_photo_hint),
+                            "web_video_resumed" to localizedContext.getString(R.string.web_video_resumed),
+                            "web_video_start_over" to localizedContext.getString(R.string.web_video_start_over),
+                            "web_sort_label" to localizedContext.getString(R.string.web_sort_label),
+                            "web_sort_newest" to localizedContext.getString(R.string.web_sort_newest),
+                            "web_sort_oldest" to localizedContext.getString(R.string.web_sort_oldest),
+                            "web_sort_name_az" to localizedContext.getString(R.string.web_sort_name_az),
+                            "web_sort_name_za" to localizedContext.getString(R.string.web_sort_name_za),
+                            "web_sort_largest" to localizedContext.getString(R.string.web_sort_largest),
+                            "web_sort_smallest" to localizedContext.getString(R.string.web_sort_smallest),
+                            "web_connection_lost" to localizedContext.getString(R.string.web_connection_lost),
+                            "web_connection_back" to localizedContext.getString(R.string.web_connection_back),
                             "web_error_no_preview" to localizedContext.getString(R.string.web_error_no_preview),
                             "web_error_pin_mismatch" to localizedContext.getString(R.string.browser_pin_mismatch),
                             "web_player_slow_start_hint" to localizedContext.getString(R.string.web_player_slow_start_hint),
@@ -691,7 +719,7 @@ class KtorGhostStreamServer(
                     .filter { item ->
                         query.isBlank() || item.displayName.contains(query, ignoreCase = true)
                     }
-                    .sortedByDescending { it.dateAddedEpochMs }
+                    .sortedWith(browserItemOrder(call.request.queryParameters["sort"]))
                 val pagedItems = if (offset != null || limit != null) {
                     items.drop(offset ?: 0).take(limit ?: DEFAULT_BROWSER_ITEMS_PAGE_SIZE)
                 } else {
@@ -796,6 +824,9 @@ class KtorGhostStreamServer(
                                 call.request.header(HttpHeaders.UserAgent),
                                 capabilityCache[call.request.origin.remoteHost],
                             ),
+                        ).copy(
+                            // The photo viewer shows this at once while the full photo loads.
+                            thumbnailUrl = BrowserItemCard.thumbnailUrlFor(item, settings.showThumbnails),
                         ),
                     )
                 } catch (e: Exception) {
@@ -2184,6 +2215,53 @@ class KtorGhostStreamServer(
      * Fills [inspectionCache] for a page of cards a few files at a time, so the first listing of a
      * large share isn't one inspection after another. Read-only: nothing is prepared or converted.
      */
+    /**
+     * Order for browser lists, chosen with `?sort=`: newest (default), oldest, name, name_desc,
+     * largest, smallest. Ties fall back to the id so paging never repeats or skips an item.
+     */
+    private fun browserItemOrder(sort: String?): Comparator<SharedItem> {
+        val byName = Comparator<SharedItem> { a, b -> naturalCompare(a.displayName, b.displayName) }
+        val primary: Comparator<SharedItem> = when (sort?.lowercase()) {
+            "oldest" -> compareBy { it.browserDateMs() }
+            "name" -> byName
+            "name_desc" -> byName.reversed()
+            "largest" -> compareByDescending { it.sizeBytes }
+            "smallest" -> compareBy { it.sizeBytes }
+            else -> compareByDescending { it.browserDateMs() }
+        }
+        return primary.thenBy { it.id }
+    }
+
+    /** The date the browser shows and sorts by: the file's own date, else when it was added. */
+    private fun SharedItem.browserDateMs(): Long = lastModifiedEpochMs?.takeIf { it > 0L } ?: dateAddedEpochMs
+
+    /** Case-insensitive name order that puts IMG_2 before IMG_10. */
+    private fun naturalCompare(a: String, b: String): Int {
+        var i = 0
+        var j = 0
+        while (i < a.length && j < b.length) {
+            val ca = a[i]
+            val cb = b[j]
+            if (ca.isDigit() && cb.isDigit()) {
+                val startA = i
+                val startB = j
+                while (i < a.length && a[i].isDigit()) i++
+                while (j < b.length && b[j].isDigit()) j++
+                val numA = a.substring(startA, i).trimStart('0')
+                val numB = b.substring(startB, j).trimStart('0')
+                if (numA.length != numB.length) return numA.length - numB.length
+                val cmp = numA.compareTo(numB)
+                if (cmp != 0) return cmp
+            } else {
+                val cmp = ca.lowercaseChar().compareTo(cb.lowercaseChar())
+                if (cmp != 0) return cmp
+                i++
+                j++
+            }
+        }
+        return (a.length - i) - (b.length - j)
+    }
+
     private suspend fun warmInspections(items: List<SharedItem>) {
         val pending = items.filter { needsInspection(it) && !inspectionCache.containsKey(inspectionKey(it)) }
         if (pending.isEmpty()) return
@@ -3503,8 +3581,26 @@ class KtorGhostStreamServer(
         val width: Int? = null,
         val height: Int? = null,
         val totalDurationMs: Long? = null,
+        /** The file's own date (last modified, else when it was added), shown in the browser's details. */
+        val dateMs: Long? = null,
     ) {
         companion object {
+            /** Card-sized thumbnail for photos, videos and PDFs; null when thumbnails are off. */
+            fun thumbnailUrlFor(item: SharedItem, showThumbnails: Boolean): String? =
+                if (
+                    showThumbnails &&
+                    (
+                        item.category == MediaCategory.PHOTO ||
+                            item.category == MediaCategory.VIDEO ||
+                            item.mimeType == "application/pdf" ||
+                            item.displayName.endsWith(".pdf", ignoreCase = true)
+                    )
+                ) {
+                    "/thumb/${item.id}?size=$DEFAULT_CARD_THUMBNAIL_SIZE_PX"
+                } else {
+                    null
+                }
+
             fun from(
                 context: Context,
                 item: SharedItem,
@@ -3518,19 +3614,7 @@ class KtorGhostStreamServer(
                 mimeType = item.mimeType ?: "application/octet-stream",
                 sizeBytes = item.sizeBytes,
                 durationMs = item.durationMs,
-                thumbnailUrl = if (
-                    showThumbnails &&
-                    (
-                        item.category == MediaCategory.PHOTO ||
-                            item.category == MediaCategory.VIDEO ||
-                            item.mimeType == "application/pdf" ||
-                            item.displayName.endsWith(".pdf", ignoreCase = true)
-                    )
-                ) {
-                    "/thumb/${item.id}?size=$DEFAULT_CARD_THUMBNAIL_SIZE_PX"
-                } else {
-                    null
-                },
+                thumbnailUrl = thumbnailUrlFor(item, showThumbnails),
                 streamUrl = "/stream/${item.id}",
                 downloadUrl = if (allowDownloads) "/download/${item.id}" else null,
                 subtitleUrl = item.subtitleMatch?.let { "/subtitle/${item.id}" },
@@ -3539,6 +3623,7 @@ class KtorGhostStreamServer(
                 width = compatibilityJob.width,
                 height = compatibilityJob.height,
                 totalDurationMs = compatibilityJob.totalDurationMs ?: item.durationMs,
+                dateMs = (item.lastModifiedEpochMs?.takeIf { it > 0L } ?: item.dateAddedEpochMs).takeIf { it > 0L },
             )
         }
     }
@@ -3584,6 +3669,8 @@ class KtorGhostStreamServer(
         val width: Int? = null,
         val height: Int? = null,
         val totalDurationMs: Long? = null,
+        val dateMs: Long? = null,
+        val thumbnailUrl: String? = null,
     ) {
         companion object {
             fun from(
@@ -3641,6 +3728,7 @@ class KtorGhostStreamServer(
                     width = compatibilityJob.width,
                     height = compatibilityJob.height,
                     totalDurationMs = compatibilityJob.totalDurationMs ?: item.durationMs,
+                    dateMs = (item.lastModifiedEpochMs?.takeIf { it > 0L } ?: item.dateAddedEpochMs).takeIf { it > 0L },
                 )
             }
         }

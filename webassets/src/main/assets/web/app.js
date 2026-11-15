@@ -19,6 +19,7 @@ const state = {
   libraryTitle: "",
   libraryTotalCount: 0,
   libraryPage: 1,
+  librarySort: "newest",
   libraryDownloadsAllowed: null,
   nowPlaying: null,
   plyr: null,
@@ -72,7 +73,41 @@ const state = {
 };
 
 function libraryCacheKey(category, query, folderId, page = 1) {
-  return `${category}|${query || ""}|${folderId || ""}|${page}`;
+  return `${category}|${query || ""}|${folderId || ""}|${state.librarySort}|${page}`;
+}
+
+/*
+ * How lists are ordered. The choice is remembered in this browser and used by every list,
+ * and the photo viewer and video player follow the same order for Next and Up next.
+ */
+const LIBRARY_SORTS = ["newest", "oldest", "name", "name_desc", "largest", "smallest"];
+const LIBRARY_SORT_KEY = "ds.librarySort";
+
+function readLibrarySort() {
+  try {
+    const saved = localStorage.getItem(LIBRARY_SORT_KEY);
+    return LIBRARY_SORTS.includes(saved) ? saved : "newest";
+  } catch (_) {
+    return "newest";
+  }
+}
+
+state.librarySort = readLibrarySort();
+
+function saveLibrarySort(sort) {
+  state.librarySort = sort;
+  try { localStorage.setItem(LIBRARY_SORT_KEY, sort); } catch (_) {}
+}
+
+function librarySortLabel(sort) {
+  return {
+    newest: gsStr("web_sort_newest", "Newest first"),
+    oldest: gsStr("web_sort_oldest", "Oldest first"),
+    name: gsStr("web_sort_name_az", "Name (A–Z)"),
+    name_desc: gsStr("web_sort_name_za", "Name (Z–A)"),
+    largest: gsStr("web_sort_largest", "Largest first"),
+    smallest: gsStr("web_sort_smallest", "Smallest first"),
+  }[sort];
 }
 
 function saveLibraryScroll() {
@@ -239,7 +274,8 @@ function fileTypeLabel(mimeType, title) {
 
 const BACK_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`;
 const FULLSCREEN_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`;
-const DOWNLOAD_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const HOME_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>`;
+const DOWNLOAD_ICON =`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
 
 const CATEGORY_ICONS = {
   videos: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
@@ -267,22 +303,59 @@ function gsStr(key, defaultVal, ...args) {
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 window.addEventListener("popstate", async () => {
-  const scrollY = history.state?.scrollY;
-  await boot();
-  if (Number.isFinite(scrollY)) {
-    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+  let scrollY = history.state?.scrollY;
+  // Leaving the photo viewer: the list should open on the page holding the last photo shown,
+  // which may not be the page the viewer started from.
+  const viewerReturn = state.viewerReturn;
+  state.viewerReturn = null;
+  let focusId = null;
+  if (viewerReturn && !location.pathname.startsWith("/photo/") && !location.pathname.startsWith("/player/video/")) {
+    focusId = viewerReturn.itemId;
+    const target = new URL(viewerReturn.href, location.origin);
+    if (target.pathname === location.pathname && target.search !== location.search) {
+      history.replaceState(history.state, "", viewerReturn.href);
+      scrollY = undefined;
+    }
   }
+  await boot();
+  requestAnimationFrame(() => {
+    if (Number.isFinite(scrollY)) window.scrollTo(0, scrollY);
+    if (focusId) revealCard(focusId);
+  });
 });
 document.addEventListener("click", (event) => {
   const link = event.target.closest("[data-link]");
   if (!link) return;
   event.preventDefault();
+  const href = link.getAttribute("href");
+  if (!href || href === "#") return;
   if (link.hasAttribute("data-back") && history.state?.depth > 0) {
     history.back();
     return;
   }
-  navigate(link.getAttribute("href"));
+  if (href.startsWith("/photo/") && !location.pathname.startsWith("/photo/")) {
+    navigate(href, false, { mediaNav: mediaNavFromCurrentList(href, "photos") });
+    return;
+  }
+  if (href.startsWith("/player/video/")) {
+    // Inside the player, Up next and Next/Previous keep the list and replace this entry.
+    const upNextIndex = Number.parseInt(link.dataset.navIndex, 10);
+    if (location.pathname.startsWith("/player/video/") && state.videoNav && Number.isInteger(upNextIndex)) {
+      navigate(href, true, { mediaNav: { ...state.videoNav.nav, index: upNextIndex } });
+    } else {
+      navigate(href, false, { mediaNav: mediaNavFromCurrentList(href, "videos") });
+    }
+    return;
+  }
+  navigate(href, link.hasAttribute("data-replace"));
 });
+
+function revealCard(itemId) {
+  const el = document.querySelector(`[data-select-card="${CSS.escape(itemId)}"]`);
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  if (rect.top < 0 || rect.bottom > window.innerHeight) el.scrollIntoView({ block: "center" });
+}
 
 document.addEventListener("error", (event) => {
   const target = event.target;
@@ -451,6 +524,9 @@ async function handleFilesUpload(files, hooks = {}) {
 
 async function boot() {
   const path = location.pathname;
+  state.photoViewer?.destroy();
+  state.photoViewer = null;
+  state.videoNav = null;
   cancelCompatPolling();
   destroyLiveModeGuard();
   destroyUppy();
@@ -487,12 +563,14 @@ async function boot() {
     }
     state.libraryVersion = null;
     startLibraryWatch();
+    // Awaited so a deleted item, an expired session or a dropped connection lands in the
+    // error / login handling below instead of leaving a blank page.
     if (path.startsWith("/player/video/")) {
-      renderVideoPlayer(path.split("/").pop());
+      await renderVideoPlayer(path.split("/").pop());
       return;
     }
     if (path.startsWith("/photo/")) {
-      renderPhotoViewer(path.split("/").pop());
+      await renderPhotoViewer(path.split("/").pop());
       return;
     }
     await (routes[path] || routes["/"])();
@@ -520,9 +598,17 @@ function startLibraryWatch() {
     let version;
     try {
       version = (await api("/api/library/version")).version;
-    } catch (_) {
+    } catch (error) {
+      if (error.status === 401) {
+        // The session ended (PIN changed or sharing restarted): ask for the PIN again.
+        state.bootstrap = null;
+        navigate("/login", true);
+        return;
+      }
+      if (error.network || error.status >= 500) noteConnectionLost();
       return;
     }
+    noteConnectionBack();
     if (!state.libraryVersion) {
       state.libraryVersion = version;
       return;
@@ -546,6 +632,35 @@ function startLibraryWatch() {
       window.scrollTo(0, scrollY);
     } catch (_) {}
   }, 5000);
+}
+
+/*
+ * When the phone stops answering (sharing stopped, Wi-Fi dropped, phone asleep), say so instead
+ * of leaving a page that silently fails. Two missed checks in a row (about 10 seconds) show a
+ * banner; the next successful check hides it and refreshes the open list.
+ */
+function noteConnectionLost() {
+  state.connectionMisses = (state.connectionMisses || 0) + 1;
+  if (state.connectionMisses < 2 || document.getElementById("connectionBanner")) return;
+  const banner = document.createElement("div");
+  banner.id = "connectionBanner";
+  banner.className = "gs-connection-banner";
+  banner.setAttribute("role", "alert");
+  banner.innerHTML = `<span class="gs-connection-dot" aria-hidden="true"></span><span>${esc(gsStr("web_connection_lost", "Can't reach the phone. Check that sharing is still on and you're on the same Wi-Fi."))}</span>`;
+  document.body.appendChild(banner);
+}
+
+function noteConnectionBack() {
+  const wasLost = Boolean(document.getElementById("connectionBanner"));
+  state.connectionMisses = 0;
+  if (!wasLost) return;
+  document.getElementById("connectionBanner")?.remove();
+  showToast(gsStr("web_connection_back", "Connected to the phone again"), 3000);
+  // Lists may have changed while away; viewers and players are left alone.
+  if (LIST_ROUTES.has(location.pathname)) {
+    state.libraryCache.clear();
+    boot();
+  }
 }
 
 function applyBootstrapUi() {
@@ -577,15 +692,16 @@ function debugTrace(event, details = "") {
   }).catch(() => {});
 }
 
-function navigate(path, replace = false) {
+function navigate(path, replace = false, extraState = null) {
   cancelCompatPolling();
   if (isMediaPath(location.pathname)) saveLibraryScroll();
+  state.viewerReturn = null;
   const depth = history.state?.depth || 0;
   if (replace) {
-    history.replaceState({ depth }, "", path);
+    history.replaceState({ ...extraState, depth }, "", path);
   } else {
     history.replaceState({ ...(history.state || {}), depth, scrollY: window.scrollY }, "");
-    history.pushState({ depth: depth + 1 }, "", path);
+    history.pushState({ ...extraState, depth: depth + 1 }, "", path);
   }
   boot();
 }
@@ -1231,14 +1347,22 @@ function renderCardProgress(item) {
 }
 
 async function api(url, options = {}) {
-  const response = await fetch(url, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+  } catch (_) {
+    // The phone could not be reached at all (sharing stopped, Wi-Fi dropped, phone asleep).
+    const error = new Error(gsStr("web_connection_lost", "Can't reach the phone. Check that sharing is still on and you're on the same Wi-Fi."));
+    error.network = true;
+    throw error;
+  }
   if (!response.ok) {
     let payload = {};
     try {
@@ -1564,7 +1688,7 @@ function browseTile(item, progress) {
   ].join("");
   const body = `<span class="gs-tile-media">${thumb}${overlay}</span><span class="gs-tile-title">${esc(item.title)}</span>`;
   if (item.category === "music") {
-    return `<button class="gs-tile gs-tile--music" type="button" data-track-src="${esc(item.streamUrl)}" data-track-title="${esc(item.title)}">${body}</button>`;
+    return `<button class="gs-tile gs-tile--music" type="button" data-track-id="${esc(item.id)}" data-track-src="${esc(item.streamUrl)}" data-track-title="${esc(item.title)}">${body}</button>`;
   }
   const href = item.category === "video" ? `/player/video/${item.id}` : `/photo/${item.id}`;
   return `<a class="gs-tile gs-tile--${item.category}" data-link href="${href}" title="${esc(item.title)}">${body}</a>`;
@@ -1624,42 +1748,114 @@ function bindMusicTiles(root) {
   root.querySelectorAll(".gs-tile--music").forEach((tile) => {
     tile.addEventListener("click", () => {
       const src = tile.dataset.trackSrc;
-      let audio = state.rowAudio;
-      if (audio && audio.dataset.src === src && !audio.paused) {
+      const audio = ensureQueueAudio();
+      if (audio.dataset.src === src && !audio.paused) {
         audio.pause();
         return;
       }
-      if (!audio) {
-        audio = new Audio();
-        audio.preload = "none";
-        state.rowAudio = audio;
-        const syncTiles = () => document.querySelectorAll(".gs-tile--music").forEach((element) => {
-          element.classList.toggle("is-playing", !audio.paused && element.dataset.trackSrc === audio.dataset.src);
-        });
-        audio.addEventListener("play", syncTiles);
-        audio.addEventListener("pause", () => {
-          syncTiles();
-          clearNowPlaying(audio);
-        });
-        audio.addEventListener("ended", syncTiles);
-        audio.addEventListener("error", () => {
-          syncTiles();
-          clearNowPlaying(audio);
-          showToast(gsStr("web_music_unsupported", "This browser can't play this track. Download it to listen."));
-        });
+      // Home rows list music newest first, so the queue continues through all music that way.
+      const id = tile.dataset.trackId;
+      if (id && state.musicQueue?.id !== id) {
+        startMusicQueue(id, { category: "music", query: "", folderId: null, sort: "newest", returnHref: "/music", pageAligned: false, index: null });
       }
-      if (audio.dataset.src !== src) {
-        audio.dataset.src = src;
-        audio.src = src;
-      }
-      audio.play().then(() => setNowPlaying({
-        type: gsStr("web_cat_music", "Music"),
-        title: tile.dataset.trackTitle,
-        element: audio,
-        route: location.pathname,
-      })).catch(() => {});
+      playOnQueueAudio({ streamUrl: src, title: tile.dataset.trackTitle });
     });
   });
+}
+
+/*
+ * Music plays as a queue: when a track ends the next one in the same list (and order) starts,
+ * across pages, and the Now playing bar, lock screen and headphone buttons can skip either way.
+ * Music streams as is; nothing is converted on the phone.
+ */
+function ensureQueueAudio() {
+  if (state.rowAudio) return state.rowAudio;
+  const audio = new Audio();
+  audio.preload = "none";
+  state.rowAudio = audio;
+  const syncTiles = () => document.querySelectorAll(".gs-tile--music").forEach((element) => {
+    element.classList.toggle("is-playing", !audio.paused && element.dataset.trackSrc === audio.dataset.src);
+  });
+  audio.addEventListener("play", syncTiles);
+  audio.addEventListener("pause", () => {
+    syncTiles();
+    renderNowPlayingBar();
+  });
+  audio.addEventListener("ended", () => {
+    syncTiles();
+    stepMusicQueue(1).then((moved) => { if (!moved) clearNowPlaying(audio); });
+  });
+  audio.addEventListener("error", () => {
+    syncTiles();
+    clearNowPlaying(audio);
+    showToast(gsStr("web_music_unsupported", "This browser can't play this track. Download it to listen."));
+  });
+  return audio;
+}
+
+function playOnQueueAudio(track) {
+  const audio = ensureQueueAudio();
+  // Only one thing plays at a time.
+  document.querySelectorAll(".gs-audio-player").forEach((element) => element.pause());
+  if (audio.dataset.src !== track.streamUrl) {
+    audio.dataset.src = track.streamUrl;
+    audio.src = track.streamUrl;
+  }
+  audio.play().then(() => setNowPlaying({
+    type: gsStr("web_cat_music", "Music"),
+    title: track.title,
+    element: audio,
+    route: location.pathname,
+  })).catch(() => {});
+}
+
+function startMusicQueue(id, nav) {
+  const queue = { id, nav, index: Number.isInteger(nav.index) ? nav.index : null };
+  state.musicQueue = queue;
+  if (queue.index != null) {
+    // Learn the list's length (and warm the next track's page) so the bar can show "2 / 12".
+    mediaAt(nav, queue.index + 1).catch(() => null).then(() => {
+      if (state.musicQueue === queue) renderNowPlayingBar();
+    });
+  } else {
+    findMediaIndex(nav, id).then((index) => {
+      if (state.musicQueue !== queue || !Number.isInteger(index)) return;
+      queue.index = index;
+      renderNowPlayingBar();
+    }).catch(() => {});
+  }
+}
+
+async function stepMusicQueue(delta) {
+  const queue = state.musicQueue;
+  if (!queue || queue.index == null) return false;
+  const target = await mediaAt(queue.nav, queue.index + delta).catch(() => null);
+  if (!target || state.musicQueue !== queue) return false;
+  queue.index += delta;
+  queue.id = target.id;
+  // Prefer the track's own card when it is on screen, so its progress bar moves.
+  const cardAudio = document.querySelector(`[data-select-card="${CSS.escape(target.id)}"] .gs-audio-player`);
+  if (cardAudio) {
+    state.rowAudio?.pause();
+    cardAudio.play().catch(() => {});
+    cardAudio.closest(".gs-card")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  } else {
+    playOnQueueAudio(target);
+  }
+  return true;
+}
+
+function syncMediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  const now = state.nowPlaying;
+  try {
+    navigator.mediaSession.metadata = now && window.MediaMetadata
+      ? new window.MediaMetadata({ title: now.title, artist: state.bootstrap?.title || "DirectServe" })
+      : null;
+    const queued = Boolean(now && state.musicQueue && state.musicQueue.index != null);
+    navigator.mediaSession.setActionHandler("nexttrack", queued ? () => stepMusicQueue(1) : null);
+    navigator.mediaSession.setActionHandler("previoustrack", queued ? () => stepMusicQueue(-1) : null);
+  } catch (_) {}
 }
 
 function libraryPageHref(pageNumber) {
@@ -1685,11 +1881,11 @@ function paginationMarkup(current, total) {
     if (n - previous > 1) numbers += `<span class="gs-page-gap" aria-hidden="true">…</span>`;
     numbers += n === current
       ? `<span class="gs-page is-current" aria-current="page">${n}</span>`
-      : `<a class="gs-page" data-link href="${libraryPageHref(n)}" aria-label="${esc(gsStr("web_page_number", "Page %1$d", n))}">${n}</a>`;
+      : `<a class="gs-page" data-link data-replace href="${libraryPageHref(n)}" aria-label="${esc(gsStr("web_page_number", "Page %1$d", n))}">${n}</a>`;
     previous = n;
   });
   const step = (target, icon, label) => target >= 1 && target <= total
-    ? `<a class="gs-page gs-page-step" data-link href="${libraryPageHref(target)}" aria-label="${esc(label)}">${icon}</a>`
+    ? `<a class="gs-page gs-page-step" data-link data-replace href="${libraryPageHref(target)}" aria-label="${esc(label)}">${icon}</a>`
     : `<span class="gs-page gs-page-step is-disabled" aria-hidden="true">${icon}</span>`;
   return `
     <nav class="gs-pagination" aria-label="${esc(gsStr("web_pages", "Pages"))}">
@@ -1730,12 +1926,18 @@ async function renderLibrary(category, title) {
       <div class="gs-control-card sticky-search">
         <div class="gs-toolbar">
           <input class="gs-search" id="libSearch" placeholder="${gsStr("web_search_placeholder")}" value="${esc(state.query)}">
+          <label class="gs-sort">
+            <span class="gs-sort-label">${esc(gsStr("web_sort_label", "Sort"))}</span>
+            <select id="librarySort" aria-label="${esc(gsStr("web_sort_label", "Sort"))}">
+              ${LIBRARY_SORTS.map((sort) => `<option value="${sort}"${sort === state.librarySort ? " selected" : ""}>${esc(librarySortLabel(sort))}</option>`).join("")}
+            </select>
+          </label>
           <div class="gs-toolbar-actions">
             <button class="gs-btn" id="selectBtn">${state.selectMode ? gsStr("web_status_selection_on") : gsStr("web_btn_select_files")}</button>
             ${allowDownloads ? `
               <button class="gs-btn gs-btn-download" id="downloadAllBtn">${gsStr("web_btn_download_all", "Download all")}</button>
-              <button class="gs-btn gs-btn-download" id="downloadAllZipBtn" title="${gsStr("web_action_download_zip", "Download as ZIP")}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <button class="gs-btn gs-btn-zip gs-btn-download" id="downloadAllZipBtn" title="${gsStr("web_action_download_zip", "Download as ZIP")}" aria-label="${gsStr("web_action_download_zip", "Download as ZIP")}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>ZIP</span>
               </button>
             ` : ""}
           </div>
@@ -1747,8 +1949,8 @@ async function renderLibrary(category, title) {
             <button class="gs-btn gs-btn-sm" id="clearSelectBtn">${gsStr("web_btn_clear_selection")}</button>
             ${allowDownloads ? `
               <button class="gs-btn gs-btn-accent gs-btn-sm" id="downloadSelectedBtn">${gsStr("web_btn_download_selected", "Download selected")}</button>
-              <button class="gs-btn gs-btn-accent gs-btn-sm" id="downloadSelectedZipBtn" title="${gsStr("web_action_download_zip", "Download as ZIP")}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <button class="gs-btn gs-btn-zip gs-btn-accent gs-btn-sm" id="downloadSelectedZipBtn" title="${gsStr("web_action_download_zip", "Download as ZIP")}" aria-label="${gsStr("web_action_download_zip", "Download as ZIP")}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>ZIP</span>
               </button>
             ` : ""}
           </div>
@@ -1758,6 +1960,14 @@ async function renderLibrary(category, title) {
       <div class="gs-library-footer" id="libraryFooter"></div>
     </section>
   `);
+
+  document.getElementById("librarySort")?.addEventListener("change", (event) => {
+    if (!LIBRARY_SORTS.includes(event.target.value)) return;
+    saveLibrarySort(event.target.value);
+    // A new order starts again at page 1.
+    history.replaceState(history.state, "", libraryPageHref(1));
+    renderLibrary(category, title);
+  });
 
   const searchInput = document.getElementById("libSearch");
   if (searchInput && state.focusSearch) {
@@ -1778,10 +1988,10 @@ async function renderLibrary(category, title) {
       }
       const seq = ++state.searchSeq;
       state.libraryPage = 1;
-      history.replaceState({}, "", libraryPageHref(1));
+      history.replaceState(history.state, "", libraryPageHref(1));
       const grid = document.getElementById("grid");
       if (grid) grid.innerHTML = skeletons(6);
-      const result = await fetchLibraryPage(category, state.query, 0, LIBRARY_PAGE_SIZE, folderId);
+      const result = await fetchLibraryPage(category, state.query, 0, LIBRARY_PAGE_SIZE, folderId, state.librarySort);
       if (seq !== state.searchSeq) return;
       state.libraryItems = result.items;
       state.libraryTotalCount = result.totalCount;
@@ -1803,7 +2013,7 @@ async function renderLibrary(category, title) {
     return;
   }
 
-  const result = await fetchLibraryPage(category, state.query, (page - 1) * LIBRARY_PAGE_SIZE, LIBRARY_PAGE_SIZE, folderId);
+  const result = await fetchLibraryPage(category, state.query, (page - 1) * LIBRARY_PAGE_SIZE, LIBRARY_PAGE_SIZE, folderId, state.librarySort);
   if (downloadsAllowedForLibrary() && !allowDownloads) {
     renderLibrary(category, title);
     return;
@@ -1811,7 +2021,7 @@ async function renderLibrary(category, title) {
   // Removing files can leave a page past the end; show the last one instead.
   const lastPage = Math.max(1, Math.ceil(result.totalCount / LIBRARY_PAGE_SIZE));
   if (page > lastPage) {
-    history.replaceState({}, "", libraryPageHref(lastPage));
+    history.replaceState(history.state, "", libraryPageHref(lastPage));
     renderLibrary(category, title);
     return;
   }
@@ -1966,11 +2176,12 @@ function startThumbnailLoad(img) {
   img.src = img.dataset.thumbSrc;
 }
 
-async function fetchLibraryPage(category, query, offset, limit, folderId) {
+async function fetchLibraryPage(category, query, offset, limit, folderId, sort = "newest") {
   const qStr = query ? `&q=${encodeURIComponent(query)}` : "";
   const fStr = folderId ? `&folderId=${encodeURIComponent(folderId)}` : "";
+  const sStr = sort && sort !== "newest" ? `&sort=${encodeURIComponent(sort)}` : "";
   const response = await api(
-    `/api/items?category=${encodeURIComponent(category)}${qStr}${fStr}&offset=${offset}&limit=${limit}`,
+    `/api/items?category=${encodeURIComponent(category)}${qStr}${fStr}${sStr}&offset=${offset}&limit=${limit}`,
   );
   if (typeof response?.allowDownloads === "boolean") {
     state.libraryDownloadsAllowed = response.allowDownloads;
@@ -2110,7 +2321,10 @@ function renderLibraryGrid() {
   }
 
   state.watchProgress = readWatchProgress();
-  grid.innerHTML = state.libraryItems.map((item) => card(item, true)).join("");
+  // Documents, archives and apps read better as a list than as picture cards.
+  const asFileList = state.libraryCategory === "files";
+  grid.classList.toggle("gs-file-list", asFileList);
+  grid.innerHTML = state.libraryItems.map((item) => (asFileList && item.category === "file" ? fileRow(item) : card(item, true))).join("");
   const totalPages = Math.max(1, Math.ceil(state.libraryTotalCount / LIBRARY_PAGE_SIZE));
   const first = (state.libraryPage - 1) * LIBRARY_PAGE_SIZE + 1;
   footer.innerHTML = `
@@ -2212,18 +2426,33 @@ async function renderVideoPlayer(id) {
     shouldUseManagedHlsPlayback(item)
   );
   state.compatItem = item;
-  
+  const videoNav = history.state?.mediaNav?.category === "videos"
+    ? history.state.mediaNav
+    : { category: "videos", query: "", folderId: null, returnHref: "/videos", pageAligned: true, index: null };
+  state.viewerReturn = { href: mediaReturnHref(videoNav, videoNav.index), itemId: item.id };
+
   shell(`
     <section class="gs-section gs-player-page">
       <div class="gs-player">
         <div class="gs-player-bar">
-          <a class="gs-back-link" data-link data-back href="/videos">${BACK_ICON}${history.state?.depth > 0 ? gsStr("common_back", "Back") : gsStr("web_btn_back", "Back to videos")}</a>
+          <a class="gs-back-link" id="videoBackLink" data-link data-back href="${esc(mediaReturnHref(videoNav, videoNav.index))}">${BACK_ICON}<span>${history.state?.depth > 0 ? gsStr("common_back", "Back") : gsStr("web_btn_back", "Back to videos")}</span></a>
+          <div class="gs-video-steps" id="videoSteps" hidden>
+            <a class="gs-icon-step" id="videoPrev" data-link href="#" aria-label="${esc(gsStr("web_action_previous", "Previous"))}" title="${esc(gsStr("web_action_previous", "Previous"))} (Shift+P)">${CHEVRON_LEFT}</a>
+            <span class="gs-video-count" id="videoCount"></span>
+            <a class="gs-icon-step" id="videoNext" data-link href="#" aria-label="${esc(gsStr("web_action_next", "Next"))}" title="${esc(gsStr("web_action_next", "Next"))} (Shift+N)">${CHEVRON_RIGHT}</a>
+          </div>
+          <a class="gs-back-link gs-home-link" data-link href="/" aria-label="${esc(gsStr("web_nav_home", "Home"))}" title="${esc(gsStr("web_nav_home", "Home"))}">${HOME_ICON}<span>${gsStr("web_nav_home", "Home")}</span></a>
         </div>
         <div id="playerStage" class="gs-stage">${renderVideoStage(item, showPlayerImmediately)}</div>
         <div class="gs-player-top">
           <div>
             <h2>${esc(item.title)}</h2>
-            <div class="gs-meta">${fmtBytes(item.sizeBytes)}${item.durationMs ? ` · ${fmtDur(item.durationMs)}` : ""}</div>
+            <div class="gs-meta">${[
+              fmtBytes(item.sizeBytes),
+              item.durationMs ? fmtDur(item.durationMs) : "",
+              item.width && item.height ? videoResolutionLabel(item.width, item.height) : "",
+              fmtDate(item.dateMs),
+            ].filter(Boolean).join(" · ")}</div>
           </div>
           <div class="gs-toolbar-actions">
             <button class="gs-btn gs-btn-sm" type="button" id="fullscreenBtn">${FULLSCREEN_ICON}${gsStr("web_btn_fullscreen", "Full screen")}</button>
@@ -2240,9 +2469,11 @@ async function renderVideoPlayer(id) {
             <span class="gs-meta" data-compat-status>${compatibilityStatusText(item, isStreamLive)}</span>
           </div>
         ` : ""}
+        <div id="upNextRow"></div>
       </div>
     </section>
   `);
+  loadVideoNav(item, videoNav);
 
   if (showPlayerImmediately) {
     ensureCompatiblePlayerMounted(item);
@@ -2254,6 +2485,219 @@ async function renderVideoPlayer(id) {
     startPreparation(id);
   }
 }
+
+function videoResolutionLabel(width, height) {
+  const short = Math.min(width, height);
+  if (short >= 2160) return "4K";
+  if (short >= 1440) return "1440p";
+  if (short >= 1080) return "1080p";
+  if (short >= 720) return "720p";
+  if (short >= 480) return "480p";
+  return `${width}×${height}`;
+}
+
+/*
+ * Previous / Next and the Up next row for the video player. They only link to other videos;
+ * nothing about those videos is prepared until the viewer picks one, so the phone does no work
+ * for videos nobody asked to play.
+ */
+const UP_NEXT_COUNT = 12;
+
+async function loadVideoNav(item, nav) {
+  state.videoNav = { id: item.id, nav, index: null, prev: null, next: null };
+  const index = await findMediaIndex(nav, item.id).catch(() => null);
+  if (location.pathname !== `/player/video/${item.id}` || index == null) return;
+  if (nav.index !== index) {
+    nav = { ...nav, index };
+    history.replaceState({ ...history.state, mediaNav: nav }, "");
+  }
+  const [prev, next, upNext] = await Promise.all([
+    mediaAt(nav, index - 1).catch(() => null),
+    mediaAt(nav, index + 1).catch(() => null),
+    mediaRange(nav, index + 1, index + UP_NEXT_COUNT).catch(() => []),
+  ]);
+  if (location.pathname !== `/player/video/${item.id}`) return;
+  state.videoNav = { id: item.id, nav, index, prev, next };
+
+  const returnHref = mediaReturnHref(nav, index);
+  state.viewerReturn = { href: returnHref, itemId: item.id };
+  document.getElementById("videoBackLink")?.setAttribute("href", returnHref);
+
+  const total = state.mediaNavCache?.total;
+  const steps = document.getElementById("videoSteps");
+  if (steps && total > 1) {
+    steps.hidden = false;
+    document.getElementById("videoCount").textContent = `${index + 1} / ${total}`;
+    [["videoPrev", prev, index - 1], ["videoNext", next, index + 1]].forEach(([elementId, target, targetIndex]) => {
+      const link = document.getElementById(elementId);
+      if (!link) return;
+      if (target) {
+        link.setAttribute("href", `/player/video/${target.id}`);
+        link.dataset.navIndex = String(targetIndex);
+        link.classList.remove("is-disabled");
+        link.removeAttribute("aria-disabled");
+        link.removeAttribute("tabindex");
+      } else {
+        link.removeAttribute("data-link");
+        link.removeAttribute("href");
+        link.classList.add("is-disabled");
+        link.setAttribute("aria-disabled", "true");
+        link.setAttribute("tabindex", "-1");
+      }
+    });
+  }
+
+  const holder = document.getElementById("upNextRow");
+  if (holder && upNext.length) {
+    const progress = readWatchProgress();
+    const row = { title: gsStr("web_video_up_next", "Up next"), items: upNext.map(({ item: video }) => video) };
+    holder.innerHTML = browseRowMarkup(row, "UpNext", progress);
+    // Tiles keep their place in the list so playing one carries the list along.
+    holder.querySelectorAll(".gs-row-track .gs-tile").forEach((tile, i) => {
+      tile.dataset.navIndex = String(upNext[i].index);
+    });
+    bindBrowseRow(row, "UpNext", progress);
+    initDeferredThumbnails(holder);
+  }
+}
+
+async function mediaRange(nav, from, to) {
+  const pages = new Set();
+  for (let i = Math.max(0, from); i <= to; i += 1) pages.add(Math.floor(i / LIBRARY_PAGE_SIZE));
+  await Promise.all([...pages].map((page) => mediaAt(nav, page * LIBRARY_PAGE_SIZE).catch(() => null)));
+  const cache = mediaNavCache(nav);
+  const items = [];
+  for (let i = Math.max(0, from); i <= to; i += 1) {
+    const found = cache.pages.get(Math.floor(i / LIBRARY_PAGE_SIZE))?.[i % LIBRARY_PAGE_SIZE];
+    if (found) items.push({ index: i, item: found });
+  }
+  return items;
+}
+
+function stepVideo(delta) {
+  const target = delta < 0 ? state.videoNav?.prev : state.videoNav?.next;
+  if (!target) return;
+  navigate(`/player/video/${target.id}`, true, { mediaNav: { ...state.videoNav.nav, index: state.videoNav.index + delta } });
+}
+
+// When a video finishes, offer the next one. It only starts when the viewer chooses it.
+function showUpNextCard() {
+  const next = state.videoNav?.next;
+  const host = document.querySelector("#playerStage .plyr") || document.querySelector("#playerStage .gs-video-wrap");
+  if (!next || !host || host.querySelector(".gs-up-next-card")) return;
+  const card = document.createElement("div");
+  card.className = "gs-up-next-card";
+  card.innerHTML = `
+    <div class="gs-up-next-inner">
+      ${next.thumbnailUrl ? `<img class="gs-up-next-thumb" src="${next.thumbnailUrl}" alt="">` : ""}
+      <div class="gs-up-next-copy">
+        <span class="gs-up-next-label">${esc(gsStr("web_video_up_next", "Up next"))}</span>
+        <strong class="gs-up-next-title">${esc(next.title)}</strong>
+        ${next.durationMs ? `<span class="gs-up-next-meta">${fmtDur(next.durationMs)}</span>` : ""}
+      </div>
+      <div class="gs-up-next-actions">
+        <a class="gs-btn gs-btn-accent" data-link data-nav-index="${state.videoNav.index + 1}" href="/player/video/${next.id}">${esc(gsStr("web_video_play_next", "Play next"))}</a>
+        <button class="gs-btn" type="button" data-up-next-replay>${esc(gsStr("web_video_replay", "Replay"))}</button>
+      </div>
+    </div>`;
+  card.querySelector("[data-up-next-replay]").addEventListener("click", () => {
+    card.remove();
+    const media = state.plyr || document.getElementById("vPlayer");
+    if (!media) return;
+    media.currentTime = 0;
+    media.play?.()?.catch?.(() => {});
+  });
+  host.appendChild(card);
+  card.querySelector("a")?.focus({ preventScroll: true });
+}
+
+// Overlays inside the player sit in Plyr's container so they stay visible in full screen.
+function playerOverlayHost(video) {
+  return video?.closest(".plyr") || video?.closest(".gs-video-wrap") || null;
+}
+
+// Resuming used to happen silently; say so, and offer to start from the beginning.
+function showResumeChip(video, seconds) {
+  const host = playerOverlayHost(video);
+  if (!host) return;
+  host.querySelector(".gs-resume-chip")?.remove();
+  const chip = document.createElement("div");
+  chip.className = "gs-resume-chip";
+  chip.setAttribute("role", "status");
+  chip.innerHTML = `
+    <span>${esc(gsStr("web_video_resumed", "Resumed from %1$s", fmtDur(seconds * 1000)))}</span>
+    <button type="button">${esc(gsStr("web_video_start_over", "Start over"))}</button>`;
+  chip.querySelector("button").addEventListener("click", (event) => {
+    event.stopPropagation();
+    const media = state.plyr || video;
+    media.currentTime = 0;
+    chip.remove();
+  });
+  host.appendChild(chip);
+  setTimeout(() => chip.classList.add("is-leaving"), 7000);
+  setTimeout(() => chip.remove(), 7400);
+}
+
+/*
+ * Double-tap the left or right side of the picture to jump 10 seconds, like phone video apps.
+ * Further taps in quick succession keep adding 10 seconds. Single taps still go to Plyr.
+ */
+const DOUBLE_TAP_SEEK_SECONDS = 10;
+
+function bindDoubleTapSeek(plyr, video) {
+  const container = plyr?.elements?.container;
+  if (!container) return;
+  let last = { time: 0, side: 0 };
+  let streak = 0;
+  container.addEventListener("pointerup", (event) => {
+    if (event.pointerType !== "touch") return;
+    if (event.target.closest(".plyr__controls, .plyr__menu, button, a, input, .gs-up-next-card, .gs-resume-chip, .gs-video-error")) return;
+    const rect = container.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const side = x < 0.35 ? -1 : x > 0.65 ? 1 : 0;
+    const now = performance.now();
+    const chained = side !== 0 && side === last.side && now - last.time < 400;
+    last = { time: now, side };
+    if (!chained) { streak = 0; return; }
+    streak += 1;
+    state.touchSeekAt = now;
+    const duration = Number.isFinite(plyr.duration) && plyr.duration > 0 ? plyr.duration : video.duration;
+    const target = plyr.currentTime + side * DOUBLE_TAP_SEEK_SECONDS;
+    plyr.currentTime = Math.max(0, Number.isFinite(duration) ? Math.min(duration - 0.5, target) : target);
+    showSeekRipple(container, side, streak * DOUBLE_TAP_SEEK_SECONDS);
+  });
+}
+
+function showSeekRipple(container, side, seconds) {
+  let ripple = container.querySelector(".gs-seek-ripple");
+  if (!ripple || Number(ripple.dataset.side) !== side) {
+    ripple?.remove();
+    ripple = document.createElement("div");
+    ripple.className = `gs-seek-ripple ${side < 0 ? "is-back" : "is-forward"}`;
+    ripple.dataset.side = String(side);
+    ripple.setAttribute("aria-hidden", "true");
+    container.appendChild(ripple);
+  }
+  ripple.innerHTML = `<span>${side < 0 ? CHEVRON_LEFT + CHEVRON_LEFT : ""}${side < 0 ? "−" : "+"}${seconds}s${side > 0 ? CHEVRON_RIGHT + CHEVRON_RIGHT : ""}</span>`;
+  ripple.classList.remove("is-on");
+  void ripple.offsetWidth;
+  ripple.classList.add("is-on");
+  clearTimeout(ripple._timer);
+  ripple._timer = setTimeout(() => ripple.remove(), 700);
+}
+
+document.addEventListener("ended", (event) => {
+  if (event.target?.id === "vPlayer" && location.pathname.startsWith("/player/video/")) showUpNextCard();
+}, true);
+document.addEventListener("play", (event) => {
+  if (event.target?.id === "vPlayer") document.querySelector(".gs-up-next-card")?.remove();
+}, true);
+window.addEventListener("keydown", (event) => {
+  if (!event.shiftKey || !state.videoNav || !location.pathname.startsWith("/player/video/")) return;
+  if (event.target?.closest?.("input, textarea, select")) return;
+  if (event.code === "KeyN") { event.preventDefault(); stepVideo(1); }
+  else if (event.code === "KeyP") { event.preventDefault(); stepVideo(-1); }
+});
 
 function renderVideoStage(item, showPlayer) {
   const status = item.compatibilityStatus || item.status;
@@ -2312,7 +2756,14 @@ function applyAspectRatioLayout(video, item, ratio = preferredVideoRatio(item)) 
   }
   video.style.aspectRatio = ratioCss;
   if (state.plyr && state.plyrItemId === item.id) {
-    state.plyr.ratio = `${width}:${height}`;
+    // Plyr's ratio setter stores the ratio as an array and then fails to read it back, which
+    // used to abort the rest of player setup. Keep it as text; the CSS aspect-ratio above
+    // already sizes the player.
+    try {
+      state.plyr.ratio = `${width}:${height}`;
+    } catch (_) {
+      state.plyr.config.ratio = `${width}:${height}`;
+    }
   }
 }
 
@@ -2521,7 +2972,9 @@ function hydrateVideoPlayer(item, options = {}) {
     const resumeAt = readWatchProgress()[item.id]?.t;
     if (!(Number.isFinite(pendingSeekOffset) && pendingSeekOffset >= 0) && resumeAt > 0) {
       const resume = () => {
-        if (video.currentTime < 1) video.currentTime = resumeAt;
+        if (video.currentTime >= 1) return;
+        video.currentTime = resumeAt;
+        showResumeChip(video, resumeAt);
       };
       if (video.readyState >= 1) resume();
       else video.addEventListener("loadedmetadata", resume, { once: true });
@@ -2532,6 +2985,11 @@ function hydrateVideoPlayer(item, options = {}) {
     const plyrOptions = {
       iconUrl: "/plyr.svg",
       fullscreen: { enabled: true, iosNative: true },
+      listeners: {
+        // Plyr toggles full screen on double-click, and a touch double-tap counts as one. When
+        // that double-tap just skipped 10 seconds, leave full screen alone.
+        fullscreen: (event) => !(event?.type === "dblclick" && performance.now() - (state.touchSeekAt || 0) < 800),
+      },
     };
     
     // Initialize with the true total duration from analyzed metadata
@@ -2550,7 +3008,8 @@ function hydrateVideoPlayer(item, options = {}) {
       state.ratioLocked[item.id] = `${item.width}:${item.height}`;
       applyAspectRatioLayout(video, item, state.ratioLocked[item.id]);
     }
-    
+    bindDoubleTapSeek(state.plyr, video);
+
     setupScrubbingPreviews(item, state.plyr);
   }
 
@@ -3314,47 +3773,718 @@ async function ensureCompatiblePlayerMounted(item) {
   return true;
 }
 
-async function renderPhotoViewer(id) {
-  const item = await api(`/api/item/${id}`);
-  const allowDownloads = !state.bootstrap?.preventDownload && Boolean(item.downloadUrl);
-  let prev = null;
-  let next = null;
-  try {
-    const all = state.libraryItems && state.libraryItems.length > 0 ? state.libraryItems : await api("/api/items?category=photos&limit=100");
-    const index = all.findIndex((photo) => photo.id === id);
-    if (index > 0) prev = all[index - 1].id;
-    if (index >= 0 && index < all.length - 1) next = all[index + 1].id;
-  } catch (_) {}
+/*
+ * The photo viewer and the video player walk the same list they were opened from (all photos or
+ * videos, a folder or a search), fetching further pages as needed, so Next never stops at a page
+ * boundary. Moving to the next item replaces the history entry instead of adding one, so a single
+ * Back leaves the viewer, and the list reopens on the page that holds the last item shown.
+ */
+const MEDIA_NAV_SCAN_SIZE = LIBRARY_PAGE_SIZE * 4;
 
-  const isPdf = item.mimeType === "application/pdf" || String(item.title).toLowerCase().endsWith(".pdf");
-  const isImage = item.category === "photo" || (item.mimeType && item.mimeType.startsWith("image/"));
+function mediaNavFromCurrentList(href, category) {
+  const id = href.split("/").pop();
+  const returnHref = location.pathname + location.search;
+  state.mediaNavCache = null;
+  const fromLibrary = LIST_ROUTES.has(location.pathname) && (state.libraryCategory === category || state.libraryCategory === "media");
+  if (!fromLibrary) {
+    return { category, query: "", folderId: null, sort: "newest", returnHref, pageAligned: false, index: null };
+  }
+  // Only the Photos or Videos list lines up page-for-page with the sequence; mixed lists keep their page.
+  const pageAligned = state.libraryCategory === category;
+  const position = state.libraryItems.findIndex((item) => item.id === id);
+  return {
+    category,
+    query: state.query || "",
+    folderId: state.folderId || null,
+    sort: state.librarySort,
+    returnHref,
+    pageAligned,
+    index: pageAligned && position >= 0 ? (state.libraryPage - 1) * LIBRARY_PAGE_SIZE + position : null,
+  };
+}
+
+function mediaNavCache(nav) {
+  const key = `${nav.category || "photos"}|${nav.query || ""}|${nav.folderId || ""}|${nav.sort || "newest"}`;
+  if (state.mediaNavCache?.key !== key) state.mediaNavCache = { key, pages: new Map(), total: null };
+  return state.mediaNavCache;
+}
+
+async function mediaAt(nav, index) {
+  if (!Number.isInteger(index) || index < 0) return null;
+  const cache = mediaNavCache(nav);
+  if (cache.total != null && index >= cache.total) return null;
+  const pageIndex = Math.floor(index / LIBRARY_PAGE_SIZE);
+  if (!cache.pages.has(pageIndex)) {
+    const result = await fetchLibraryPage(nav.category || "photos", nav.query, pageIndex * LIBRARY_PAGE_SIZE, LIBRARY_PAGE_SIZE, nav.folderId, nav.sort);
+    cache.pages.set(pageIndex, result.items);
+    cache.total = result.totalCount;
+  }
+  return cache.pages.get(pageIndex)[index % LIBRARY_PAGE_SIZE] || null;
+}
+
+async function findMediaIndex(nav, id) {
+  if (Number.isInteger(nav.index) && (await mediaAt(nav, nav.index))?.id === id) return nav.index;
+  const cache = mediaNavCache(nav);
+  for (const [pageIndex, items] of cache.pages) {
+    const position = items.findIndex((item) => item.id === id);
+    if (position >= 0) return pageIndex * LIBRARY_PAGE_SIZE + position;
+  }
+  // Opened without a known position (home rows, a shared link, a reload): look it up.
+  let offset = 0;
+  for (let guard = 0; guard < 500; guard++) {
+    const result = await fetchLibraryPage(nav.category || "photos", nav.query, offset, MEDIA_NAV_SCAN_SIZE, nav.folderId, nav.sort);
+    cache.total = result.totalCount;
+    for (let k = 0; k < result.items.length; k += LIBRARY_PAGE_SIZE) {
+      cache.pages.set((offset + k) / LIBRARY_PAGE_SIZE, result.items.slice(k, k + LIBRARY_PAGE_SIZE));
+    }
+    const position = result.items.findIndex((item) => item.id === id);
+    if (position >= 0) return offset + position;
+    if (!result.hasMore || !result.items.length) return null;
+    offset += result.items.length;
+  }
+  return null;
+}
+
+function mediaReturnHref(nav, index) {
+  const url = new URL(nav.returnHref || `/${nav.category || "photos"}`, location.origin);
+  if (nav.pageAligned && Number.isInteger(index)) {
+    const page = Math.floor(index / LIBRARY_PAGE_SIZE) + 1;
+    if (page > 1) url.searchParams.set("page", String(page));
+    else url.searchParams.delete("page");
+  }
+  return url.pathname + url.search;
+}
+
+async function mediaAround(nav, index, radius) {
+  const from = Math.max(0, index - radius);
+  const to = index + radius;
+  const pages = new Set();
+  for (let i = from; i <= to; i += 1) pages.add(Math.floor(i / LIBRARY_PAGE_SIZE));
+  await Promise.all([...pages].map((page) => mediaAt(nav, page * LIBRARY_PAGE_SIZE).catch(() => null)));
+  const cache = mediaNavCache(nav);
+  const around = [];
+  for (let i = from; i <= to; i += 1) {
+    const item = cache.pages.get(Math.floor(i / LIBRARY_PAGE_SIZE))?.[i % LIBRARY_PAGE_SIZE];
+    if (item) around.push({ index: i, item });
+  }
+  return around;
+}
+
+const PHOTO_SLIDESHOW_MS = 4000;
+const PHOTO_STRIP_RADIUS = 10;
+const PHOTO_MAX_ZOOM = 5;
+const PV_ICON = {
+  close: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+  prev: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`,
+  next: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>`,
+  play: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>`,
+  pause: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`,
+  fullscreen: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`,
+  exitFullscreen: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>`,
+  info: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>`,
+  download: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  zoomIn: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+  zoomOut: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>`,
+};
+
+function isImageItem(item) {
+  return item.category === "photo" || String(item.mimeType || "").startsWith("image/");
+}
+
+/*
+ * Full-screen photo viewer, built like a phone gallery: the photo fills the screen, controls
+ * float over it and fade away, a filmstrip shows what is around, and swipe, pinch, double-tap,
+ * wheel and keyboard all work. Stepping swaps the photo in place (no page reload) and only
+ * rewrites the current history entry, so one Back always leaves the viewer.
+ */
+async function renderPhotoViewer(id) {
+  const nav = history.state?.mediaNav || { category: "photos", query: "", folderId: null, returnHref: "/photos", pageAligned: true, index: null };
+  // A known position resolves at once; an unknown one (home rows, a shared link) may need a
+  // longer lookup, so the photo shows first and Previous/Next arrive when it finishes.
+  const indexPromise = findMediaIndex(nav, id).catch(() => null);
+  const item = await api(`/api/item/${id}`);
+  const index = await Promise.race([indexPromise, new Promise((resolve) => setTimeout(() => resolve(undefined), 400))]);
+  if (location.pathname !== `/photo/${id}`) return;
+  if (Number.isInteger(index) && nav.index !== index) {
+    history.replaceState({ ...history.state, mediaNav: { ...nav, index } }, "");
+  }
+
+  const t = {
+    back: history.state?.depth > 0 ? gsStr("common_back", "Back") : gsStr("web_btn_back_to_photos", "Back to photos"),
+    home: gsStr("web_nav_home", "Home"),
+    prev: gsStr("web_action_previous", "Previous"),
+    next: gsStr("web_action_next", "Next"),
+    download: gsStr("web_action_download", "Download"),
+    fullscreen: gsStr("web_btn_fullscreen", "Full screen"),
+  };
   shell(`
-    <section class="gs-section gs-player-page">
-      <div class="gs-player">
-        <div class="gs-player-bar">
-          <a class="gs-back-link" data-link data-back href="/photos">${BACK_ICON}${history.state?.depth > 0 ? gsStr("common_back", "Back") : gsStr("web_btn_back_to_photos", "Back to photos")}</a>
-        </div>
-        <div class="gs-stage" style="position:relative;">
-          ${isPdf
-            ? `<iframe class="gs-preview gs-preview-pdf" src="${item.streamUrl}" title="${esc(item.title)}" style="width:100%;"></iframe>`
-            : isImage
-              ? `<img class="gs-preview gs-photo-preview" src="${item.streamUrl}" alt="${esc(item.title)}">`
-              : `<div class="gs-preview gs-no-preview">${gsStr("web_error_no_preview", "No preview available for this file type")}</div>`}
-          ${prev ? `<a class="gs-photo-nav prev" data-link href="/photo/${prev}" aria-label="${esc(gsStr("web_action_previous", "Previous"))}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>` : ""}
-          ${next ? `<a class="gs-photo-nav next" data-link href="/photo/${next}" aria-label="${esc(gsStr("web_action_next", "Next"))}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></a>` : ""}
-        </div>
-        <div class="gs-player-top">
-          <div>
-            <h2>${esc(item.title)}</h2>
-            <div class="gs-meta">${fmtBytes(item.sizeBytes)}</div>
-          </div>
-          <div class="gs-toolbar-actions">
-            ${allowDownloads ? `<a class="gs-btn gs-btn-sm gs-btn-download" href="${item.downloadUrl}">${DOWNLOAD_ICON}${gsStr("web_btn_download_original", "Download original")}</a>` : ""}
-          </div>
-        </div>
+    <div class="pv is-loading" id="photoViewer" role="dialog" aria-modal="true" tabindex="-1" aria-label="${esc(item.title)}">
+      <div class="pv-stage">
+        <img class="pv-thumb" alt="" aria-hidden="true" hidden>
+        <img class="pv-img" alt="" draggable="false">
+        <div class="pv-doc" hidden></div>
+        <div class="pv-spinner" hidden></div>
+        <div class="pv-error" hidden>${esc(gsStr("web_photo_load_failed", "This photo could not be loaded."))}</div>
       </div>
-    </section>
+
+      <header class="pv-top pv-chrome">
+        <a class="pv-btn pv-back" data-link data-back href="/photos" title="${esc(t.back)}">${BACK_ICON}<span>${esc(t.back)}</span></a>
+        <div class="pv-heading">
+          <div class="pv-title"></div>
+          <div class="pv-sub"></div>
+        </div>
+        <div class="pv-actions">
+          <button class="pv-btn pv-play" type="button" data-pv="slideshow" aria-label="${esc(gsStr("web_photo_slideshow", "Slideshow"))}" title="${esc(gsStr("web_photo_slideshow", "Slideshow"))} (Space)">${PV_ICON.play}</button>
+          ${document.fullscreenEnabled ? `<button class="pv-btn pv-hide-sm" type="button" data-pv="fullscreen" aria-label="${esc(t.fullscreen)}" title="${esc(t.fullscreen)} (F)">${PV_ICON.fullscreen}</button>` : ""}
+          <a class="pv-btn pv-download" href="#" aria-label="${esc(t.download)}" title="${esc(t.download)}" hidden>${PV_ICON.download}</a>
+          <button class="pv-btn" type="button" data-pv="info" aria-label="${esc(gsStr("web_photo_details", "Details"))}" title="${esc(gsStr("web_photo_details", "Details"))} (I)">${PV_ICON.info}</button>
+          <a class="pv-btn" data-link href="/" aria-label="${esc(t.home)}" title="${esc(t.home)}">${HOME_ICON}</a>
+        </div>
+      </header>
+
+      <button class="pv-nav pv-prev pv-chrome" type="button" data-pv="prev" aria-label="${esc(t.prev)}" hidden>${PV_ICON.prev}</button>
+      <button class="pv-nav pv-next pv-chrome" type="button" data-pv="next" aria-label="${esc(t.next)}" hidden>${PV_ICON.next}</button>
+
+      <div class="pv-zoom pv-chrome">
+        <button class="pv-btn" type="button" data-pv="zoom-out" aria-label="${esc(gsStr("web_photo_zoom_out", "Zoom out"))}" title="${esc(gsStr("web_photo_zoom_out", "Zoom out"))} (-)">${PV_ICON.zoomOut}</button>
+        <button class="pv-btn pv-zoom-level" type="button" data-pv="zoom-reset" aria-label="${esc(gsStr("web_photo_zoom_reset", "Reset zoom"))}" title="${esc(gsStr("web_photo_zoom_reset", "Reset zoom"))} (0)">100%</button>
+        <button class="pv-btn" type="button" data-pv="zoom-in" aria-label="${esc(gsStr("web_photo_zoom_in", "Zoom in"))}" title="${esc(gsStr("web_photo_zoom_in", "Zoom in"))} (+)">${PV_ICON.zoomIn}</button>
+      </div>
+
+      <footer class="pv-bottom pv-chrome">
+        <div class="pv-strip" hidden></div>
+      </footer>
+
+      <aside class="pv-info" inert aria-label="${esc(gsStr("web_photo_details", "Details"))}">
+        <div class="pv-info-head">
+          <h3>${esc(gsStr("web_photo_details", "Details"))}</h3>
+          <button class="pv-btn" type="button" data-pv="info" aria-label="${esc(gsStr("web_photo_close", "Close"))}">${PV_ICON.close}</button>
+        </div>
+        <dl class="pv-info-list"></dl>
+        <a class="gs-btn gs-btn-accent gs-btn-block pv-info-download" href="#" hidden>${DOWNLOAD_ICON}${esc(gsStr("web_btn_download_original", "Download original"))}</a>
+      </aside>
+    </div>
   `);
+  document.body.classList.add("gs-photo-mode");
+  state.photoViewer = createPhotoViewer(document.getElementById("photoViewer"), nav, item, index ?? null);
+  if (index === undefined) {
+    indexPromise.then((found) => state.photoViewer?.attachIndex(id, found));
+  }
+}
+
+function createPhotoViewer(root, nav, firstItem, firstIndex) {
+  const $ = (selector) => root.querySelector(selector);
+  const stage = $(".pv-stage");
+  const img = $(".pv-img");
+  const thumb = $(".pv-thumb");
+  const doc = $(".pv-doc");
+  const spinner = $(".pv-spinner");
+  const errorEl = $(".pv-error");
+  const backLink = $(".pv-back");
+  const strip = $(".pv-strip");
+  const info = $(".pv-info");
+  const zoomLevel = $(".pv-zoom-level");
+  const view = { nav, item: firstItem, index: firstIndex, prev: null, next: null, scale: 1, tx: 0, ty: 0 };
+  const cleanups = [];
+  const on = (target, type, fn, options) => {
+    target.addEventListener(type, fn, options);
+    cleanups.push(() => target.removeEventListener(type, fn, options));
+  };
+  let token = 0;
+  let slideshowTimer = null;
+  let chromeTimer = null;
+  let tapTimer = null;
+  let spinnerTimer = null;
+  let lastTap = { time: 0, x: 0, y: 0 };
+  let stripKey = "";
+  let stripItems = [];
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const total = () => state.mediaNavCache?.total;
+
+  // ---- Zoom & pan -------------------------------------------------------
+  function applyTransform(animate) {
+    img.style.transition = animate ? "transform 0.22s ease, opacity 0.18s ease" : "opacity 0.18s ease";
+    img.style.transform = `translate3d(${view.tx}px, ${view.ty}px, 0) scale(${view.scale})`;
+    root.classList.toggle("is-zoomed", view.scale > 1.01);
+    zoomLevel.textContent = `${Math.round(view.scale * 100)}%`;
+  }
+  function clampPan() {
+    const maxX = Math.max(0, (img.offsetWidth * view.scale - stage.clientWidth) / 2);
+    const maxY = Math.max(0, (img.offsetHeight * view.scale - stage.clientHeight) / 2);
+    view.tx = clamp(view.tx, -maxX, maxX);
+    view.ty = clamp(view.ty, -maxY, maxY);
+  }
+  function zoomTo(scale, clientX, clientY, animate = true) {
+    if (img.hidden || root.classList.contains("is-loading")) return;
+    const next = clamp(scale, 1, PHOTO_MAX_ZOOM);
+    const rect = stage.getBoundingClientRect();
+    const px = (clientX ?? rect.left + rect.width / 2) - (rect.left + rect.width / 2);
+    const py = (clientY ?? rect.top + rect.height / 2) - (rect.top + rect.height / 2);
+    // Keep the point under the finger or cursor where it is.
+    view.tx = px - (px - view.tx) * (next / view.scale);
+    view.ty = py - (py - view.ty) * (next / view.scale);
+    view.scale = next;
+    if (next === 1) { view.tx = 0; view.ty = 0; }
+    clampPan();
+    applyTransform(animate);
+    if (next > 1) stopSlideshow();
+  }
+  function resetZoom(animate) {
+    view.scale = 1; view.tx = 0; view.ty = 0;
+    applyTransform(animate);
+  }
+
+  // ---- Showing a photo ---------------------------------------------------
+  function show(item, index) {
+    const my = ++token;
+    view.item = item;
+    view.index = index;
+    resetZoom(false);
+    root.style.removeProperty("--pv-dim");
+    root.setAttribute("aria-label", item.title);
+    $(".pv-title").textContent = item.title;
+    updateCounter();
+    const allowDownloads = !state.bootstrap?.preventDownload && Boolean(item.downloadUrl);
+    [$(".pv-download"), $(".pv-info-download")].forEach((link) => {
+      link.hidden = !allowDownloads;
+      if (allowDownloads) link.href = item.downloadUrl;
+    });
+    updateReturn();
+    clearTimeout(spinnerTimer);
+    errorEl.hidden = true;
+    spinner.hidden = true;
+
+    if (!isImageItem(item)) {
+      root.classList.remove("is-loading");
+      root.classList.add("is-doc");
+      img.hidden = true;
+      thumb.hidden = true;
+      doc.hidden = false;
+      const isPdf = item.mimeType === "application/pdf" || String(item.title).toLowerCase().endsWith(".pdf");
+      doc.innerHTML = isPdf
+        ? `<iframe src="${item.streamUrl}" title="${esc(item.title)}"></iframe>`
+        : `<div class="pv-error">${gsStr("web_error_no_preview", "No preview available for this file type")}</div>`;
+      renderInfo();
+      updateNeighbours(my);
+      return;
+    }
+
+    root.classList.remove("is-doc");
+    doc.hidden = true;
+    doc.innerHTML = "";
+    img.hidden = false;
+    root.classList.add("is-loading");
+    // The small thumbnail shows straight away while the full photo arrives.
+    if (item.thumbnailUrl) {
+      thumb.src = item.thumbnailUrl;
+      thumb.hidden = false;
+    } else {
+      thumb.hidden = true;
+    }
+    spinnerTimer = setTimeout(() => {
+      if (my === token && root.classList.contains("is-loading")) spinner.hidden = false;
+    }, 300);
+    img.onload = () => {
+      if (my !== token) return;
+      root.classList.remove("is-loading");
+      spinner.hidden = true;
+      thumb.hidden = true;
+      renderInfo();
+    };
+    img.onerror = () => {
+      if (my !== token) return;
+      root.classList.remove("is-loading");
+      spinner.hidden = true;
+      errorEl.hidden = false;
+    };
+    img.alt = item.title;
+    img.src = item.streamUrl;
+    if (img.complete && img.naturalWidth) img.onload();
+    renderInfo();
+    updateNeighbours(my);
+  }
+
+  function updateCounter() {
+    const count = total();
+    const parts = [];
+    if (view.index != null && count > 1) parts.push(`${view.index + 1} / ${count}`);
+    if (view.item.sizeBytes) parts.push(fmtBytes(view.item.sizeBytes));
+    $(".pv-sub").textContent = parts.join(" · ");
+  }
+
+  function updateReturn() {
+    const href = mediaReturnHref(view.nav, view.index);
+    backLink.setAttribute("href", href);
+    state.viewerReturn = { href, itemId: view.item.id };
+  }
+
+  function updateNavButtons() {
+    $(".pv-prev").hidden = !view.prev;
+    $(".pv-next").hidden = !view.next;
+  }
+
+  async function loadNeighbours(my) {
+    if (view.index == null) {
+      view.prev = null; view.next = null;
+      updateNavButtons();
+      strip.hidden = true;
+      return;
+    }
+    const index = view.index;
+    const [prev, next] = await Promise.all(
+      [mediaAt(view.nav, index - 1), mediaAt(view.nav, index + 1)].map((p) => p.catch(() => null)),
+    );
+    if (my !== token) return;
+    view.prev = prev;
+    view.next = next;
+    updateNavButtons();
+    updateCounter();
+    [prev, next].forEach((photo) => { if (photo?.streamUrl && isImageItem(photo)) new Image().src = photo.streamUrl; });
+    markStripCurrent();
+    const around = await mediaAround(view.nav, index, PHOTO_STRIP_RADIUS).catch(() => []);
+    if (my !== token) return;
+    renderStrip(around);
+  }
+  const updateNeighbours = (my) => { loadNeighbours(my); };
+
+  // ---- Filmstrip ------------------------------------------------------------
+  function renderStrip(around) {
+    if (around.length < 2) { strip.hidden = true; return; }
+    strip.hidden = false;
+    const key = `${around[0].index}-${around[around.length - 1].index}`;
+    if (key !== stripKey) {
+      stripKey = key;
+      stripItems = around;
+      strip.innerHTML = around.map(({ index, item }) => `
+        <button class="pv-strip-item" type="button" data-index="${index}" aria-label="${esc(item.title)}">
+          ${item.thumbnailUrl ? `<img src="${item.thumbnailUrl}" alt="" loading="lazy" draggable="false">` : ""}
+        </button>`).join("");
+    }
+    markStripCurrent(true);
+  }
+  function markStripCurrent(instant = false) {
+    let current = null;
+    strip.querySelectorAll(".pv-strip-item").forEach((button) => {
+      const isCurrent = Number(button.dataset.index) === view.index;
+      button.classList.toggle("is-current", isCurrent);
+      if (isCurrent) { current = button; button.setAttribute("aria-current", "true"); } else button.removeAttribute("aria-current");
+    });
+    if (current) {
+      strip.scrollTo({
+        left: current.offsetLeft - strip.clientWidth / 2 + current.offsetWidth / 2,
+        behavior: instant ? "auto" : "smooth",
+      });
+    }
+  }
+
+  // ---- Moving between photos ------------------------------------------------
+  function goTo(item, index) {
+    history.replaceState({ ...history.state, mediaNav: { ...view.nav, index } }, "", `/photo/${item.id}`);
+    show(item, index);
+  }
+  function step(delta) {
+    const target = delta < 0 ? view.prev : view.next;
+    if (!target) {
+      root.classList.remove("is-bump-left", "is-bump-right");
+      void root.offsetWidth;
+      root.classList.add(delta < 0 ? "is-bump-left" : "is-bump-right");
+      return false;
+    }
+    goTo(target, view.index + delta);
+    return true;
+  }
+  function leave() {
+    backLink.click();
+  }
+
+  // ---- Slideshow ----------------------------------------------------------------
+  function startSlideshow() {
+    if (view.index == null) return;
+    stopSlideshow();
+    resetZoom(true);
+    root.classList.add("is-playing");
+    setChromeHidden(true);
+    const play = $(".pv-play");
+    play.innerHTML = PV_ICON.pause;
+    play.classList.add("is-on");
+    slideshowTimer = setInterval(() => {
+      if (root.classList.contains("is-loading")) return;
+      if (view.next) { step(1); return; }
+      const count = total();
+      if (count != null && view.index >= count - 1) stopSlideshow();
+    }, PHOTO_SLIDESHOW_MS);
+  }
+  function stopSlideshow() {
+    if (!slideshowTimer) return;
+    clearInterval(slideshowTimer);
+    slideshowTimer = null;
+    root.classList.remove("is-playing");
+    const play = $(".pv-play");
+    play.innerHTML = PV_ICON.play;
+    play.classList.remove("is-on");
+    setChromeHidden(false);
+  }
+  const toggleSlideshow = () => (slideshowTimer ? stopSlideshow() : startSlideshow());
+
+  // ---- Controls that fade away ------------------------------------------------
+  function setChromeHidden(hidden) {
+    root.classList.toggle("is-chrome-hidden", hidden);
+  }
+  function wakeChrome() {
+    if (slideshowTimer) return;
+    setChromeHidden(false);
+    clearTimeout(chromeTimer);
+    chromeTimer = setTimeout(() => {
+      if (!root.classList.contains("is-info-open") && !root.querySelector(".pv-chrome:hover")) setChromeHidden(true);
+    }, 3000);
+  }
+
+  // ---- Details panel ------------------------------------------------------------
+  function renderInfo() {
+    const item = view.item;
+    const rows = [
+      [gsStr("web_photo_info_name", "Name"), item.title],
+      [gsStr("web_photo_info_size", "Size"), item.sizeBytes ? fmtBytes(item.sizeBytes) : ""],
+      [gsStr("web_photo_info_dimensions", "Dimensions"), img.naturalWidth && !img.hidden ? `${img.naturalWidth} × ${img.naturalHeight}` : ""],
+      [gsStr("web_photo_info_date", "Date"), fmtDate(item.dateMs, true)],
+      [gsStr("web_photo_info_type", "Type"), item.mimeType || ""],
+      [gsStr("web_photo_info_position", "Position"), view.index != null && total() ? `${view.index + 1} / ${total()}` : ""],
+    ].filter(([, value]) => value);
+    $(".pv-info-list").innerHTML = rows.map(([label, value]) => `<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`).join("");
+  }
+  function toggleInfo(open = !root.classList.contains("is-info-open")) {
+    root.classList.toggle("is-info-open", open);
+    info.inert = !open;
+    root.querySelectorAll('[data-pv="info"]').forEach((button) => button.classList.toggle("is-on", open));
+    if (open) { renderInfo(); setChromeHidden(false); stopSlideshow(); }
+  }
+
+  // ---- Full screen ------------------------------------------------------------
+  function toggleFullscreen() {
+    if (!document.fullscreenEnabled) return;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else root.requestFullscreen().catch(() => {});
+  }
+  on(document, "fullscreenchange", () => {
+    const button = $('[data-pv="fullscreen"]');
+    if (button) button.innerHTML = document.fullscreenElement ? PV_ICON.exitFullscreen : PV_ICON.fullscreen;
+  });
+
+  // ---- Buttons --------------------------------------------------------------------
+  on(root, "click", (event) => {
+    const stripButton = event.target.closest(".pv-strip-item");
+    if (stripButton) {
+      const entry = stripItems.find((candidate) => candidate.index === Number(stripButton.dataset.index));
+      if (entry && entry.index !== view.index) goTo(entry.item, entry.index);
+      return;
+    }
+    const action = event.target.closest("[data-pv]")?.dataset.pv;
+    if (!action) return;
+    switch (action) {
+      case "prev": step(-1); break;
+      case "next": step(1); break;
+      case "slideshow": toggleSlideshow(); break;
+      case "fullscreen": toggleFullscreen(); break;
+      case "info": toggleInfo(); break;
+      case "zoom-in": zoomTo(view.scale * 1.5); break;
+      case "zoom-out": zoomTo(view.scale / 1.5); break;
+      case "zoom-reset": resetZoom(true); break;
+    }
+  });
+
+  // ---- Keyboard --------------------------------------------------------------------
+  on(window, "keydown", (event) => {
+    if (event.target?.closest?.("input, textarea, select") || event.ctrlKey || event.metaKey || event.altKey) return;
+    const handled = () => event.preventDefault();
+    switch (event.key) {
+      case "ArrowLeft": handled(); step(-1); break;
+      case "ArrowRight": handled(); step(1); break;
+      case "Home": if (view.index > 0) { handled(); mediaAt(view.nav, 0).then((p) => p && goTo(p, 0)); } break;
+      case "End": {
+        const count = total();
+        if (count && view.index < count - 1) { handled(); mediaAt(view.nav, count - 1).then((p) => p && goTo(p, count - 1)); }
+        break;
+      }
+      case " ": handled(); toggleSlideshow(); break;
+      case "f": case "F": handled(); toggleFullscreen(); break;
+      case "i": case "I": handled(); toggleInfo(); break;
+      case "+": case "=": handled(); zoomTo(view.scale * 1.5); break;
+      case "-": handled(); zoomTo(view.scale / 1.5); break;
+      case "0": handled(); resetZoom(true); break;
+      case "Escape":
+        if (document.fullscreenElement) return;
+        handled();
+        if (root.classList.contains("is-info-open")) toggleInfo(false);
+        else if (slideshowTimer) stopSlideshow();
+        else if (view.scale > 1.01) resetZoom(true);
+        else leave();
+        break;
+      default: return;
+    }
+    if (event.key !== " ") wakeChrome();
+  });
+
+  // ---- Touch, pen and mouse gestures -----------------------------------------
+  const pointers = new Map();
+  let gesture = null;
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  function beginDrag(x, y) {
+    gesture = { type: "drag", startX: x, startY: y, tx: view.tx, ty: view.ty, time: performance.now(), moved: false, axis: null };
+  }
+  on(stage, "pointerdown", (event) => {
+    if (root.classList.contains("is-doc") || event.button > 0) return;
+    stage.setPointerCapture?.(event.pointerId);
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      gesture = { type: "pinch", startDist: distance(a, b), startScale: view.scale, moved: true };
+      clearTimeout(tapTimer);
+    } else if (pointers.size === 1) {
+      beginDrag(event.clientX, event.clientY);
+    }
+  });
+  on(stage, "pointermove", (event) => {
+    if (event.pointerType === "mouse" && !pointers.size) wakeChrome();
+    if (!pointers.has(event.pointerId) || !gesture) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (gesture.type === "pinch" && pointers.size >= 2) {
+      const [a, b] = [...pointers.values()];
+      zoomTo(gesture.startScale * (distance(a, b) / gesture.startDist), (a.x + b.x) / 2, (a.y + b.y) / 2, false);
+      return;
+    }
+    if (gesture.type !== "drag") return;
+    const dx = event.clientX - gesture.startX;
+    const dy = event.clientY - gesture.startY;
+    if (!gesture.moved && Math.hypot(dx, dy) < 8) return;
+    gesture.moved = true;
+    if (view.scale > 1.01) {
+      view.tx = gesture.tx + dx;
+      view.ty = gesture.ty + dy;
+      clampPan();
+      applyTransform(false);
+      return;
+    }
+    if (!gesture.axis) gesture.axis = Math.abs(dx) >= Math.abs(dy) ? "x" : "y";
+    if (gesture.axis === "x") {
+      // Resist at the ends of the list so it is clear there is nothing further.
+      const blocked = (dx > 0 && !view.prev) || (dx < 0 && !view.next);
+      view.tx = blocked ? dx * 0.25 : dx;
+      view.ty = 0;
+      applyTransform(false);
+    } else if (event.pointerType !== "mouse" && dy > 0) {
+      view.ty = dy;
+      view.tx = 0;
+      root.style.setProperty("--pv-dim", String(1 - Math.min(dy / 500, 0.6)));
+      applyTransform(false);
+    }
+  });
+  function endPointer(event) {
+    if (!pointers.has(event.pointerId)) return;
+    pointers.delete(event.pointerId);
+    const current = gesture;
+    if (pointers.size === 1 && current?.type === "pinch") {
+      const [remaining] = [...pointers.values()];
+      beginDrag(remaining.x, remaining.y);
+      gesture.moved = true;
+      return;
+    }
+    if (pointers.size) return;
+    gesture = null;
+    if (!current) return;
+    if (current.type === "pinch") {
+      if (view.scale < 1.05) resetZoom(true);
+      return;
+    }
+    if (event.type === "pointercancel") { if (view.scale <= 1.01) resetZoom(true); return; }
+    if (!current.moved) { handleTap(event); return; }
+    if (view.scale > 1.01) return;
+    const dx = event.clientX - current.startX;
+    const dy = event.clientY - current.startY;
+    const speed = Math.abs(dx) / Math.max(1, performance.now() - current.time);
+    if (current.axis === "x" && (Math.abs(dx) > stage.clientWidth * 0.18 || (speed > 0.45 && Math.abs(dx) > 30))) {
+      if (step(dx < 0 ? 1 : -1)) return;
+    }
+    if (current.axis === "y" && dy > 140) { leave(); return; }
+    root.style.removeProperty("--pv-dim");
+    resetZoom(true);
+  }
+  on(stage, "pointerup", endPointer);
+  on(stage, "pointercancel", endPointer);
+
+  function handleTap(event) {
+    const now = performance.now();
+    const isDouble = now - lastTap.time < 300 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 40;
+    if (isDouble) {
+      clearTimeout(tapTimer);
+      lastTap = { time: 0, x: 0, y: 0 };
+      if (view.scale > 1.01) resetZoom(true);
+      else zoomTo(2.5, event.clientX, event.clientY);
+      return;
+    }
+    lastTap = { time: now, x: event.clientX, y: event.clientY };
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => {
+      if (slideshowTimer) { stopSlideshow(); return; }
+      if (root.classList.contains("is-info-open")) { toggleInfo(false); return; }
+      setChromeHidden(!root.classList.contains("is-chrome-hidden"));
+    }, 300);
+  }
+
+  on(stage, "wheel", (event) => {
+    if (root.classList.contains("is-doc")) return;
+    event.preventDefault();
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    zoomTo(view.scale * Math.exp(-event.deltaY * 0.0015), event.clientX, event.clientY, false);
+  }, { passive: false });
+
+  on(window, "resize", () => { clampPan(); applyTransform(false); markStripCurrent(true); });
+
+  show(firstItem, firstIndex);
+  wakeChrome();
+  // Keyboard users land in the viewer, so arrow keys work without clicking first.
+  root.focus({ preventScroll: true });
+  showTouchHintOnce();
+
+  // The first time someone opens a photo on a touch screen, tell them about the gestures.
+  function showTouchHintOnce() {
+    if (!window.matchMedia?.("(hover: none)")?.matches) return;
+    try {
+      if (localStorage.getItem("ds.photoHintSeen")) return;
+      localStorage.setItem("ds.photoHintSeen", "1");
+    } catch (_) {
+      return;
+    }
+    const hint = document.createElement("div");
+    hint.className = "pv-hint";
+    hint.setAttribute("role", "status");
+    hint.textContent = gsStr("web_photo_hint", "Swipe to browse · Double-tap to zoom");
+    root.appendChild(hint);
+    setTimeout(() => hint.classList.add("is-leaving"), 3500);
+    setTimeout(() => hint.remove(), 4000);
+  }
+
+  return {
+    // The list position arrived after the photo was already on screen.
+    attachIndex(itemId, index) {
+      if (!Number.isInteger(index) || view.item.id !== itemId || view.index != null) return;
+      view.index = index;
+      history.replaceState({ ...history.state, mediaNav: { ...view.nav, index } }, "");
+      updateReturn();
+      updateCounter();
+      renderInfo();
+      updateNeighbours(token);
+    },
+    destroy() {
+      token += 1;
+      stopSlideshow();
+      [chromeTimer, tapTimer, spinnerTimer].forEach(clearTimeout);
+      cleanups.forEach((cleanup) => cleanup());
+      if (document.fullscreenElement === root) document.exitFullscreen().catch(() => {});
+      document.body.classList.remove("gs-photo-mode");
+    },
+  };
 }
 
 function renderLogin(errorMessage = "") {
@@ -3386,6 +4516,9 @@ function renderLogin(errorMessage = "") {
         method: "POST",
         body: JSON.stringify(loginData),
       });
+      // What we knew before signing in hides the library (counts, folders); load it fresh.
+      state.bootstrap = null;
+      state.libraryCache.clear();
       navigate("/", true);
     } catch (error) {
       renderLogin(error.message || gsStr("web_error_pin_mismatch", "That PIN did not match."));
@@ -3399,8 +4532,14 @@ function renderError(message) {
       <div class="gs-login">
         <h1>${esc(sessionTitle)}</h1>
         <p class="gs-error-text">${esc(message)}</p>
+        <div class="gs-toolbar-actions gs-error-actions">
+          <button class="gs-btn gs-btn-accent" type="button" id="errorRetryBtn">${esc(gsStr("web_btn_retry", "Retry"))}</button>
+          ${location.pathname !== "/" ? `<a class="gs-btn" data-link href="/">${HOME_ICON}${esc(gsStr("web_nav_home", "Home"))}</a>` : ""}
+        </div>
       </div>
     </div>`;
+  // A failed page used to be a dead end; now it can be retried or left.
+  document.getElementById("errorRetryBtn")?.addEventListener("click", () => boot());
 }
 
 function showToast(message, duration = 4000) {
@@ -3422,6 +4561,52 @@ function showToast(message, duration = 4000) {
   };
 
   setTimeout(leave, duration);
+}
+
+// Colour family for a file type badge.
+function fileTypeGroup(label) {
+  if (label === "PDF") return "pdf";
+  if (["ZIP", "RAR", "7Z", "TAR", "GZ", "TGZ", "BZ2", "XZ"].includes(label)) return "archive";
+  if (["APK", "APKS", "XAPK", "AAB"].includes(label)) return "app";
+  if (["XLS", "XLSX", "CSV", "ODS"].includes(label)) return "sheet";
+  if (["PPT", "PPTX", "ODP", "KEY"].includes(label)) return "slides";
+  if (["JSON", "XML", "HTML", "JS", "CSS", "KT", "JAVA", "PY"].includes(label)) return "code";
+  if (["DOC", "DOCX", "ODT", "TXT", "MD", "RTF", "EPUB"].includes(label)) return "doc";
+  return "other";
+}
+
+/*
+ * One file in the Files list: type badge, the full name, type · size · date, and Open /
+ * Download. Uses the same data-select-* hooks as cards, so selection and ZIP work unchanged.
+ */
+function fileRow(item) {
+  const allowDownloads = !state.bootstrap?.preventDownload && Boolean(item.downloadUrl);
+  const label = fileTypeLabel(item.mimeType, item.title);
+  const selected = state.selected.has(item.id);
+  const meta = [label, item.sizeBytes ? fmtBytes(item.sizeBytes) : "", fmtDate(item.dateMs)].filter(Boolean).join(" · ");
+  // A thumbnail (PDF first page) keeps a small type tag so the kind of file is always clear.
+  const badge = item.thumbnailUrl
+    ? `<img class="gs-card-img gs-file-thumb" loading="lazy" decoding="async" src="${THUMBNAIL_PLACEHOLDER_SRC}" data-thumb-src="${item.thumbnailUrl}" data-thumb-state="idle" alt=""><span class="gs-file-badge-tag">${esc(label)}</span>`
+    : `<span>${esc(label)}</span>`;
+  const openLink = isBrowserPreviewable(item.mimeType) && !state.selectMode
+    ? `<a class="gs-btn gs-btn-sm" href="${item.streamUrl}" target="_blank" rel="noopener noreferrer">${esc(gsStr("web_action_view", "View"))}</a>`
+    : "";
+  const downloadLink = allowDownloads && !state.selectMode
+    ? `<a class="gs-btn gs-btn-sm gs-btn-download gs-file-download" href="${item.downloadUrl}" aria-label="${esc(gsStr("web_action_download", "Download"))}" title="${esc(gsStr("web_action_download", "Download"))}">${DOWNLOAD_ICON}<span>${esc(gsStr("web_action_download", "Download"))}</span></a>`
+    : "";
+  return `
+    <article class="gs-file-row${state.selectMode ? " gs-card-selectable" : ""}${selected ? " is-selected" : ""}" data-select-card="${item.id}">
+      <div class="gs-file-badge is-${fileTypeGroup(label)}${item.thumbnailUrl ? " has-thumb" : ""}" aria-hidden="true">${badge}</div>
+      <div class="gs-file-main">
+        <div class="gs-file-name" title="${esc(item.title)}">${esc(item.title)}</div>
+        <div class="gs-meta">${esc(meta)}</div>
+      </div>
+      <div class="gs-file-actions">
+        ${state.selectMode ? `<button class="gs-card-toggle is-visible" data-select-toggle="${item.id}">${selected ? gsStr("web_status_selected", "Selected") : gsStr("web_action_select", "Select")}</button>` : ""}
+        ${openLink}
+        ${downloadLink}
+      </div>
+    </article>`;
 }
 
 function card(item, selectable = false) {
@@ -3533,6 +4718,12 @@ function attachMusicPlayers() {
         element.textContent = gsStr("common_play", "Play");
       });
       if (button) button.textContent = gsStr("common_pause", "Pause");
+      if (state.rowAudio && state.rowAudio !== mediaElement) state.rowAudio.pause();
+      // Playing a card starts (or continues) the queue from this track in this list.
+      const itemId = cardElement?.dataset.selectCard;
+      if (itemId && state.musicQueue?.id !== itemId) {
+        startMusicQueue(itemId, mediaNavFromCurrentList(`/track/${itemId}`, "music"));
+      }
       setNowPlaying({
         type: "Music",
         title,
@@ -3544,12 +4735,13 @@ function attachMusicPlayers() {
     mediaElement.addEventListener("pause", () => {
       if (mediaElement.ended) return;
       if (button) button.textContent = gsStr("common_play", "Play");
-      clearNowPlaying(mediaElement);
+      // Keep the bar so Resume and Next stay one tap away.
+      renderNowPlayingBar();
     });
 
     mediaElement.addEventListener("ended", () => {
       if (button) button.textContent = gsStr("common_play", "Play");
-      clearNowPlaying(mediaElement);
+      stepMusicQueue(1).then((moved) => { if (!moved) clearNowPlaying(mediaElement); });
     });
 
     button?.addEventListener("click", () => {
@@ -3865,20 +5057,27 @@ function renderNowPlayingBar() {
     bar.className = "gs-now";
     bar.innerHTML = "";
     floatingSendBar?.classList.remove("is-raised");
+    syncMediaSession();
     return;
   }
 
   bar.className = "gs-now is-visible";
   floatingSendBar?.classList.add("is-raised");
+  const queue = state.musicQueue && state.musicQueue.index != null ? state.musicQueue : null;
+  const queueTotal = queue && state.mediaNavCache?.key?.startsWith("music|") ? state.mediaNavCache.total : null;
+  const position = queue && queueTotal > 1 ? `${queue.index + 1} / ${queueTotal}` : "";
+  const paused = Boolean(state.nowPlaying.element?.paused);
   bar.innerHTML = `
-    <div>
-      <div class="gs-now-label">${gsStr("web_now_playing", "Now playing")}</div>
+    <div class="gs-now-copy">
+      <div class="gs-now-label">${gsStr("web_now_playing", "Now playing")}${position ? ` · <span class="gs-now-position">${position}</span>` : ""}</div>
       <strong>${esc(state.nowPlaying.title)}</strong>
       <div class="gs-meta">${esc(state.nowPlaying.type)}</div>
     </div>
-    <div class="gs-toolbar-actions">
-      <button class="gs-btn gs-btn-sm" id="nowPlayingToggleBtn">${state.nowPlaying.element?.paused ? gsStr("common_resume", "Resume") : gsStr("common_pause", "Pause")}</button>
-      ${state.nowPlaying.route ? `<a class="gs-btn gs-btn-sm" data-link href="${state.nowPlaying.route}">${gsStr("common_open", "Open")}</a>` : ""}
+    <div class="gs-toolbar-actions gs-now-actions">
+      ${queue ? `<button class="gs-btn gs-btn-sm gs-btn-square" type="button" id="nowPlayingPrevBtn" aria-label="${esc(gsStr("web_action_previous", "Previous"))}" title="${esc(gsStr("web_action_previous", "Previous"))}"${queue.index > 0 ? "" : " disabled"}>${CHEVRON_LEFT}</button>` : ""}
+      <button class="gs-btn gs-btn-sm gs-btn-accent" type="button" id="nowPlayingToggleBtn">${paused ? gsStr("common_resume", "Resume") : gsStr("common_pause", "Pause")}</button>
+      ${queue ? `<button class="gs-btn gs-btn-sm gs-btn-square" type="button" id="nowPlayingNextBtn" aria-label="${esc(gsStr("web_action_next", "Next"))}" title="${esc(gsStr("web_action_next", "Next"))}"${queueTotal != null && queue.index >= queueTotal - 1 ? " disabled" : ""}>${CHEVRON_RIGHT}</button>` : ""}
+      ${state.nowPlaying.route && state.nowPlaying.route !== location.pathname ? `<a class="gs-btn gs-btn-sm" data-link href="${state.nowPlaying.route}">${gsStr("common_open", "Open")}</a>` : ""}
     </div>`;
 
   document.getElementById("nowPlayingToggleBtn")?.addEventListener("click", () => {
@@ -3891,6 +5090,9 @@ function renderNowPlayingBar() {
     }
     renderNowPlayingBar();
   });
+  document.getElementById("nowPlayingPrevBtn")?.addEventListener("click", () => stepMusicQueue(-1));
+  document.getElementById("nowPlayingNextBtn")?.addEventListener("click", () => stepMusicQueue(1));
+  syncMediaSession();
 }
 
 function skeletons(count) {
@@ -3931,6 +5133,16 @@ function fmtBytes(bytes) {
     index += 1;
   }
   return `${value >= 100 || index === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`;
+}
+
+// Dates read in the viewer's own language and format.
+function fmtDate(ms, withTime = false) {
+  if (!Number.isFinite(ms) || ms <= 0) return "";
+  try {
+    return new Intl.DateTimeFormat(undefined, withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(new Date(ms));
+  } catch (_) {
+    return new Date(ms).toLocaleDateString();
+  }
 }
 
 function fmtDur(ms) {
