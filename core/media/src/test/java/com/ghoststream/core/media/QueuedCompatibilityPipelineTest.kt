@@ -320,6 +320,82 @@ class QueuedCompatibilityPipelineTest {
         assertEquals(listOf("high-priority", "low-priority"), executionOrder)
     }
 
+    /** Holds the first item until it is cancelled; finishes every other item at once. */
+    private class HoldFirstWorker(private val heldId: String) : CompatibilityWorker {
+        val started = CopyOnWriteArrayList<String>()
+        private val held = kotlinx.coroutines.CompletableDeferred<CompatibilityWorkerResult>()
+
+        override suspend fun prepare(
+            item: SharedItem,
+            cache: PlaybackCache,
+            stabilizedSource: StabilizedSourceInfo?,
+            startOffsetMs: Long,
+            onUpdate: (CompatibilityWorkerUpdate) -> Unit,
+        ): CompatibilityWorkerResult {
+            started += item.id
+            if (item.id == heldId) return held.await()
+            val outputFile = cache.newOutputFile(item, "mp4").apply {
+                parentFile?.mkdirs()
+                writeText(item.id)
+            }
+            return CompatibilityWorkerResult.Success(
+                preparedAsset = cache.record(itemId = item.id, file = outputFile, mimeType = "video/mp4"),
+                message = "ready",
+            )
+        }
+
+        override fun cancel(itemId: String) {
+            if (itemId == heldId) {
+                held.complete(
+                    CompatibilityWorkerResult.Failure("stopped", type = CompatibilityFailureType.CANCEL),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `play request takes over from a conversion nobody is watching`() = runTest {
+        val worker = HoldFirstWorker(heldId = "left-behind")
+        val pipeline = QueuedCompatibilityPipeline(
+            cache = FakePlaybackCache(),
+            worker = worker,
+            scope = CoroutineScope(coroutineContext),
+            viewerInterestTtlMs = -1L, // every active job counts as abandoned at once
+        )
+
+        pipeline.requestPreparation(transcodeItem(id = "left-behind"), priority = JobPriority.HIGH)
+        advanceUntilIdle()
+        pipeline.requestPreparation(transcodeItem(id = "wanted-now"), priority = JobPriority.HIGH)
+        advanceUntilIdle()
+
+        assertEquals(listOf("left-behind", "wanted-now"), worker.started)
+        assertEquals(CompatibilityStatus.READY, pipeline.currentJob("wanted-now")?.status)
+        // Stopped on purpose is not a failure: it can simply be played again later.
+        assertEquals(CompatibilityStatus.IDLE, pipeline.currentJob("left-behind")?.status)
+    }
+
+    @Test
+    fun `play request waits while the active conversion is still being watched`() = runTest {
+        val worker = HoldFirstWorker(heldId = "being-watched")
+        val pipeline = QueuedCompatibilityPipeline(
+            cache = FakePlaybackCache(),
+            worker = worker,
+            scope = CoroutineScope(coroutineContext),
+            viewerInterestTtlMs = 60_000L,
+        )
+
+        pipeline.requestPreparation(transcodeItem(id = "being-watched"), priority = JobPriority.HIGH)
+        advanceUntilIdle()
+        pipeline.requestPreparation(transcodeItem(id = "second"), priority = JobPriority.HIGH)
+        pipeline.noteViewerInterest("second")
+        advanceUntilIdle()
+
+        assertEquals(listOf("being-watched"), worker.started)
+        assertEquals(CompatibilityStatus.QUEUED, pipeline.currentJob("second")?.status)
+        worker.cancel("being-watched")
+        advanceUntilIdle()
+    }
+
     @Test
     fun `forced fallback overrides ready direct job before early return`() = runTest {
         val cache = FakePlaybackCache()

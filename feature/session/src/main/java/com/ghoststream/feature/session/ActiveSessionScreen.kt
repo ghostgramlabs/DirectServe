@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Collections
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Refresh
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -392,8 +394,17 @@ internal fun ScanCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Button(onClick = onCopyLink, shape = RoundedCornerShape(10.dp)) {
-                    Text(stringResource(R.string.session_copy_short))
+                // An icon keeps the button the same small size in every language and font scale.
+                FilledTonalIconButton(
+                    onClick = onCopyLink,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.ContentCopy,
+                        contentDescription = stringResource(R.string.session_copy_short),
+                        modifier = Modifier.size(20.dp),
+                    )
                 }
                 if (onShareLink != null) {
                     IconButton(onClick = onShareLink) {

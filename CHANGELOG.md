@@ -30,6 +30,26 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
   shortly after starting, and the browser checks again before giving up.
 - Fixed: the home page was empty right after entering the PIN.
 - Fixed: some videos with known size lost player controls such as keyboard shortcuts.
+- Faster start for videos that need converting: the phone reads the video where it is instead
+  of first copying the whole file (minutes for a long film, and twice the storage).
+- HDR10, HLG and Dolby Vision 8.x videos play directly in browsers that can show 10-bit HEVC
+  (such as Chrome or Edge with hardware support) instead of waiting for a slow conversion.
+- When a browser can't decode a video, the phone goes straight to converting it instead of
+  first trying a repackage that could not help.
+- Fixed: long videos over 2 GB never fell back to conversion when the browser couldn't play the
+  original, and a video could stay on "Preparing" forever when nothing was being prepared.
+- Videos being converted keep playing to the end while the phone works: playback continues as
+  soon as about 12 more seconds are ready (it used to wait for 15% of the whole video), and
+  when the browser can't use the streaming format it carries on from the same file instead of
+  stopping.
+- Picking another video while one is still converting starts the new one straight away when
+  nobody is watching the first, instead of waiting for that whole conversion to finish.
+- Fixed: a converted video could get stuck on an empty player when its conversion finished
+  just as it was starting, and could replay its last moment over and over at the end.
+- Fixed: thumbnails of other videos no longer slow down the start of the one you picked.
+- Fixed: the photo slideshow did nothing when a photo was opened from Home or a link, moved on
+  before a slow photo had loaded, and stopped at the last photo; it now starts over.
+- The copy-address button on the sharing screen is a compact icon in every language.
 
 ## 1.0.27 - 2026-11-03
 

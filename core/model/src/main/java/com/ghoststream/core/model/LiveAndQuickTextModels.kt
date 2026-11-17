@@ -141,6 +141,12 @@ interface LiveScreenSessionStore {
     suspend fun emitPacket(packet: LiveScreenStreamPacket)
     fun clearStream()
     suspend fun registerViewer(clientIp: String, viewerName: String, pin: String?): LiveViewerSessionRegistration
+
+    /**
+     * True when [viewerId] is the viewer that joined (passing the live PIN and the one-viewer
+     * check) from [clientIp]. The packed live stream uses this so it is only served to them.
+     */
+    fun isActiveViewer(viewerId: String?, clientIp: String): Boolean
     suspend fun consumeViewerOfferRequest(): LiveWebRtcOfferRequest?
     suspend fun submitAndroidOffer(viewerId: String, sdp: String, audioEnabled: Boolean): Boolean
     suspend fun consumeAndroidOffer(viewerId: String): LiveWebRtcAndroidOffer?

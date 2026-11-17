@@ -87,11 +87,17 @@ class MediaSourceStabilizer(
                 StableWorkerSource.MediaStoreUri(normalizedUri) to SourceType.MEDIASTORE_URI
             }
 
-            // Priority 3: Persisted SAF (if verified readable and direct read is preferred)
-            // However, the policy says for fragile URIs (SAF), materialization is preferred for reliability.
-            // sourceType == SourceType.SAF_DOCUMENT_URI && permissionSucceeded && readProbeSuccess -> { ... }
+            // Priority 3: Read the phone's own copy in place. Copying first meant a multi-GB video
+            // (a 3-hour film, an 8K clip) spent minutes being duplicated, inside the viewer's
+            // play request, before preparation could even start, and needed the same space again.
+            sourceType == SourceType.MEDIASTORE_URI && readProbeSuccess -> {
+                StableWorkerSource.MediaStoreUri(uriString) to SourceType.MEDIASTORE_URI
+            }
+            readProbeSuccess && (sourceType == SourceType.SAF_DOCUMENT_URI || sourceType == SourceType.PROVIDER_URI) -> {
+                StableWorkerSource.PersistedUri(uriString) to sourceType
+            }
 
-            // Priority 4: Materialization (Reliability path)
+            // Priority 4: Materialization, only for sources that cannot be read in place.
             else -> {
                 val materializedFile = materialize(uri, itemId)
                 if (materializedFile != null) {

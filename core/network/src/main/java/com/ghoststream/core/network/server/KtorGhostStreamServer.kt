@@ -136,6 +136,9 @@ class KtorGhostStreamServer(
      * /api/items request (~0.2s each on a mid phone), so a 30-video share took seconds to load.
      */
     private val inspectionCache = java.util.concurrent.ConcurrentHashMap<String, com.ghoststream.core.media.MediaInspection>()
+
+    /** When each [inspectionCache] entry was made, so a play request can reuse a fresh one. */
+    private val inspectedAtMs = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val thumbnailPlaceholderBytes by lazy { buildThumbnailPlaceholderBytes() }
 
     override suspend fun start(port: Int): ServerBinding {
@@ -841,6 +844,8 @@ class KtorGhostStreamServer(
                     call.respond(HttpStatusCode.NotFound, ErrorPayload(this@KtorGhostStreamServer.context.getString(R.string.browser_file_unavailable)))
                     return@get
                 }
+                // A page asking about this video is a viewer waiting for it or watching it.
+                compatibilityPipeline.noteViewerInterest(item.id)
                 val job = compatibilitySnapshotFor(call.request.origin.remoteHost, item, triggerPreparation = false)
                 val allowInProgressHls = supportsInProgressHls(
                     host = call.request.origin.remoteHost,
@@ -956,12 +961,20 @@ class KtorGhostStreamServer(
                     // loop that showed up in logs as "Missing #EXTM3U".
                     if (currentMode == PlaybackMode.DIRECT) {
                         debugLogSink.log("WebCompat", "direct_play_escalation id=${item.id} name=${item.displayName} - browser reported DIRECT failure, escalating")
+                        // The container and codec the phone already found decide the next step.
+                        val inspected = inspectionCache[inspectionKey(item)]
+                        val itemForLadder = if (inspected == null) item else item.copy(
+                            metadata = item.metadata + buildMap {
+                                put("container", inspected.container.name)
+                                inspected.videoTrackMimeType?.let { put("video_codec", it) }
+                            },
+                        )
                         rememberPlaybackOverride(
                             host = host,
                             item = item,
                             mode = nextBrowserFallbackMode(
                                 mode = currentMode,
-                                item = item,
+                                item = itemForLadder,
                                 userAgent = call.request.header(HttpHeaders.UserAgent),
                                 caps = capabilityCache[host],
                             ),
@@ -1899,6 +1912,14 @@ class KtorGhostStreamServer(
                 call.respond(liveScreenStore.state.value)
             }
 
+            // Which way Mirror screen is being sent: "hls" (screen and sound packed into one
+            // stream, always in sync, a second or two behind) or "webrtc" (lowest delay).
+            get("/api/live/mode") {
+                if (!call.authorizeBrowserCall()) return@get
+                val mode = if (liveScreenStore.currentMuxedStream() != null) "hls" else "webrtc"
+                call.respond(mapOf("mode" to mode))
+            }
+
             get("/api/live/hls/master.m3u8") {
                 if (!call.authorizeBrowserCall()) return@get
                 val live = call.resolveLiveMuxedStream() ?: return@get
@@ -1921,7 +1942,7 @@ class KtorGhostStreamServer(
                 }
                 call.response.headers.append(HttpHeaders.CacheControl, "no-store")
                 call.respondText(
-                    text = buildLiveHlsMasterPlaylist(index, live.info),
+                    text = buildLiveHlsMasterPlaylist(index, live.info, live.viewerQuery),
                     contentType = ContentType.parse(call.hlsContentType()),
                 )
             }
@@ -1941,7 +1962,7 @@ class KtorGhostStreamServer(
                 }
                 call.response.headers.append(HttpHeaders.CacheControl, "no-store")
                 call.respondText(
-                    text = buildLiveHlsPlaylist(index),
+                    text = buildLiveHlsPlaylist(index, live.viewerQuery),
                     contentType = ContentType.parse(call.hlsContentType()),
                 )
             }
@@ -2275,7 +2296,11 @@ class KtorGhostStreamServer(
                 async(io) {
                     runCatching { mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName) }
                         .getOrNull()
-                        ?.let { inspectionCache.putIfAbsent(inspectionKey(item), it) }
+                        ?.let {
+                            if (inspectionCache.putIfAbsent(inspectionKey(item), it) == null) {
+                                inspectedAtMs[inspectionKey(item)] = System.currentTimeMillis()
+                            }
+                        }
                 }
             }.awaitAll()
         }
@@ -2302,13 +2327,24 @@ class KtorGhostStreamServer(
             item.playbackDecision.reason.contains("Browser rejected direct playback", ignoreCase = true)
         val refreshedInspection = runCatching {
             if (triggerPreparation && item.category == MediaCategory.VIDEO) {
-                // Preparation re-inspects (the file may have changed in ways size/date miss).
-                mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName)
-                    .also { inspectionCache[inspectionKey(item)] = it }
+                // Preparation re-inspects (the file may have changed in ways size/date miss),
+                // unless it was inspected moments ago: opening the player page inspects the
+                // video and asks to prepare it right after, and reading the file's structure
+                // twice only delayed the start (seconds for a large or slow-to-open file).
+                val key = inspectionKey(item)
+                val recent = inspectionCache[key]?.takeIf {
+                    System.currentTimeMillis() - (inspectedAtMs[key] ?: 0L) < RECENT_INSPECTION_MS
+                }
+                recent ?: mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName)
+                    .also {
+                        inspectionCache[key] = it
+                        inspectedAtMs[key] = System.currentTimeMillis()
+                    }
             } else if (needsInspection(item)) {
                 // Passive listing reuses the last result.
                 inspectionCache.getOrPut(inspectionKey(item)) {
                     mediaAnalyzer.inspect(Uri.parse(item.uri), item.mimeType, item.displayName)
+                        .also { inspectedAtMs[inspectionKey(item)] = System.currentTimeMillis() }
                 }
             } else {
                 null
@@ -2621,12 +2657,17 @@ class KtorGhostStreamServer(
     ) {
         val requestedRange = parseRequestedGrowingRange(request.header(HttpHeaders.Range))
         if (requestedRange != null) {
-            val availableLength = waitForGrowingFileOffset(
-                itemId = item.id,
-                file = file,
-                requiredOffset = requestedRange.start,
-                isFragmentedMp4 = isFragmentedMp4,
-            )
+            // This wait sleeps (up to the idle budget) until the writer reaches the requested
+            // offset. Run it off the request threads so a browser waiting for more video cannot
+            // hold up other requests such as the page's status checks.
+            val availableLength = withContext(Dispatchers.IO) {
+                waitForGrowingFileOffset(
+                    itemId = item.id,
+                    file = file,
+                    requiredOffset = requestedRange.start,
+                    isFragmentedMp4 = isFragmentedMp4,
+                )
+            }
             if (availableLength <= requestedRange.start) {
                 response.headers.append(HttpHeaders.ContentRange, "bytes */$availableLength")
                 respond(
@@ -2767,12 +2808,25 @@ class KtorGhostStreamServer(
         if (isAppleFamily && mode == PlaybackMode.DIRECT && item?.hasHevcSignal() == true) {
             return PlaybackMode.TRANSCODE
         }
+        // When the video is HEVC/VP9/AV1/Dolby Vision, a failed direct play means the browser
+        // cannot decode the picture (it claimed support, then hit a profile, bit-depth or size
+        // limit). Repackaging the same video cannot fix that and only added a slow, useless
+        // step before the conversion that does. H.264 still walks the ladder one rung at a time.
+        if (mode == PlaybackMode.DIRECT && item?.hasModernCodecSignal() == true) {
+            return PlaybackMode.TRANSCODE
+        }
         return when (mode) {
             PlaybackMode.DIRECT -> PlaybackMode.REMUX
             PlaybackMode.REMUX -> PlaybackMode.TRANSMUX
             PlaybackMode.TRANSMUX -> PlaybackMode.TRANSCODE
             PlaybackMode.TRANSCODE -> PlaybackMode.TRANSCODE
         }
+    }
+
+    private fun SharedItem.hasModernCodecSignal(): Boolean {
+        val videoCodec = metadata["video_codec"].orEmpty().lowercase(Locale.US)
+        return hasHevcSignal() || videoCodec.contains("vp9") || videoCodec.contains("av01") ||
+            videoCodec.contains("dolby-vision")
     }
 
     private fun SharedItem.hasHevcSignal(): Boolean {
@@ -3099,6 +3153,13 @@ class KtorGhostStreamServer(
             respond(HttpStatusCode.ServiceUnavailable, ErrorPayload(localizedContext().getString(R.string.web_live_stream_ended)))
             return null
         }
+        // Only the viewer who joined (live PIN and one-viewer check, same as WebRTC) gets the
+        // stream; every playlist and segment URL carries their viewer id.
+        val viewerId = request.queryParameters["viewer"]
+        if (!liveScreenStore.isActiveViewer(viewerId, remoteHost())) {
+            respond(HttpStatusCode.Forbidden, ErrorPayload(localizedContext().getString(R.string.web_live_stream_ended)))
+            return null
+        }
         val file = File(info.filePath)
         if (!file.exists()) {
             respond(HttpStatusCode.ServiceUnavailable, ErrorPayload(localizedContext().getString(R.string.browser_hls_not_ready)))
@@ -3109,7 +3170,7 @@ class KtorGhostStreamServer(
             request.header(HttpHeaders.UserAgent),
             ClientActivity.WATCHING_VIDEO,
         )
-        return LiveMuxedPlaybackSource(info, file)
+        return LiveMuxedPlaybackSource(info, file, viewerId.orEmpty())
     }
 
     private fun io.ktor.server.application.ApplicationCall.hlsContentType(): String {
@@ -3124,6 +3185,7 @@ class KtorGhostStreamServer(
     private fun buildLiveHlsMasterPlaylist(
         index: FragmentedMp4HlsIndex,
         info: LiveMuxedStreamInfo,
+        viewerQuery: String,
     ): String {
         val codecList = buildList {
             add(index.videoCodecString ?: "avc1.640028")
@@ -3135,21 +3197,21 @@ class KtorGhostStreamServer(
             appendLine(
                 "#EXT-X-STREAM-INF:BANDWIDTH=${info.bitrateKbps * 1000},CODECS=\"$codecList\",RESOLUTION=${info.width}x${info.height}",
             )
-            appendLine("/api/live/hls/playlist.m3u8")
+            appendLine("/api/live/hls/playlist.m3u8$viewerQuery")
         }
     }
 
-    private fun buildLiveHlsPlaylist(index: FragmentedMp4HlsIndex): String = buildString {
+    private fun buildLiveHlsPlaylist(index: FragmentedMp4HlsIndex, viewerQuery: String): String = buildString {
         appendLine("#EXTM3U")
         appendLine("#EXT-X-VERSION:7")
         appendLine("#EXT-X-TARGETDURATION:$HLS_TARGET_DURATION_SECONDS")
         appendLine("#EXT-X-MEDIA-SEQUENCE:0")
         appendLine("#EXT-X-PLAYLIST-TYPE:EVENT")
         appendLine("#EXT-X-INDEPENDENT-SEGMENTS")
-        appendLine("#EXT-X-MAP:URI=\"/api/live/hls/init.mp4\"")
+        appendLine("#EXT-X-MAP:URI=\"/api/live/hls/init.mp4$viewerQuery\"")
         index.segments.forEachIndexed { segmentIndex, segment ->
             appendLine("#EXTINF:${"%.3f".format(Locale.US, segment.durationSeconds)},")
-            appendLine("/api/live/hls/segment/$segmentIndex.m4s")
+            appendLine("/api/live/hls/segment/$segmentIndex.m4s$viewerQuery")
         }
     }
 
@@ -3805,7 +3867,11 @@ class KtorGhostStreamServer(
     private data class LiveMuxedPlaybackSource(
         val info: LiveMuxedStreamInfo,
         val file: File,
-    )
+        val viewerId: String,
+    ) {
+        /** Query string every live-stream URL carries, so only the joined viewer can fetch it. */
+        val viewerQuery: String get() = "?viewer=" + java.net.URLEncoder.encode(viewerId, "UTF-8")
+    }
 
     private data class RequestedGrowingRange(
         val start: Long,
@@ -3821,6 +3887,7 @@ class KtorGhostStreamServer(
         const val MAX_BROWSER_THUMBNAIL_SIZE_PX = 640
         const val COOKIE_NAME = "ghost_session"
         const val GROWING_FILE_POLL_INTERVAL_MS = 300L
+        const val RECENT_INSPECTION_MS = 60_000L
         const val MAX_GROWING_FILE_IDLE_POLLS = 300
         const val HLS_INDEX_POLL_INTERVAL_MS = 250L
         const val MAX_HLS_INDEX_IDLE_POLLS = 80

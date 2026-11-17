@@ -30,6 +30,7 @@ class LiveScreenManager : LiveScreenSessionStore {
         extraBufferCapacity = 32,
     )
     private val signalingMutex = Mutex()
+    @Volatile
     private var viewerSession: ViewerSession? = null
     private var muxedStream: LiveMuxedStreamInfo? = null
 
@@ -106,6 +107,11 @@ class LiveScreenManager : LiveScreenSessionStore {
             viewerId = newViewer.viewerId,
             status = LiveViewerStatus.WAITING,
         )
+    }
+
+    override fun isActiveViewer(viewerId: String?, clientIp: String): Boolean {
+        val viewer = viewerSession ?: return false
+        return !viewerId.isNullOrBlank() && viewer.viewerId == viewerId && viewer.clientIp == clientIp
     }
 
     override suspend fun consumeViewerOfferRequest(): LiveWebRtcOfferRequest? = signalingMutex.withLock {

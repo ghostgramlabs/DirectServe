@@ -833,6 +833,13 @@ function buildClientCapabilities() {
   const supportsEac3 = canPlayMimeType(video, 'audio/mp4; codecs="ec-3"');
   const supportsMatroska = canPlayMimeType(video, "video/x-matroska") ||
     canPlayMimeType(video, 'video/x-matroska; codecs="avc1.64001F, mp4a.40.2"');
+  // 10-bit HEVC (Main 10) is what HDR10, HLG and Dolby Vision 8.x files carry. A browser that
+  // decodes it shows them directly (tone-mapped on an ordinary screen), so they need no
+  // conversion. Asking only Apple devices sent these to a slow full conversion on the phone.
+  const supportsHevcMain10 = supportsHevc && (
+    canPlayMimeType(video, 'video/mp4; codecs="hvc1.2.4.L153.B0"') ||
+    canPlayMimeType(video, 'video/mp4; codecs="hev1.2.4.L153.B0"')
+  );
   return {
     browserFamily: detectBrowserFamily(),
     os: detectBrowserOs(),
@@ -848,7 +855,7 @@ function buildClientCapabilities() {
     supportsMse,
     supportsHlsNatively,
     supportsMatroska,
-    supportsHdr: supportsHevc && isAppleDevice(),
+    supportsHdr: supportsHevcMain10 || (supportsHevc && isAppleDevice()),
     isPowerEfficient: !isMobileBrowser(),
   };
 }
@@ -872,6 +879,8 @@ async function reportClientCapabilities() {
 // helpers (which themselves guard against prepared MP4).
 function hasUsableHlsPath(item) {
   if (!item || !item.hlsUrl || !item.streamReady) return false;
+  // This browser already failed to play this video's segmented stream.
+  if (state.hlsFailed?.[item.id]) return false;
   // iOS Safari treats EVENT-type playlists as live (no proper seek bar).
   // Defer HLS until the playlist is finalized with VOD + ENDLIST so iOS
   // gets a fully seekable scrub bar. Other Apple devices and TV browsers
@@ -1054,6 +1063,17 @@ function lockPlayerSource(item) {
     return candidate;
   }
   if (existing && (existing.kind !== candidate.kind || existing.url !== candidate.url)) {
+    // A lock only protects a player that is really running on that source. A source that was
+    // chosen but never started (its readiness check failed, for instance because the phone
+    // finished the file at that moment) must not block the source that is ready now; that left
+    // an empty player and nothing ever played.
+    const mounted = document.getElementById("vPlayer");
+    const lockInUse = Boolean(mounted) && mounted.dataset.bound === "true" && mounted.dataset.sourceType === existing.kind;
+    if (!lockInUse) {
+      debugTrace("player_source_relocked", `id=${item.id} from=${existing.kind} to=${candidate.kind} reason=lock_never_started`);
+      state.playerSourceLocks[item.id] = candidate;
+      return candidate;
+    }
     debugTrace(
       "player_rehydrate_blocked",
       `id=${item.id} reason=source_locked source=${existing.kind} requested=${candidate.kind}`,
@@ -2557,8 +2577,27 @@ async function loadVideoNav(item, nav) {
       tile.dataset.navIndex = String(upNext[i].index);
     });
     bindBrowseRow(row, "UpNext", progress);
-    initDeferredThumbnails(holder);
+    // Making thumbnails of other videos competes with getting this one started (the phone
+    // decodes a frame of each), so they wait until this video is playing.
+    if (item.playbackMode === "DIRECT") initDeferredThumbnails(holder);
+    else whenVideoHasData(item.id, () => initDeferredThumbnails(holder));
   }
+}
+
+function whenVideoHasData(id, callback) {
+  const route = `/player/video/${id}`;
+  // "Has picture data" also covers a browser that blocked autoplay: the video is ready, paused.
+  const isPlaying = () => (document.getElementById("vPlayer")?.readyState || 0) >= 2;
+  if (isPlaying()) { callback(); return; }
+  const startedAt = Date.now();
+  const timer = setInterval(() => {
+    if (location.pathname !== route) { clearInterval(timer); return; }
+    // Do not hold them back forever if the video never starts (an error card, for instance).
+    if (isPlaying() || Date.now() - startedAt > 20000) {
+      clearInterval(timer);
+      callback();
+    }
+  }, 500);
 }
 
 async function mediaRange(nav, from, to) {
@@ -2617,11 +2656,52 @@ function showUpNextCard() {
  */
 function isPrematureVideoEnd(video, item) {
   if (!video || video.dataset.sourceType !== "prepared_mp4") return false;
+  // What matters is the copy the browser is holding: one fetched while the file was still
+  // growing stops short even after the phone has finished (the rest never played), and one
+  // fetched after it finished ends at the real end, whatever length the phone reported (a
+  // small mismatch there used to reload the last moment of the video over and over).
+  if (video.dataset.loadedIncomplete !== "true") return false;
   const latest = state.compatItem && state.compatItem.id === item.id ? state.compatItem : item;
   const fullSeconds = (latest.totalDurationMs || latest.durationMs || item.durationMs || 0) / 1000;
   if (fullSeconds > 0 && video.currentTime >= fullSeconds - 1.5) return false;
-  if (latest.compatibilityComplete === true && !(fullSeconds > 0)) return false;
   return true;
+}
+
+const GROWING_RESUME_MIN_SECONDS = 12;
+const CONVERSION_HEARTBEAT_MS = 5000;
+
+/*
+ * While a video that is still being converted is open, check in with the phone every few
+ * seconds. The phone keeps converting a video only while someone is waiting for or watching it
+ * (a request for another video takes over otherwise), and the page learns when the file is
+ * finished, which the seek logic depends on.
+ */
+function startConversionHeartbeat(id) {
+  if (state.conversionHeartbeat) clearInterval(state.conversionHeartbeat);
+  const timer = setInterval(async () => {
+    if (location.pathname !== `/player/video/${id}`) {
+      clearInterval(timer);
+      if (state.conversionHeartbeat === timer) state.conversionHeartbeat = null;
+      return;
+    }
+    try {
+      const job = await api(`/api/compat/${id}`);
+      const complete = Boolean(job.complete || job.compatibilityComplete || job.status === "READY");
+      if (state.compatItem?.id === id) {
+        state.compatItem = {
+          ...state.compatItem,
+          compatibilityComplete: complete,
+          compatibilityStatus: job.status || state.compatItem.compatibilityStatus,
+          compatibilityProgressPercent: job.progressPercent ?? state.compatItem.compatibilityProgressPercent,
+        };
+      }
+      if (complete || job.status === "FAILED" || job.status === "STALLED") {
+        clearInterval(timer);
+        if (state.conversionHeartbeat === timer) state.conversionHeartbeat = null;
+      }
+    } catch (_) {}
+  }, CONVERSION_HEARTBEAT_MS);
+  state.conversionHeartbeat = timer;
 }
 
 function continueGrowingPreparedMp4(video, item, resumeAt) {
@@ -2641,8 +2721,9 @@ function continueGrowingPreparedMp4(video, item, resumeAt) {
     if (state.growingResume === run) state.growingResume = null;
     chip.remove();
   };
-  const reload = (url) => {
+  const reload = (url, complete) => {
     const src = `${url}${url.includes("?") ? "&" : "?"}r=${Date.now()}`;
+    video.dataset.loadedIncomplete = complete ? "false" : "true";
     video.addEventListener("loadedmetadata", () => {
       try { video.currentTime = Math.max(0, resumeAt - 0.2); } catch (_) {}
       video.play().catch(() => {});
@@ -2669,10 +2750,47 @@ function continueGrowingPreparedMp4(video, item, resumeAt) {
       }
       const progress = Number(job.progressPercent);
       if (run.lastProgress === null) run.lastProgress = Number.isFinite(progress) ? progress : 0;
-      // Reload when finished, or once a good chunk more has been written.
-      if (url && (complete || (Number.isFinite(progress) && progress >= run.lastProgress + 15))) {
+      // The phone now offers the segmented stream, which follows a video that is still being
+      // converted by itself. Move to it at the same spot instead of reloading the file again
+      // and again each time playback catches up with the conversion.
+      if (!complete && job.hlsUrl && job.ready && !state.hlsFailed?.[item.id]) {
+        const hlsItem = {
+          ...(state.compatItem?.id === item.id ? state.compatItem : item),
+          hlsUrl: job.hlsUrl,
+          preparedMp4Url: url || null,
+          streamReady: true,
+          compatibilityComplete: false,
+          compatibilityStatus: job.status,
+          selectedSourceType: undefined,
+          selectedSourceUrl: undefined,
+        };
+        if (shouldUseManagedHlsPlayback(hlsItem) || shouldUseNativeHlsPlayback(hlsItem)) {
+          debugTrace("prepared_mp4_to_hls", `id=${item.id} at=${resumeAt.toFixed(1)}s`);
+          const previousLock = state.playerSourceLocks[item.id];
+          delete state.playerSourceLocks[item.id];
+          state.pendingCompatSeekOffset[item.id] = resumeAt;
+          if (await ensureCompatiblePlayerMounted(hlsItem)) {
+            finish();
+            return;
+          }
+          // The stream was not ready after all: stay on the file and keep waiting below.
+          delete state.pendingCompatSeekOffset[item.id];
+          if (previousLock) state.playerSourceLocks[item.id] = previousLock;
+        }
+      }
+      // How many seconds of video exist beyond where playback stopped. Waiting for a share of
+      // the whole video (15%) meant minutes of frozen picture on a long film.
+      const totalSeconds = (job.totalDurationMs || item.totalDurationMs || item.durationMs || 0) / 1000;
+      const secondsAhead = totalSeconds > 0 && Number.isFinite(progress)
+        ? (progress / 100) * totalSeconds - resumeAt
+        : null;
+      const enoughMore = secondsAhead !== null
+        ? secondsAhead >= GROWING_RESUME_MIN_SECONDS
+        : Number.isFinite(progress) && progress >= run.lastProgress + 15;
+      // Reload when finished, or once enough more has been written to keep playing.
+      if (url && (complete || enoughMore)) {
         finish();
-        reload(url);
+        reload(url, complete);
         return;
       }
     } catch (_) {}
@@ -2973,13 +3091,30 @@ function hydrateVideoPlayer(item, options = {}) {
   destroyPlyr();
   destroyHls();
   video.dataset.bound = "true";
-  const selectedSource = state.playerSourceLocks[item.id] || resolveStablePlayerSource(item);
+  let selectedSource = state.playerSourceLocks[item.id] || resolveStablePlayerSource(item);
+  // An HLS choice made while the video was still converting is no longer offered once the file
+  // is finished. Starting the player on it would leave it with no source at all, so take what
+  // is right for the video as it is now (the finished MP4).
+  const staleHlsLock = selectedSource &&
+    ((selectedSource.kind === "managed_hls" && !shouldUseManagedHlsPlayback(item)) ||
+      (selectedSource.kind === "native_hls" && !shouldUseNativeHlsPlayback(item)));
+  if (staleHlsLock) {
+    const fresh = resolveStablePlayerSource(item);
+    if (fresh && fresh.kind !== selectedSource.kind) {
+      debugTrace("player_source_relocked", `id=${item.id} from=${selectedSource.kind} to=${fresh.kind} reason=hls_no_longer_offered`);
+      state.playerSourceLocks[item.id] = fresh;
+      selectedSource = fresh;
+      if (fresh.url && fresh.kind !== "managed_hls") video.src = fresh.url;
+    }
+  }
   if (!selectedSource) {
     debugTrace("player_rehydrate_blocked", `id=${item.id} reason=no_locked_source`);
     return;
   }
   video.dataset.sourceType = selectedSource.kind;
   video.dataset.sourceUrl = selectedSource.url || "";
+  video.dataset.loadedIncomplete = selectedSource.kind === "prepared_mp4" && !item.compatibilityComplete ? "true" : "false";
+  if (item.playbackMode !== "DIRECT" && !item.compatibilityComplete) startConversionHeartbeat(item.id);
   const useNativePlayer = shouldUseNativeVideoPlayer(item);
   const useDirectMp4 = selectedSource.kind === "prepared_mp4" || selectedSource.kind === "direct";
   const useNativeHls = selectedSource.kind === "native_hls" && shouldUseNativeHlsPlayback(item);
@@ -3173,6 +3308,7 @@ function hydrateVideoPlayer(item, options = {}) {
       };
       video.dataset.sourceType = "prepared_mp4";
       video.dataset.sourceUrl = currentItem.preparedMp4Url;
+      video.dataset.loadedIncomplete = currentItem.compatibilityComplete === true ? "false" : "true";
       const plyrObj = state.plyr;
       if (plyrObj) {
         plyrObj.source = {
@@ -3186,6 +3322,38 @@ function hydrateVideoPlayer(item, options = {}) {
       if (options.autoplay) {
         video.play().catch(() => {});
       }
+      return true;
+    };
+
+    // The browser rejected the segmented stream. The same video is also available as one file
+    // (still growing, or finished), which plays through the browser's own decoder, so carry on
+    // there from the same spot instead of stopping, and do not pick the stream again for this
+    // video. Waiting for the finished file meant waiting for the whole conversion.
+    const fallBackToPreparedFile = (reason) => {
+      const current = state.compatItem?.id === item.id ? state.compatItem : item;
+      if (!current.preparedMp4Url) return false;
+      state.hlsFailed = state.hlsFailed || {};
+      state.hlsFailed[item.id] = true;
+      const pending = state.pendingCompatSeekOffset[item.id];
+      const resumeAt = Number.isFinite(pending) ? pending : video.currentTime;
+      debugTrace("hls_error_prepared_file_fallback", `id=${item.id} reason=${reason} at=${(resumeAt || 0).toFixed(1)}s`);
+      destroyHls();
+      delete state.playerSourceLocks[item.id];
+      if (resumeAt > 0.5) state.pendingCompatSeekOffset[item.id] = resumeAt;
+      // A file that is still growing must be fetched afresh: the browser remembers the shorter
+      // copy it saw under the same address and would stop where that one ended.
+      const fileUrl = current.compatibilityComplete
+        ? current.preparedMp4Url
+        : `${current.preparedMp4Url}${current.preparedMp4Url.includes("?") ? "&" : "?"}r=${Date.now()}`;
+      ensureCompatiblePlayerMounted({
+        ...current,
+        preparedMp4Url: fileUrl,
+        hlsUrl: null,
+        selectedSourceType: undefined,
+        selectedSourceUrl: undefined,
+      }).then((mounted) => {
+        if (!mounted && location.pathname === `/player/video/${item.id}`) waitForPreparedMp4Fallback(current);
+      });
       return true;
     };
 
@@ -3302,6 +3470,7 @@ function hydrateVideoPlayer(item, options = {}) {
             // If the server has already finalized the prepared MP4, switch to direct
             // playback immediately: no HLS/MSE involved, so no TFHD or codec issues.
             // We use state.compatItem to ensure we have the latest state from polling.
+            if (fallBackToPreparedFile("append_errors")) return;
             const currentItem = state.compatItem || item;
             if (currentItem.preparedMp4Url && currentItem.compatibilityComplete === true) {
               debugTrace("prepared_asset_reused", `id=${item.id} asset=${currentItem.preparedMp4Url.slice(currentItem.preparedMp4Url.lastIndexOf('/') + 1)}`);
@@ -3340,9 +3509,11 @@ function hydrateVideoPlayer(item, options = {}) {
           }, 1000);
           return;
         }
+        if (fallBackToPreparedFile("network_error")) return;
         showHlsError("A network error occurred while loading the video.");
         return;
       }
+      if (fallBackToPreparedFile(`fatal_${data?.details || "media_error"}`)) return;
       showHlsError("This video is still getting ready. Try again in a moment.");
     });
     return true;
@@ -3618,14 +3789,17 @@ function hydrateVideoPlayer(item, options = {}) {
       // can OOM-kill the host's foreground service. If the file is beyond what
       // the host can safely re-encode, skip auto-fallback and let the user
       // retry manually or download the original.
-      const tooBigForAutoTranscode =
-        (typeof item.sizeBytes === "number" && item.sizeBytes > 2 * 1024 * 1024 * 1024) ||
-        (typeof item.width === "number" && item.width > 3840);
+      // File size alone is no reason: a long 1080p film is several GB and converts fine (the
+      // phone reads it in place and the browser starts on the first part). Only pictures wider
+      // than 4K are beyond what a phone can convert in reasonable time.
+      const tooBigForAutoTranscode = Math.max(Number(item.width) || 0, Number(item.height) || 0) > 3840;
       if (tooBigForAutoTranscode) {
         debugTrace(
           "video_error_direct_compat_fallback_skipped",
           `id=${item.id} sizeBytes=${item.sizeBytes || ""} width=${item.width || ""} reason=too_large_for_safe_transcode`,
         );
+        showBrowserCannotPlay(item);
+        return;
       } else {
         debugTrace("video_error_direct_compat_fallback", `id=${item.id} failures=${failureCount} triggering compat preparation`);
         // Clear the source lock so the poll loop picks up the new compat
@@ -3831,6 +4005,11 @@ async function ensureCompatiblePlayerMounted(item) {
   }
   if (!ready) {
     debugTrace("player_rehydrate_blocked", `id=${item.id} reason=source_probe_failed source=${selectedSource.kind}`);
+    // Nothing is playing from this source, so do not keep it locked for the next attempt.
+    const mounted = document.getElementById("vPlayer");
+    if (!mounted || mounted.dataset.sourceType !== selectedSource.kind) {
+      delete state.playerSourceLocks[item.id];
+    }
     return false;
   }
   const lockedItem = {
@@ -4149,6 +4328,7 @@ function createPhotoViewer(root, nav, firstItem, firstIndex) {
       img.hidden = true;
       thumb.hidden = true;
       doc.hidden = false;
+      scheduleSlide();
       const isPdf = item.mimeType === "application/pdf" || String(item.title).toLowerCase().endsWith(".pdf");
       doc.innerHTML = isPdf
         ? `<iframe src="${item.streamUrl}" title="${esc(item.title)}"></iframe>`
@@ -4179,12 +4359,15 @@ function createPhotoViewer(root, nav, firstItem, firstIndex) {
       spinner.hidden = true;
       thumb.hidden = true;
       renderInfo();
+      scheduleSlide();
     };
     img.onerror = () => {
       if (my !== token) return;
       root.classList.remove("is-loading");
       spinner.hidden = true;
       errorEl.hidden = false;
+      // A photo that will not load should not stop the slideshow.
+      scheduleSlide(1500);
     };
     img.alt = item.title;
     img.src = item.streamUrl;
@@ -4226,6 +4409,7 @@ function createPhotoViewer(root, nav, firstItem, firstIndex) {
     if (my !== token) return;
     view.prev = prev;
     view.next = next;
+    view.neighboursIndex = index;
     updateNavButtons();
     updateCounter();
     [prev, next].forEach((photo) => { if (photo?.streamUrl && isImageItem(photo)) new Image().src = photo.streamUrl; });
@@ -4272,6 +4456,15 @@ function createPhotoViewer(root, nav, firstItem, firstIndex) {
     show(item, index);
   }
   function step(delta) {
+    // Previous/Next still belong to the last photo until they are looked up for this one.
+    if (view.index != null && view.neighboursIndex !== view.index) {
+      const my = token;
+      const index = view.index + delta;
+      mediaAt(view.nav, index).catch(() => null).then((target) => {
+        if (target && my === token) goTo(target, index);
+      });
+      return index >= 0;
+    }
     const target = delta < 0 ? view.prev : view.next;
     if (!target) {
       root.classList.remove("is-bump-left", "is-bump-right");
@@ -4287,25 +4480,43 @@ function createPhotoViewer(root, nav, firstItem, firstIndex) {
   }
 
   // ---- Slideshow ----------------------------------------------------------------
+  // Each photo stays on screen for the full time once it has loaded, however slow the phone is.
+  // `slideshowTimer` is true-ish for as long as the slideshow is on, even between timeouts.
+  let slideshowWait = null;
+  function scheduleSlide(delay = PHOTO_SLIDESHOW_MS) {
+    if (!slideshowTimer) return;
+    clearTimeout(slideshowWait);
+    slideshowWait = setTimeout(advanceSlide, delay);
+  }
+  async function advanceSlide() {
+    if (!slideshowTimer) return;
+    // Still loading: the photo's onload starts the next wait.
+    if (root.classList.contains("is-loading")) return;
+    // The list position or the next photo is still being looked up.
+    if (view.index == null || view.neighboursIndex !== view.index) { scheduleSlide(400); return; }
+    if (view.next) { goTo(view.next, view.index + 1); return; }
+    // At the end of the list, start again from the first photo.
+    const my = token;
+    const first = view.index > 0 ? await mediaAt(view.nav, 0).catch(() => null) : null;
+    if (!slideshowTimer || my !== token) return;
+    if (first) goTo(first, 0);
+    else stopSlideshow();
+  }
   function startSlideshow() {
-    if (view.index == null) return;
     stopSlideshow();
     resetZoom(true);
+    slideshowTimer = true;
     root.classList.add("is-playing");
     setChromeHidden(true);
     const play = $(".pv-play");
     play.innerHTML = PV_ICON.pause;
     play.classList.add("is-on");
-    slideshowTimer = setInterval(() => {
-      if (root.classList.contains("is-loading")) return;
-      if (view.next) { step(1); return; }
-      const count = total();
-      if (count != null && view.index >= count - 1) stopSlideshow();
-    }, PHOTO_SLIDESHOW_MS);
+    if (!root.classList.contains("is-loading")) scheduleSlide();
   }
   function stopSlideshow() {
     if (!slideshowTimer) return;
-    clearInterval(slideshowTimer);
+    clearTimeout(slideshowWait);
+    slideshowWait = null;
     slideshowTimer = null;
     root.classList.remove("is-playing");
     const play = $(".pv-play");
@@ -4994,6 +5205,7 @@ async function pollCompat(id, item, options = {}) {
   }
 
   let attempts = 0;
+  let idleReplies = 0;
   async function tick() {
     if (token !== state.compatPollToken || location.pathname !== route) return;
     attempts += 1;
@@ -5007,6 +5219,25 @@ async function pollCompat(id, item, options = {}) {
         return;
       }
     } catch (_) {}
+
+    // The phone says nothing is being prepared and there is nothing to play yet. Polling used
+    // to stop here silently, leaving "Preparing" on screen forever. Ask again, then say so.
+    if (job?.status === "IDLE") {
+      idleReplies += 1;
+      if (idleReplies <= 2) {
+        debugTrace("compat_idle_reprepare", `id=${id} attempt=${idleReplies}`);
+        try {
+          const again = await api(`/api/compat/${id}/prepare`, { method: "POST" });
+          if (token !== state.compatPollToken || location.pathname !== route) return;
+          if (await applyCompatState(again)) return;
+        } catch (_) {}
+        state.compatPollTimer = setTimeout(tick, 1000);
+        return;
+      }
+      cancelCompatPolling();
+      showBrowserCannotPlay(item);
+      return;
+    }
 
     const interval = getAdaptiveInterval(attempts, job || {});
     if (interval <= 0) return;
@@ -5503,7 +5734,7 @@ async function renderLiveScreen() {
   mountLiveScreen(liveState);
 }
 
-function mountLiveScreen(initialState) {
+async function mountLiveScreen(initialState) {
   const video = document.getElementById("liveVideo");
   const statusText = document.getElementById("liveStatusText");
   const audioText = document.getElementById("liveAudioText");
@@ -5583,17 +5814,55 @@ function mountLiveScreen(initialState) {
   });
   applyLiveMuteButton();
 
+  // The phone either packs screen and sound into one live stream (always in sync, a second or
+  // two behind) or sends them over WebRTC (lowest delay). Ask which, then play it.
+  state.liveMode = "webrtc";
+  try {
+    state.liveMode = (await api("/api/live/mode"))?.mode === "hls" ? "hls" : "webrtc";
+  } catch (_) {}
+  startLiveTransport(video, applyStatus, applyLiveState, audioText, audioBtn);
+}
+
+function startLiveTransport(video, applyStatus, applyLiveState, audioText, audioBtn, pinOverride) {
+  if (state.liveMode === "hls") {
+    startLiveMuxedHls(video, applyStatus, applyLiveState, audioText, audioBtn, pinOverride);
+    return;
+  }
   if (!("RTCPeerConnection" in window)) {
     applyStatus(gsStr("web_live_unsupported", ""));
     return;
   }
-
-  startLiveWebRtc(video, applyStatus, applyLiveState, audioText, audioBtn);
+  startLiveWebRtc(video, applyStatus, applyLiveState, audioText, audioBtn, pinOverride);
 }
 
-async function startLiveMuxedHls(video, applyStatus, applyLiveState, audioText, audioBtn) {
+async function startLiveMuxedHls(video, applyStatus, applyLiveState, audioText, audioBtn, pinOverride) {
   applyStatus(gsStr("web_live_status_connecting", ""));
-  const sourceUrl = "/api/live/hls/master.m3u8";
+  if (state.liveDisconnectPromise) {
+    await state.liveDisconnectPromise;
+  }
+  // Join exactly as the WebRTC path does: the live PIN and the one-viewer rule are checked here,
+  // and the stream is then served only to this viewer id.
+  const pin = pinOverride !== undefined ? pinOverride : (state.livePin || null);
+  const session = await api("/api/live/webrtc/session", {
+    method: "POST",
+    body: JSON.stringify({ pin }),
+  });
+  if (!session.accepted || !session.viewerId) {
+    if (session.status === "BUSY") applyStatus(gsStr("web_live_busy", ""));
+    else if (session.status === "PIN_REQUIRED") {
+      applyStatus(gsStr("web_live_pin_required", ""));
+      const wrongPin = pin != null && pin !== "";
+      if (wrongPin) state.livePin = null;
+      promptLivePin(video, applyStatus, applyLiveState, audioText, audioBtn, wrongPin);
+    } else applyStatus(gsStr("web_live_stream_ended", ""));
+    return;
+  }
+  state.livePin = pin || null;
+  state.liveViewerId = session.viewerId;
+  window.addEventListener("pagehide", () => {
+    if (state.liveViewerId) disconnectLiveViewer(state.liveViewerId);
+  }, { once: true });
+  const sourceUrl = `/api/live/hls/master.m3u8?viewer=${encodeURIComponent(session.viewerId)}`;
 
   state.liveStatePollTimer = window.setInterval(async () => {
     if (location.pathname !== "/live") return;
@@ -5617,11 +5886,26 @@ async function startLiveMuxedHls(video, applyStatus, applyLiveState, audioText, 
       backBufferLength: 15,
     });
     state.liveHls = hls;
+    // Recover a few times, spaced out; retrying instantly on every fatal error used to flood the
+    // phone with requests when the stream could not be played at all.
+    let fatalErrors = 0;
     hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data?.fatal) {
-        applyStatus(gsStr("web_live_status_reconnecting", ""));
-        try { hls.startLoad(); } catch (_) {}
+      if (!data?.fatal) return;
+      fatalErrors += 1;
+      if (fatalErrors > 3) {
+        try { hls.destroy(); } catch (_) {}
+        if (state.liveHls === hls) state.liveHls = null;
+        applyStatus(gsStr("web_live_unsupported", ""));
+        return;
       }
+      applyStatus(gsStr("web_live_status_reconnecting", ""));
+      setTimeout(() => {
+        if (state.liveHls !== hls) return;
+        try {
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+          else hls.startLoad();
+        } catch (_) {}
+      }, 1000 * fatalErrors);
     });
     hls.loadSource(sourceUrl);
     hls.attachMedia(video);
@@ -5667,7 +5951,7 @@ function promptLivePin(video, applyStatus, applyLiveState, audioText, audioBtn, 
     if (!pin) return;
     wrapper.remove();
     video.style.display = "";
-    startLiveWebRtc(video, applyStatus, applyLiveState, audioText, audioBtn, pin);
+    startLiveTransport(video, applyStatus, applyLiveState, audioText, audioBtn, pin);
   });
 }
 

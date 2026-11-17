@@ -7,13 +7,18 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
 import android.media.ExifInterface
+import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Build
+import android.util.LruCache
 import com.ghoststream.core.model.PlaybackDecision
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import com.ghoststream.core.model.PlaybackMode
 import com.ghoststream.core.model.SharedItem
@@ -26,6 +31,14 @@ class AndroidMediaAnalyzer(
     private val decisionEngine: SmartPlaybackDecisionEngine,
     private val stabilizer: MediaSourceStabilizer,
 ) : MediaAnalyzer {
+
+    /** Few video frame decodes at once; large HEVC/HDR decodes are heavy on memory and decoders. */
+    private val videoFrameGate = Semaphore(2)
+
+    /** Recent video thumbnails (JPEG bytes), so lists and the player do not decode them again. */
+    private val videoFrameCache = object : LruCache<String, ByteArray>(VIDEO_FRAME_CACHE_BYTES) {
+        override fun sizeOf(key: String, value: ByteArray): Int = value.size
+    }
 
     override fun inspect(uri: Uri, mimeType: String?, displayName: String): MediaInspection {
         val extension = displayName.substringAfterLast('.', "").lowercase()
@@ -250,8 +263,17 @@ class AndroidMediaAnalyzer(
                 }
 
                 if (inferredMime.startsWith("video/")) {
-                    videoTrackMimeType = inferredMime
                     videoProfile = if (format.containsKey(MediaFormat.KEY_PROFILE)) format.getInteger(MediaFormat.KEY_PROFILE) else null
+                    val dolbyVisionBase = if (inferredMime == MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION) {
+                        dolbyVisionBaseLayerMime(videoProfile)
+                    } else null
+                    videoTrackMimeType = dolbyVisionBase ?: inferredMime
+                    if (dolbyVisionBase == "video/hevc") {
+                        // The HEVC base layer of these profiles is 10-bit (Main 10).
+                        videoProfile = MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10
+                        bitDepth = 10
+                        hdrFormat = hdrFormat ?: "DolbyVision"
+                    }
                     videoLevel = if (format.containsKey(MediaFormat.KEY_LEVEL)) format.getInteger(MediaFormat.KEY_LEVEL) else null
                     width = if (format.containsKey(MediaFormat.KEY_WIDTH)) format.getInteger(MediaFormat.KEY_WIDTH) else null
                     height = if (format.containsKey(MediaFormat.KEY_HEIGHT)) format.getInteger(MediaFormat.KEY_HEIGHT) else null
@@ -382,6 +404,21 @@ class AndroidMediaAnalyzer(
         val audioInitDataOk: Boolean? = null,
     )
 
+    /*
+     * Dolby Vision profiles 4, 7 and 8 (8.1 HDR10, 8.4 HLG) carry a standard HEVC Main 10 base
+     * layer, and profile 9 an H.264 one, so any player of that codec shows the picture (without
+     * the Dolby Vision extras). Treated as unknown, they always went to a full conversion.
+     * Profile 5 has no standard base layer (its colours are wrong without Dolby Vision), so it
+     * stays Dolby Vision-only.
+     */
+    private fun dolbyVisionBaseLayerMime(profile: Int?): String? = when (profile) {
+        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheDtr,
+        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheDtb,
+        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheSt -> "video/hevc"
+        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvavSe -> "video/avc"
+        else -> null
+    }
+
     // Inspect MediaFormat color metadata for an HDR transfer function.
     // Returns null when the format does not advertise HDR (SDR or unknown).
     private fun inferHdrFormat(format: MediaFormat): String? {
@@ -484,20 +521,52 @@ class AndroidMediaAnalyzer(
         return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
 
-    private fun extractVideoFrame(uri: Uri, timeMs: Long?, maxSizePx: Int): ByteArray? {
+    /*
+     * A full-size frame of an 8K video is 7680x4320: about 130 MB as a bitmap (more for 10-bit
+     * HDR). Several at once (a list or the Up next row) ran the app out of memory and crashed it,
+     * which also stopped the video being played. Decode straight to thumbnail size, two videos at
+     * most at a time, keep recent results, and treat running out of memory as "no thumbnail".
+     */
+    private suspend fun extractVideoFrame(uri: Uri, timeMs: Long?, maxSizePx: Int): ByteArray? {
+        val key = "$uri|${timeMs ?: -1}|$maxSizePx"
+        synchronized(videoFrameCache) { videoFrameCache.get(key) }?.let { return it }
+        return videoFrameGate.withPermit {
+            synchronized(videoFrameCache) { videoFrameCache.get(key) }?.let { return@withPermit it }
+            decodeVideoFrame(uri, timeMs, maxSizePx)?.also { bytes ->
+                synchronized(videoFrameCache) { videoFrameCache.put(key, bytes) }
+            }
+        }
+    }
+
+    private fun decodeVideoFrame(uri: Uri, timeMs: Long?, maxSizePx: Int): ByteArray? {
         val retriever = MediaMetadataRetriever()
         return try {
             retriever.setDataSource(context, uri)
-            val frame = if (timeMs != null) {
-                retriever.getFrameAtTime(timeMs * 1_000L, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            val timeUs = if (timeMs != null) timeMs * 1_000L else -1L
+            val option = MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+            val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
+            val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
+            val frame = if (
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 &&
+                width > 0 && height > 0 && maxSizePx > 0 && maxOf(width, height) > maxSizePx
+            ) {
+                // The platform scales while decoding, so the full-size frame never reaches the app.
+                val scale = maxSizePx.toFloat() / maxOf(width, height)
+                retriever.getScaledFrameAtTime(
+                    timeUs,
+                    option,
+                    (width * scale).toInt().coerceAtLeast(1),
+                    (height * scale).toInt().coerceAtLeast(1),
+                )
             } else {
-                retriever.getFrameAtTime(-1, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                retriever.getFrameAtTime(timeUs, option)
             } ?: return null
             frame.useScaledJpeg(maxSizePx)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
+            // Includes OutOfMemoryError and decoder failures on very large or unusual videos.
             null
         } finally {
-            retriever.release()
+            runCatching { retriever.release() }
         }
     }
 
@@ -521,5 +590,9 @@ class AndroidMediaAnalyzer(
         val targetWidth = (width * scale).toInt().coerceAtLeast(1)
         val targetHeight = (height * scale).toInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(this, targetWidth, targetHeight, true)
+    }
+
+    private companion object {
+        const val VIDEO_FRAME_CACHE_BYTES = 6 * 1024 * 1024
     }
 }

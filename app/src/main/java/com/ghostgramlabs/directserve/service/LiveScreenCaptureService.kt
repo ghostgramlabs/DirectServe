@@ -257,7 +257,7 @@ class LiveScreenCaptureService : Service() {
                 videoFrameObserved = false
                 resetAudioInjectionPacing()
 
-                if (MUXED_LIVE_STREAM_ENABLED) {
+                if (useMuxedStream) {
                     initializeMuxedCapture(resultCode, permissionData, metrics.densityDpi)
                 } else {
                     initializeWebRtc(permissionData)
@@ -283,7 +283,7 @@ class LiveScreenCaptureService : Service() {
                     )
                 }
 
-                if (!MUXED_LIVE_STREAM_ENABLED) {
+                if (!useMuxedStream) {
                     startSignalingLoop()
                 }
             } catch (error: Exception) {
@@ -292,6 +292,9 @@ class LiveScreenCaptureService : Service() {
             }
         }
     }
+
+    private val useMuxedStream: Boolean
+        get() = MUXED_LIVE_STREAM_ENABLED && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     private fun initializeMuxedCapture(resultCode: Int, permissionData: Intent, densityDpi: Int) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -364,7 +367,7 @@ class LiveScreenCaptureService : Service() {
             .setUseHardwareAcousticEchoCanceler(false)
             .setUseHardwareNoiseSuppressor(false)
             .setAudioAttributes(mediaPlaybackAudioAttributes())
-            .setAudioBufferCallback { buffer, _, channelCount, sampleRate, bytesRead, captureTimestampNs ->
+            .setAudioBufferCallback { buffer, _, channelCount, sampleRate, bytesRead, _ ->
                 if (webrtcAudioFormat == null && sampleRate > 0 && channelCount > 0) {
                     val spec = WebRtcAudioFormat(sampleRate, channelCount, buffer.capacity())
                     webrtcAudioFormat = spec
@@ -373,30 +376,21 @@ class LiveScreenCaptureService : Service() {
                         "webrtc audio buffer format observed sampleRate=${spec.sampleRate} channels=${spec.channelCount} capacity=${spec.bufferCapacity} firstBytesRead=$bytesRead",
                     )
                 }
-                // Overwrite the microphone PCM that WebRTC just captured with
-                // device-playback PCM. Riding on WebRTC's mic capture cadence
-                // means the resulting audio frames inherit the mic's native
-                // capture timestamp, which stays in lock-step with the screen-
-                // capture video clock — this is how A/V sync actually works.
+                // External input: a single playback AudioRecord paces WebRTC's 10 ms frames.
+                // Never run a microphone recorder in parallel with playback capture.
                 val pump = playbackAudioPump
-                val targetBytes = if (bytesRead > 0) bytesRead else buffer.capacity()
-                if (pump != null) {
-                    val peak = pump.overwriteWithDeviceAudio(buffer, targetBytes)
-                    if (peak < 0) {
-                        // Pump not yet producing audio — replace mic PCM with
-                        // silence so nobody's microphone leaks into the stream.
-                        writeSilence(buffer)
-                    } else if (peak > AUDIO_ACTIVITY_PEAK_THRESHOLD && !audioObserved) {
+                val peak = pump?.overwriteWithDeviceAudio(buffer, buffer.capacity()) ?: -1
+                if (peak < 0) {
+                    writeSilence(buffer)
+                    paceInjectedAudioCallback(sampleRate, channelCount, buffer.capacity())
+                } else {
+                    resetAudioInjectionPacing()
+                    if (peak > AUDIO_ACTIVITY_PEAK_THRESHOLD && !audioObserved) {
                         audioObserved = true
                         updateAudioStatus(LiveAudioStatus.AUDIO_LIVE, "pcm_activity_peak_$peak")
                     }
-                } else {
-                    writeSilence(buffer)
+                    pump?.lastServedCaptureNs ?: System.nanoTime()
                 }
-                // The PCM we just wrote was captured earlier than this callback ran (it waited in
-                // the pump's jitter cushion); report its real age so the viewer lip-syncs it.
-                val latencyNs = pump?.lastServedLatencyNs ?: 0L
-                if (captureTimestampNs > latencyNs) captureTimestampNs - latencyNs else captureTimestampNs
             }
             .setAudioRecordErrorCallback(object : JavaAudioDeviceModule.AudioRecordErrorCallback {
                 override fun onWebRtcAudioRecordInitError(errorMessage: String?) {
@@ -429,22 +423,19 @@ class LiveScreenCaptureService : Service() {
 
                 override fun onWebRtcAudioRecordStop() {
                     container.debugLogRepository.log("LiveScreen", "WebRTC audio record stopped")
+                    playbackAudioPump?.pause()
                     resetAudioInjectionPacing()
                 }
             })
             .createAudioDeviceModule()
-        // IMPORTANT: leave AudioRecord enabled. WebRTC's mic capture thread is
-        // what drives the audio buffer callback at a steady 10 ms cadence and
-        // assigns the capture timestamps that get correlated with the video
-        // clock. We overwrite the captured mic PCM with device-playback PCM
-        // inside the callback, so nothing from the actual microphone ever
-        // leaves the device, but A/V sync still works because WebRTC's
-        // timing machinery is intact.
-        audioModule.setMicrophoneMute(false)
+        // The pinned WebRTC SDK invokes AudioBufferCallback in external-input mode. The
+        // playback read above provides pacing; only unavailable input uses a silence timer.
+        audioModule.setAudioRecordEnabled(false)
+        audioModule.setMicrophoneMute(true)
         audioModule.setSpeakerMute(true)
         container.debugLogRepository.log(
             "LiveScreen",
-            "WebRTC audio device created; mic AudioRecord enabled as pacing clock, PCM overwritten with playback capture",
+            "WebRTC external audio enabled; playback capture is the only audio clock",
         )
 
         val factory = PeerConnectionFactory.builder()
@@ -1593,6 +1584,10 @@ class LiveScreenCaptureService : Service() {
         private const val ICE_GATHERING_SIGNAL_POLL_MS = 50L
         private const val LOCAL_DESCRIPTION_FALLBACK_MS = 1_200L
         private const val WEBRTC_AUDIO_ENABLED = true
+        // Screen and sound packed into one stream (fMP4 served as live HLS) would keep them in
+        // sync by design, but Chrome rejects the segments this muxer produces
+        // (CHUNK_DEMUXER_ERROR_APPEND_FAILED) and its audio/video clocks start from different
+        // bases. Off until the muxer is fixed; the browser and server already support it.
         private const val MUXED_LIVE_STREAM_ENABLED = false
 
         fun start(context: Context, resultCode: Int, permissionData: Intent, shareSound: Boolean) {

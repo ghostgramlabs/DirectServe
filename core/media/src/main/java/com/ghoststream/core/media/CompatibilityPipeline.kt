@@ -51,6 +51,9 @@ interface CompatibilityPipeline {
     
     fun currentJob(itemId: String): CompatibilityJob?
     suspend fun markMediaServed(itemId: String)
+
+    /** A viewer is waiting for or watching this item (status checks from its player page). */
+    suspend fun noteViewerInterest(itemId: String) {}
     suspend fun clearFailure(itemId: String)
     suspend fun invalidate(itemId: String)
     suspend fun cancelPendingPreparations()
@@ -63,6 +66,8 @@ class QueuedCompatibilityPipeline(
     private val stabilizer: MediaSourceStabilizer? = null,
     private val decisionEngine: SmartPlaybackDecisionEngine = DefaultSmartPlaybackDecisionEngine(),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    /** How long after the last sign of a viewer an active job still counts as wanted. */
+    private val viewerInterestTtlMs: Long = VIEWER_INTEREST_TTL_MS,
 ) : CompatibilityPipeline {
     private val terminalFailureTypes = setOf(
         CompatibilityFailureType.SOURCE,
@@ -76,6 +81,9 @@ class QueuedCompatibilityPipeline(
     private val canceledItems = mutableSetOf<String>()
     private var queueProcessorRunning = false
     private var activeRequest: PreparationRequest? = null
+
+    /** When a viewer last asked about or was served each item (see [noteViewerInterest]). */
+    private val viewerInterestAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     override val jobs: StateFlow<Map<String, CompatibilityJob>> = _jobs.asStateFlow()
 
@@ -340,10 +348,37 @@ class QueuedCompatibilityPipeline(
     override fun currentJob(itemId: String): CompatibilityJob? = _jobs.value[itemId]
 
     override suspend fun markMediaServed(itemId: String) {
+        viewerInterestAt[itemId] = System.currentTimeMillis()
         _jobs.update { current ->
             val job = current[itemId] ?: return@update current
             current + (itemId to job.copy(lastMediaServedAt = System.currentTimeMillis()))
         }
+    }
+
+    override suspend fun noteViewerInterest(itemId: String) {
+        viewerInterestAt[itemId] = System.currentTimeMillis()
+        // A play request waiting behind another video takes over once nobody is watching or
+        // waiting for that other video any more (the viewer went back and picked this one).
+        val abandonedId = queueMutex.withLock {
+            val active = activeRequest ?: return@withLock null
+            if (active.item.id == itemId) return@withLock null
+            val waiting = pendingRequests.any { it.item.id == itemId && it.priority != JobPriority.LOW }
+            if (waiting && isAbandoned(active)) active.item.id else null
+        }
+        abandonedId?.let {
+            CompatLogger.info("CompatPipeline", "preempt_abandoned active=$it for=$itemId")
+            worker.cancel(it)
+        }
+    }
+
+    /**
+     * An active job counts as abandoned when no page has asked about it and none of its media
+     * has been requested for a while. Player pages check in every few seconds while they wait
+     * for or play a video that is still being prepared.
+     */
+    private fun isAbandoned(active: PreparationRequest): Boolean {
+        val lastInterest = maxOf(viewerInterestAt[active.item.id] ?: 0L, active.requestedAt)
+        return System.currentTimeMillis() - lastInterest > viewerInterestTtlMs
     }
 
     override suspend fun clearFailure(itemId: String) {
@@ -460,7 +495,21 @@ class QueuedCompatibilityPipeline(
                 streamable = true,
                 updatedAtEpochMs = System.currentTimeMillis()
             )
-            is CompatibilityWorkerResult.Failure -> {
+            is CompatibilityWorkerResult.Failure -> if (result.type == CompatibilityFailureType.CANCEL) {
+                // Stopped on purpose (another video took over, or sharing stopped): not a
+                // failure. Leave it ready to be prepared again the next time someone plays it.
+                cache.evict(item.id)
+                val requestedAgain = queueMutex.withLock { pendingRequests.any { it.item.id == item.id } }
+                currentJob(item.id)!!.copy(
+                    status = if (requestedAgain) CompatibilityStatus.QUEUED else CompatibilityStatus.IDLE,
+                    progressPercent = null,
+                    preparedAsset = null,
+                    hlsReady = false,
+                    directReady = false,
+                    streamable = false,
+                    updatedAtEpochMs = System.currentTimeMillis(),
+                )
+            } else {
                 cache.evict(item.id)
                 currentJob(item.id)!!.copy(
                     status = CompatibilityStatus.FAILED,
@@ -508,7 +557,14 @@ class QueuedCompatibilityPipeline(
     private fun preemptActiveLocked(priorityItemId: String): String? {
         val active = activeRequest ?: return null
         if (active.item.id == priorityItemId) return null
-        return if (active.priority == JobPriority.LOW) active.item.id else null
+        // A manual batch job always yields to a play request. A play request for another video
+        // yields only when nobody is watching or waiting for it any more; otherwise the new
+        // request waited for that whole conversion to finish before it could even start.
+        return if (active.priority == JobPriority.LOW || isAbandoned(active)) active.item.id else null
+    }
+
+    private companion object {
+        const val VIEWER_INTEREST_TTL_MS = 15_000L
     }
 
     private data class PreparationRequest(

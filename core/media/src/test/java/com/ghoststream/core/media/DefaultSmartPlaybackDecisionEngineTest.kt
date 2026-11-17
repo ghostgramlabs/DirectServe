@@ -262,4 +262,35 @@ class DefaultSmartPlaybackDecisionEngineTest {
         assertEquals(PlaybackMode.DIRECT, d.mode)
         assertEquals("application/pdf", d.browserMimeType)
     }
+
+    // ── Large / HDR / long files (8K HEVC HDR10, Dolby Vision 8.x, 3-hour MKV) ─────
+
+    private fun hdr8k(container: MediaContainer = MediaContainer.MP4) = inspect(container, video = "video/hevc").copy(
+        bitDepth = 10, hdrFormat = "HDR10", width = 7680, height = 4320,
+    )
+
+    @Test
+    fun `8K HEVC 10-bit HDR MP4 plays DIRECT when the browser decodes HEVC Main 10`() {
+        val caps = ClientCapabilities(supportsHevc = true, supportsHdr = true)
+        assertEquals(PlaybackMode.DIRECT, engine.decide(hdr8k(), caps).mode)
+    }
+
+    @Test
+    fun `8K HEVC 10-bit HDR MP4 needs conversion when the browser cannot decode HEVC`() {
+        assertEquals(PlaybackMode.TRANSCODE, engine.decide(hdr8k(), ClientCapabilities()).mode)
+    }
+
+    @Test
+    fun `Dolby Vision 8 base layer reported as HEVC Main 10 plays DIRECT in a Main 10 browser`() {
+        val dv = inspect(MediaContainer.MP4, video = "video/hevc").copy(bitDepth = 10, hdrFormat = "DolbyVision")
+        val caps = ClientCapabilities(supportsHevc = true, supportsHdr = true)
+        assertEquals(PlaybackMode.DIRECT, engine.decide(dv, caps).mode)
+    }
+
+    @Test
+    fun `Long H264 AAC MKV only needs repackaging when the browser cannot open MKV`() {
+        val mkv = inspect(MediaContainer.MATROSKA, mime = "video/x-matroska", name = "test_3hr_h264.mkv")
+        assertEquals(PlaybackMode.TRANSMUX, engine.decide(mkv, ClientCapabilities()).mode)
+        assertEquals(PlaybackMode.DIRECT, engine.decide(mkv, ClientCapabilities(supportsMatroska = true)).mode)
+    }
 }
