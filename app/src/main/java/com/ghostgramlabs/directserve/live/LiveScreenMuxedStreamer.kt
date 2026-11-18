@@ -69,7 +69,9 @@ class LiveScreenMuxedStreamer(
     fun start(): Boolean {
         if (!running.compareAndSet(false, true)) return true
         outputFile.parentFile?.mkdirs()
-        outputFile.delete()
+        // Only one mirroring session runs at a time, so anything else in the folder was
+        // left behind by an earlier session that ended without cleaning up (a crash or kill).
+        outputFile.parentFile?.listFiles()?.forEach { runCatching { it.delete() } }
 
         return runCatching {
             fileOutputStream = FileOutputStream(outputFile)
@@ -100,7 +102,11 @@ class LiveScreenMuxedStreamer(
     }
 
     fun stop() {
-        if (!running.getAndSet(false)) return
+        if (!running.getAndSet(false)) {
+            // An encoder or muxer error can clear `running` before stop() is called.
+            deleteOutputFile()
+            return
+        }
         runCatching { virtualDisplay?.release() }
         virtualDisplay = null
         runCatching { inputSurface?.release() }
@@ -132,6 +138,18 @@ class LiveScreenMuxedStreamer(
             audioBasePtsUs = null
             lastVideoPtsUs = -1L
             lastAudioPtsUs = -1L
+        }
+        deleteOutputFile()
+    }
+
+    /**
+     * The file only exists to stream this session to the viewer; no copy of the user's
+     * screen should outlive mirroring. The server answers a missing file with "stream
+     * ended", and a reader that still holds it open finishes normally.
+     */
+    private fun deleteOutputFile() {
+        if (!outputFile.delete() && outputFile.exists()) {
+            logger("muxed live stream file could not be deleted: ${outputFile.name}", null)
         }
     }
 
