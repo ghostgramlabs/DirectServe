@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <!-- The Wi-Fi permissions below make Play assume Wi-Fi hardware is required, which hides the app
+         from some phones, tablets, desktops and XR devices. Sharing also works over a hotspot or
+         Ethernet, and the Wi-Fi lock is skipped when there is no Wi-Fi. -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

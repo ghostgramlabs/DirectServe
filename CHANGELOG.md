@@ -3,7 +3,14 @@
 User-facing changes to DirectServe, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
-## 1.0.29 - 2026-11-22
+## 1.0.30 - 2026-11-22
+
+- DirectServe can be installed on devices that Google Play treated as lacking Wi-Fi: Wi-Fi is now
+  marked optional, because sharing also works over a hotspot or Ethernet.
+
+(1.0.29, build 32, was uploaded to Play but replaced by this build before release.)
+
+## 1.0.29 - 2026-11-22 (not released)
 
 - Fixed: while only Mirror screen was on, a browser on the same Wi-Fi could read the mirroring
   PIN from the live status the page polls, and so open the mirror without being given the PIN.
