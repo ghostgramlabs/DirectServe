@@ -48,11 +48,11 @@ IDEAS
 • Family get-together: everyone picks up the trip photos and videos on their own phone.
 • Classroom or training: hand out notes, PDFs and videos to the whole class at once.
 • Meetings: share slides and documents with the room, or mirror your screen for a demo.
-• Weddings, parties and events: let guests save the photos straight from your phone.
 • Travel and places without internet: turn on your hotspot and share movies with friends on a train, a bus or a campsite.
-• Hotel room: watch your downloaded movies on the TV.
-• Work: move large camera videos to your computer for editing, without a cable.
 
-DirectServe runs on Android 8.0 and later, is open source (Apache 2.0) and is available in 23 languages.
+AVAILABLE IN 23 LANGUAGES
+English · Afrikaans · العربية · 中文（简体／繁體）· Nederlands · Français · Deutsch · Ελληνικά · हिन्दी · Bahasa Indonesia · Italiano · 日本語 · 한국어 · മലയാളം · Português · Русский · Español · Svenska · தமிழ் · తెలుగు · ไทย · Türkçe · Tiếng Việt
+
+DirectServe runs on Android 8.0 and later and is open source (Apache 2.0).
 
 Good to know: speed depends on your Wi-Fi or hotspot. Converting very large or unusual videos takes longer and depends on your phone. Some apps block screen and sound capture.

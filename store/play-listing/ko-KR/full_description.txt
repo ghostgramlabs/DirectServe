@@ -32,3 +32,6 @@ DLNA를 켜면 스마트 TV와 미디어 플레이어가 휴대폰을 미디어 
 
 이럴 때 좋아요
 가족 모임 사진 공유, 수업과 교육, 회의, 호텔 TV로 영화 보기, 인터넷 없는 여행지에서 공유, 케이블 없이 큰 동영상을 PC로 옮길 때.
+
+23개 언어 지원
+English · Afrikaans · العربية · 中文（简体／繁體）· Nederlands · Français · Deutsch · Ελληνικά · हिन्दी · Bahasa Indonesia · Italiano · 日本語 · 한국어 · മലയാളം · Português · Русский · Español · Svenska · தமிழ் · తెలుగు · ไทย · Türkçe · Tiếng Việt

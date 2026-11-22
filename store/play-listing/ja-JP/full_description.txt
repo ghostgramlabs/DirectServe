@@ -32,3 +32,6 @@ DLNA をオンにすると、スマートテレビやメディアプレーヤー
 
 こんな場面に
 家族の集まりでの写真共有、授業や研修、会議、ホテルのテレビで映画、ネットのない旅先での共有、大きな動画をケーブルなしでPCへ移すとき。
+
+23言語に対応
+English · Afrikaans · العربية · 中文（简体／繁體）· Nederlands · Français · Deutsch · Ελληνικά · हिन्दी · Bahasa Indonesia · Italiano · 日本語 · 한국어 · മലയാളം · Português · Русский · Español · Svenska · தமிழ் · తెలుగు · ไทย · Türkçe · Tiếng Việt
