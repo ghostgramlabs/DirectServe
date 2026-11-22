@@ -1909,7 +1909,10 @@ class KtorGhostStreamServer(
 
             get("/api/live/state") {
                 if (!call.authorizeBrowserCall()) return@get
-                call.respond(liveScreenStore.state.value)
+                // Never send the mirroring PIN to a browser. authorizeBrowserCall only enforces the
+                // file-sharing PIN, so during a mirror-only session this route is open to anyone on
+                // the network; the viewer types the PIN and /api/live/webrtc/session checks it.
+                call.respond(liveScreenStore.state.value.copy(pin = null))
             }
 
             // Which way Mirror screen is being sent: "hls" (screen and sound packed into one

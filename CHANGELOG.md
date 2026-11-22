@@ -5,6 +5,9 @@ User-facing changes to DirectServe, newest first. Version numbers match the Goog
 
 ## 1.0.29 - 2026-11-22
 
+- Fixed: while only Mirror screen was on, a browser on the same Wi-Fi could read the mirroring
+  PIN from the live status the page polls, and so open the mirror without being given the PIN.
+  The PIN is no longer sent to browsers; viewers must type it.
 - Sharing now asks for a PIN by default, so only people you give the PIN to can open your share,
   even on a busy Wi-Fi. You can still turn the PIN off in Settings.
 - DirectServe no longer lets Android copy its data to your Google account backup or to a new
