@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">Vorige bladsy</string>
     <string name="web_page_next">Volgende bladsy</string>
     <string name="web_pages">Bladsye</string>
+    <string name="privacy_policy_full_link">Lees die volledige beleid</string>
+    <string name="privacy_policy_terms_link">Gebruiksvoorwaardes</string>
 </resources>

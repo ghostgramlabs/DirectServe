@@ -1074,4 +1074,6 @@
     <string name="web_page_prev">이전 페이지</string>
     <string name="web_page_next">다음 페이지</string>
     <string name="web_pages">페이지</string>
+    <string name="privacy_policy_full_link">전체 정책 읽기</string>
+    <string name="privacy_policy_terms_link">이용약관</string>
 </resources>

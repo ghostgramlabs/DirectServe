@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">Предыдущая страница</string>
     <string name="web_page_next">Следующая страница</string>
     <string name="web_pages">Страницы</string>
+    <string name="privacy_policy_full_link">Читать полную политику</string>
+    <string name="privacy_policy_terms_link">Условия использования</string>
 </resources>

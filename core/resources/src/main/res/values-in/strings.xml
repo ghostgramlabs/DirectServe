@@ -1074,4 +1074,6 @@
     <string name="web_page_prev">Halaman sebelumnya</string>
     <string name="web_page_next">Halaman berikutnya</string>
     <string name="web_pages">Halaman</string>
+    <string name="privacy_policy_full_link">Baca kebijakan lengkap</string>
+    <string name="privacy_policy_terms_link">Ketentuan penggunaan</string>
 </resources>

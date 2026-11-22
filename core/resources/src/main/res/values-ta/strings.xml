@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">முந்தைய பக்கம்</string>
     <string name="web_page_next">அடுத்த பக்கம்</string>
     <string name="web_pages">பக்கங்கள்</string>
+    <string name="privacy_policy_full_link">முழுக் கொள்கையையும் படிக்கவும்</string>
+    <string name="privacy_policy_terms_link">பயன்பாட்டு விதிமுறைகள்</string>
 </resources>

@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">Vorige pagina</string>
     <string name="web_page_next">Volgende pagina</string>
     <string name="web_pages">Pagina\'s</string>
+    <string name="privacy_policy_full_link">Volledig beleid lezen</string>
+    <string name="privacy_policy_terms_link">Gebruiksvoorwaarden</string>
 </resources>

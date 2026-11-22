@@ -1074,4 +1074,6 @@
     <string name="web_page_prev">Trang trước</string>
     <string name="web_page_next">Trang sau</string>
     <string name="web_pages">Các trang</string>
+    <string name="privacy_policy_full_link">Đọc toàn bộ chính sách</string>
+    <string name="privacy_policy_terms_link">Điều khoản sử dụng</string>
 </resources>

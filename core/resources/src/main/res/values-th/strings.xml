@@ -1074,4 +1074,6 @@
     <string name="web_page_prev">หน้าก่อนหน้า</string>
     <string name="web_page_next">หน้าถัดไป</string>
     <string name="web_pages">หน้า</string>
+    <string name="privacy_policy_full_link">อ่านนโยบายฉบับเต็ม</string>
+    <string name="privacy_policy_terms_link">ข้อกำหนดการใช้งาน</string>
 </resources>

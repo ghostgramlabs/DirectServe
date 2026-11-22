@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">पिछला पेज</string>
     <string name="web_page_next">अगला पेज</string>
     <string name="web_pages">पेज</string>
+    <string name="privacy_policy_full_link">पूरी नीति पढ़ें</string>
+    <string name="privacy_policy_terms_link">उपयोग की शर्तें</string>
 </resources>

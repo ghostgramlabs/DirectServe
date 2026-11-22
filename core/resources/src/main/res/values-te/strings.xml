@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">మునుపటి పేజీ</string>
     <string name="web_page_next">తదుపరి పేజీ</string>
     <string name="web_pages">పేజీలు</string>
+    <string name="privacy_policy_full_link">పూర్తి విధానాన్ని చదవండి</string>
+    <string name="privacy_policy_terms_link">వినియోగ నిబంధనలు</string>
 </resources>

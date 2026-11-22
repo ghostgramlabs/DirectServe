@@ -1,6 +1,7 @@
 package com.ghoststream.feature.settings
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -34,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -455,6 +457,26 @@ fun PrivacyPolicyScreen(
                     Text(stringResource(R.string.privacy_policy_line_2), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(stringResource(R.string.privacy_policy_line_3), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(stringResource(R.string.privacy_policy_line_4), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // The full published policy and terms, as Google Play's User Data policy asks.
+                    val context = LocalContext.current
+                    for ((label, url) in listOf(
+                        R.string.privacy_policy_full_link to PRIVACY_POLICY_URL,
+                        R.string.privacy_policy_terms_link to TERMS_OF_USE_URL,
+                    )) {
+                        TextButton(onClick = {
+                            try {
+                                context.startActivity(
+                                    android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                                )
+                            } catch (_: android.content.ActivityNotFoundException) {
+                                // No browser: show the address so it can still be opened elsewhere.
+                                android.widget.Toast.makeText(context, url, android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        }) {
+                            Text(stringResource(label))
+                        }
+                    }
             }
         }
     }
@@ -700,3 +722,6 @@ private fun settingsSecondaryButtonColors() = ButtonDefaults.outlinedButtonColor
 
 @Composable
 private fun ghostPanelColor(): androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surface
+
+private const val PRIVACY_POLICY_URL = "https://ghostgramlabs.com/directserve-privacy/"
+private const val TERMS_OF_USE_URL = "https://ghostgramlabs.com/directserve-privacy/terms.html"

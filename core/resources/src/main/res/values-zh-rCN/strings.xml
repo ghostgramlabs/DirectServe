@@ -1074,4 +1074,6 @@
     <string name="web_page_prev">上一页</string>
     <string name="web_page_next">下一页</string>
     <string name="web_pages">页面</string>
+    <string name="privacy_policy_full_link">阅读完整政策</string>
+    <string name="privacy_policy_terms_link">使用条款</string>
 </resources>

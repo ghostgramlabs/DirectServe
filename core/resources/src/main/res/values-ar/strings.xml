@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">الصفحة السابقة</string>
     <string name="web_page_next">الصفحة التالية</string>
     <string name="web_pages">الصفحات</string>
+    <string name="privacy_policy_full_link">اقرأ السياسة كاملة</string>
+    <string name="privacy_policy_terms_link">شروط الاستخدام</string>
 </resources>

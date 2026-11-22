@@ -1074,4 +1074,6 @@
     <string name="web_page_prev">前のページ</string>
     <string name="web_page_next">次のページ</string>
     <string name="web_pages">ページ</string>
+    <string name="privacy_policy_full_link">ポリシー全文を読む</string>
+    <string name="privacy_policy_terms_link">利用規約</string>
 </resources>

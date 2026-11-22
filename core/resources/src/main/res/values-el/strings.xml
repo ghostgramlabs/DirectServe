@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">Προηγούμενη σελίδα</string>
     <string name="web_page_next">Επόμενη σελίδα</string>
     <string name="web_pages">Σελίδες</string>
+    <string name="privacy_policy_full_link">Διαβάστε ολόκληρη την πολιτική</string>
+    <string name="privacy_policy_terms_link">Όροι χρήσης</string>
 </resources>

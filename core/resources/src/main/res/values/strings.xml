@@ -1101,4 +1101,6 @@
     <string name="web_page_prev">Previous page</string>
     <string name="web_page_next">Next page</string>
     <string name="web_pages">Pages</string>
+    <string name="privacy_policy_full_link">Read the full policy</string>
+    <string name="privacy_policy_terms_link">Terms of use</string>
 </resources>

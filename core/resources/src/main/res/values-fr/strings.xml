@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">Page précédente</string>
     <string name="web_page_next">Page suivante</string>
     <string name="web_pages">Pages</string>
+    <string name="privacy_policy_full_link">Lire la politique complète</string>
+    <string name="privacy_policy_terms_link">Conditions d\'utilisation</string>
 </resources>

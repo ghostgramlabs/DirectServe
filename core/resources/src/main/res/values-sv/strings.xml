@@ -1075,4 +1075,6 @@
     <string name="web_page_prev">Föregående sida</string>
     <string name="web_page_next">Nästa sida</string>
     <string name="web_pages">Sidor</string>
+    <string name="privacy_policy_full_link">Läs hela policyn</string>
+    <string name="privacy_policy_terms_link">Användarvillkor</string>
 </resources>
