@@ -916,7 +916,7 @@ class MainViewModel(
             val queuedCount = queueSessionBrowserPlayback()
             val message = if (queuedCount > 0) {
                 _browserPrepManuallyTriggered.value = true
-                application.getString(R.string.message_browser_playback_queued_all, queuedCount)
+                application.getString(R.string.message_browser_playback_queued_all)
             } else {
                 application.getString(R.string.message_browser_playback_already_ready)
             }

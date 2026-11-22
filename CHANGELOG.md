@@ -3,12 +3,16 @@
 User-facing changes to DirectServe, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
-## Unreleased
+## 1.0.29 - 2026-11-22
 
 - Sharing now asks for a PIN by default, so only people you give the PIN to can open your share,
   even on a busy Wi-Fi. You can still turn the PIN off in Settings.
 - DirectServe no longer lets Android copy its data to your Google account backup or to a new
   phone. Settings, connected-device names and share history stay on this phone only.
+- With notifications turned off for DirectServe on Android 13 or later, sharing notifications
+  are now skipped safely instead of relying on the phone to ignore them.
+- If the microphone permission is taken away while mirroring with sound, the sound stops with a
+  "permission denied" status instead of a general failure.
 
 ## 1.0.28 - 2026-11-15
 

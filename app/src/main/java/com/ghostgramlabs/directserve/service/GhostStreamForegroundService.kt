@@ -1,11 +1,13 @@
 package com.ghostgramlabs.directserve.service
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -97,8 +99,7 @@ class GhostStreamForegroundService : Service() {
                     val heartbeatExpired = now - lastNotificationUpdateMs > NOTIFICATION_HEARTBEAT_MS
 
                     if (contentChanged || heartbeatExpired) {
-                        NotificationManagerCompat.from(this@GhostStreamForegroundService)
-                            .notify(NOTIFICATION_ID, buildNotification(state))
+                        postNotification(NOTIFICATION_ID, buildNotification(state))
                         lastNotificationIsSharing = state.isSharing
                         lastNotificationUrl = state.sessionUrl
                         lastNotificationClientCount = clientCount
@@ -436,6 +437,24 @@ class GhostStreamForegroundService : Service() {
         NotificationManagerCompat.from(this).cancel(UPLOAD_SUCCESS_NOTIFICATION_ID)
     }
 
+    /**
+     * Posts a notification only when the app may. On Android 13+ the user can deny the
+     * notification permission; some phones then throw instead of dropping the call.
+     */
+    private fun postNotification(id: Int, notification: android.app.Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        try {
+            NotificationManagerCompat.from(this).notify(id, notification)
+        } catch (_: SecurityException) {
+            // Permission revoked between the check and the call: skip this notification.
+        }
+    }
+
     private fun showQuickTextNotification(message: QuickTextMessage) {
         val openAppIntent = PendingIntent.getActivity(
             this,
@@ -458,8 +477,7 @@ class GhostStreamForegroundService : Service() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
-        NotificationManagerCompat.from(this)
-            .notify(QUICK_TEXT_NOTIFICATION_ID_BASE + (message.id.hashCode() and 0xFFFF), notification)
+        postNotification(QUICK_TEXT_NOTIFICATION_ID_BASE + (message.id.hashCode() and 0xFFFF), notification)
     }
 
     private fun showUploadRequestNotification(request: com.ghoststream.core.model.UploadRequest) {
@@ -496,7 +514,7 @@ class GhostStreamForegroundService : Service() {
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(SharedR.string.common_decline), declineIntent)
             .build()
 
-        NotificationManagerCompat.from(this).notify(REQUEST_NOTIFICATION_ID, notification)
+        postNotification(REQUEST_NOTIFICATION_ID, notification)
     }
 
     private fun cancelUploadRequestNotification() {
@@ -540,7 +558,7 @@ class GhostStreamForegroundService : Service() {
             )
             .build()
 
-        NotificationManagerCompat.from(this).notify(UPLOAD_PROGRESS_NOTIFICATION_ID, notification)
+        postNotification(UPLOAD_PROGRESS_NOTIFICATION_ID, notification)
     }
 
     private fun cancelIncomingUploadProgressNotification() {
@@ -573,7 +591,7 @@ class GhostStreamForegroundService : Service() {
             .setOnlyAlertOnce(true)
             .build()
 
-        NotificationManagerCompat.from(this).notify(UPLOAD_SUCCESS_NOTIFICATION_ID, notification)
+        postNotification(UPLOAD_SUCCESS_NOTIFICATION_ID, notification)
     }
 
     private fun showDeviceConnectionNotification(
@@ -602,7 +620,7 @@ class GhostStreamForegroundService : Service() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
-        NotificationManagerCompat.from(this).notify(CONNECTION_NOTIFICATION_ID, notification)
+        postNotification(CONNECTION_NOTIFICATION_ID, notification)
     }
 
 

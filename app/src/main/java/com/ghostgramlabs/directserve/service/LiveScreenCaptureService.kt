@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
@@ -378,8 +379,9 @@ class LiveScreenCaptureService : Service() {
                 }
                 // External input: a single playback AudioRecord paces WebRTC's 10 ms frames.
                 // Never run a microphone recorder in parallel with playback capture.
-                val pump = playbackAudioPump
-                val peak = pump?.overwriteWithDeviceAudio(buffer, buffer.capacity()) ?: -1
+                // Device audio capture only exists on Android 10+ (the pump is never created below it).
+                val pump = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) playbackAudioPump else null
+                val peak = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) pump?.overwriteWithDeviceAudio(buffer, buffer.capacity()) ?: -1 else -1
                 if (peak < 0) {
                     writeSilence(buffer)
                     paceInjectedAudioCallback(sampleRate, channelCount, buffer.capacity())
@@ -389,7 +391,7 @@ class LiveScreenCaptureService : Service() {
                         audioObserved = true
                         updateAudioStatus(LiveAudioStatus.AUDIO_LIVE, "pcm_activity_peak_$peak")
                     }
-                    pump?.lastServedCaptureNs ?: System.nanoTime()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) pump?.lastServedCaptureNs ?: System.nanoTime() else System.nanoTime()
                 }
             }
             .setAudioRecordErrorCallback(object : JavaAudioDeviceModule.AudioRecordErrorCallback {
@@ -423,7 +425,7 @@ class LiveScreenCaptureService : Service() {
 
                 override fun onWebRtcAudioRecordStop() {
                     container.debugLogRepository.log("LiveScreen", "WebRTC audio record stopped")
-                    playbackAudioPump?.pause()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) playbackAudioPump?.pause()
                     resetAudioInjectionPacing()
                 }
             })
@@ -1274,11 +1276,11 @@ class LiveScreenCaptureService : Service() {
         displayManager?.unregisterDisplayListener(displayListener)
         displayManager = null
         try {
-            runCatching { playbackAudioPump?.stop() }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) runCatching { playbackAudioPump?.stop() }
             playbackAudioPump = null
             closePeerConnection()
             container.debugLogRepository.log("LiveScreen", "releasing audio/video capture resources")
-            runCatching { muxedStreamer?.stop() }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) runCatching { muxedStreamer?.stop() }
             runCatching { screenCapturer?.stopCapture() }
             runCatching { screenCapturer?.dispose() }
             runCatching { surfaceTextureHelper?.dispose() }
@@ -1462,6 +1464,7 @@ class LiveScreenCaptureService : Service() {
         startPlaybackAudioPump(readyProjection, format)
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun startPlaybackAudioPump(projection: MediaProjection, format: WebRtcAudioFormat) {
         val pump = PlaybackAudioPump(
             projection = projection,

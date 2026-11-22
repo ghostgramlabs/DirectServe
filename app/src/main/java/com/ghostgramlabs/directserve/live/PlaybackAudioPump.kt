@@ -68,7 +68,8 @@ class PlaybackAudioPump(
             return false
         }
 
-        val record = runCatching {
+        // RECORD_AUDIO can be denied or revoked at any time; fail this audio path cleanly.
+        val record = try {
             AudioRecord.Builder()
                 .setAudioPlaybackCaptureConfig(config)
                 .setAudioFormat(
@@ -80,8 +81,12 @@ class PlaybackAudioPump(
                 )
                 .setBufferSizeInBytes(bufferBytes)
                 .build()
-        }.getOrElse {
-            logger("playback AudioRecord build failed", it)
+        } catch (e: SecurityException) {
+            logger("playback AudioRecord build failed: record audio permission denied", e)
+            onStatus(LiveAudioStatus.AUDIO_FAILED, "playback_audiorecord_build_failed_permission_denied")
+            return false
+        } catch (e: Exception) {
+            logger("playback AudioRecord build failed", e)
             onStatus(LiveAudioStatus.AUDIO_FAILED, "playback_audiorecord_build_failed")
             return false
         }

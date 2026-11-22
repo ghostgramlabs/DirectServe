@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
+
 package com.ghostgramlabs.directserve.live
 
 import android.content.Context
@@ -207,7 +209,8 @@ class LiveScreenMuxedStreamer(
             onAudioStatus(LiveAudioStatus.AUDIO_FAILED, "muxed_audio_config_failed")
             return false
         }
-        val record = runCatching {
+        // RECORD_AUDIO can be denied or revoked at any time; fail this audio path cleanly.
+        val record = try {
             AudioRecord.Builder()
                 .setAudioPlaybackCaptureConfig(config)
                 .setAudioFormat(
@@ -219,8 +222,12 @@ class LiveScreenMuxedStreamer(
                 )
                 .setBufferSizeInBytes(bufferSize)
                 .build()
-        }.getOrElse {
-            logger("muxed playback AudioRecord build failed", it)
+        } catch (e: SecurityException) {
+            logger("muxed playback AudioRecord build failed: record audio permission denied", e)
+            onAudioStatus(LiveAudioStatus.AUDIO_FAILED, "muxed_audio_record_build_failed_permission_denied")
+            return false
+        } catch (e: Exception) {
+            logger("muxed playback AudioRecord build failed", e)
             onAudioStatus(LiveAudioStatus.AUDIO_FAILED, "muxed_audio_record_build_failed")
             return false
         }
