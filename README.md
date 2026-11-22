@@ -31,8 +31,8 @@ to share, straight over your local network.
   with device audio or microphone, and protected by a PIN.
 - **Smart TVs.** DLNA/UPnP streaming to TVs and players such as VLC and Kodi.
 - **Quick text.** Share text and clipboard snippets between devices.
-- **Local-only and private.** Nothing passes through a cloud server. Sessions can be PIN
-  protected.
+- **Local-only and private.** Nothing passes through a cloud server, and nothing is backed up to
+  the cloud. Sessions ask for a PIN by default (it can be turned off in Settings).
 
 ## Building
 

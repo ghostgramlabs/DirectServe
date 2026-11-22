@@ -3,6 +3,13 @@
 User-facing changes to DirectServe, newest first. Version numbers match the Google Play release
 (`versionName` in `app/build.gradle.kts`).
 
+## Unreleased
+
+- Sharing now asks for a PIN by default, so only people you give the PIN to can open your share,
+  even on a busy Wi-Fi. You can still turn the PIN off in Settings.
+- DirectServe no longer lets Android copy its data to your Google account backup or to a new
+  phone. Settings, connected-device names and share history stay on this phone only.
+
 ## 1.0.28 - 2026-11-15
 
 - Photos open full screen in the browser: swipe or use the arrow keys to browse, pinch or

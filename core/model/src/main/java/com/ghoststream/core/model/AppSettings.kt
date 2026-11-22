@@ -28,7 +28,7 @@ data class AppSettings(
     val keepScreenAwake: Boolean = true,
     val hapticOnDeviceConnect: Boolean = true,
     val showRecentSessions: Boolean = true,
-    val requireSessionPin: Boolean = false,
+    val requireSessionPin: Boolean = true,
     val autoGeneratePin: Boolean = true,
     val manualPin: String = "2468",
     val clearAuthOnStop: Boolean = true,
