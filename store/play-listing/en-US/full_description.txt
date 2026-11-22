@@ -1,0 +1,58 @@
+Turn your phone into a private media server and file-sharing hub. Watch your phone's videos, photos and music on a TV, laptop or tablet, mirror your screen, and transfer files between your phone and PC over your own Wi-Fi or hotspot. No cables, no account, no cloud upload, and nothing to install on the other screen: it only needs a web browser.
+
+Why people use DirectServe: it is faster than emailing files to yourself, needs no USB cable to move phone videos to a computer, and lets a whole room watch or download from one phone at once, even with no internet.
+
+HOW IT WORKS
+1. Choose what to share: videos, photos, music, documents or whole folders.
+2. Tap Start sharing.
+3. Scan the QR code, or type the short address, on the other device.
+Nothing to install on the TV, Windows PC, Mac or Chromebook.
+
+CAST VIDEOS TO YOUR TV OR LAPTOP
+• Videos play straight from your phone, with no copying first: MP4, MKV, MOV, WebM, AVI, TS and more.
+• 4K, HDR and HEVC (H.265) videos play directly in browsers that support them.
+• If a browser can't play a file as it is, DirectServe converts it on your phone when you press Play, and the video starts while the rest is still being prepared.
+• Continue watching where you stopped, Previous / Next, an Up next row, and double-tap to skip 10 seconds.
+• Wide videos turn the phone sideways in full screen.
+
+PHOTOS AND MUSIC
+• Full-screen photo viewer: swipe, pinch to zoom, filmstrip and slideshow.
+• Music plays as a playlist, with controls on the lock screen.
+• Sort any list by newest, oldest, name or size.
+
+FILE TRANSFER BOTH WAYS
+• Send files from phone to PC, laptop or another phone: one file, a selection, or everything as a ZIP.
+• Upload photos, videos and documents from a computer to your phone in the browser. You approve each transfer.
+• Share PDF, Word, Excel, PowerPoint, ZIP and APK files.
+• Add files or folders at any time. Open pages update by themselves.
+
+SHARE WITH EVERYONE AT ONCE
+One share for the whole group. Everyone on the same Wi-Fi or hotspot scans the same QR code and gets their own page on their own phone, tablet or laptop, to watch, browse or download whatever they want, all at the same time. No app for them, no sign-up, no sending files one by one.
+
+SCREEN MIRRORING
+Mirror your phone screen live to any browser, with sound from apps that allow it. Great for presentations, classrooms, meetings, app demos and showing photos to a room.
+
+SEND TEXT AND LINKS
+Paste a link or a note on the laptop and it appears on your phone, or the other way round.
+
+SMART TVs AND MEDIA PLAYERS
+Turn on DLNA in Advanced settings so smart TVs, TV boxes, VLC and Kodi on the same network can find your phone as a media server.
+
+PRIVATE AND OFFLINE
+• Works on your local Wi-Fi or your phone's hotspot, with no internet connection needed. Your files stay on your own network.
+• No account, no cloud, no ads, no tracking.
+• Every share is protected by a PIN by default, so only people you give it to can open it.
+• See who is connected, rename or block devices, and stop sharing with one tap.
+
+IDEAS
+• Family get-together: everyone picks up the trip photos and videos on their own phone.
+• Classroom or training: hand out notes, PDFs and videos to the whole class at once.
+• Meetings: share slides and documents with the room, or mirror your screen for a demo.
+• Weddings, parties and events: let guests save the photos straight from your phone.
+• Travel and places without internet: turn on your hotspot and share movies with friends on a train, a bus or a campsite.
+• Hotel room: watch your downloaded movies on the TV.
+• Work: move large camera videos to your computer for editing, without a cable.
+
+DirectServe runs on Android 8.0 and later, is open source (Apache 2.0) and is available in 23 languages.
+
+Good to know: speed depends on your Wi-Fi or hotspot. Converting very large or unusual videos takes longer and depends on your phone. Some apps block screen and sound capture.

@@ -1,0 +1,34 @@
+Trasforma il telefono in un media server privato e in un punto di condivisione file. Guarda video, foto e musica del telefono su TV, portatile o tablet, duplica lo schermo e trasferisci file tra telefono e PC tramite il tuo Wi-Fi o hotspot. Niente cavi, niente account, niente cloud, e nulla da installare sull'altro schermo: basta un browser.
+
+Perché usarlo: è più veloce che inviarsi i file per e-mail, non serve un cavo USB per portare i video del telefono sul computer, e un'intera stanza può guardare o scaricare da un solo telefono contemporaneamente, anche senza internet.
+
+COME FUNZIONA
+1. Scegli video, foto, musica, documenti o intere cartelle.
+2. Tocca Avvia condivisione.
+3. Scansiona il codice QR sull'altro dispositivo e inserisci il PIN.
+
+TRASMETTI I VIDEO SU TV O PORTATILE
+• MP4, MKV, MOV, WebM e altri si riproducono direttamente dal telefono, anche 4K e HEVC.
+• Se un browser non riesce a riprodurre un video, DirectServe lo converte sul telefono quando premi Riproduci.
+• Riprendi da dove avevi lasciato, con Successivo e la riga «Prossimo».
+
+TRASFERIMENTO FILE NEI DUE SENSI
+• Invia file dal telefono a PC, portatile o un altro telefono: uno alla volta o tutto in ZIP.
+• Carica foto e documenti da un computer al telefono. Approvi tu ogni trasferimento.
+
+DUPLICAZIONE SCHERMO
+Duplica lo schermo del telefono in diretta su qualsiasi browser, con l'audio delle app che lo consentono. Ideale per presentazioni, lezioni e riunioni.
+
+CONDIVIDI CON TUTTO IL GRUPPO
+Tutti sullo stesso Wi-Fi o hotspot scansionano un solo codice QR e guardano o scaricano sul proprio dispositivo, contemporaneamente.
+
+SMART TV, VLC E KODI
+Attiva il DLNA perché smart TV e lettori multimediali trovino il telefono come media server.
+
+PRIVATO E OFFLINE
+• Funziona sul Wi-Fi locale o sull'hotspot, senza internet.
+• Niente account, cloud, pubblicità o tracciamento.
+• Ogni condivisione è protetta da PIN per impostazione predefinita. Vedi, blocca o disconnetti i dispositivi quando vuoi.
+
+IDEALE PER
+Foto di famiglia alle riunioni, lezioni e formazione, riunioni di lavoro, film sulla TV dell'hotel, condivisione in viaggio senza internet, e spostare video grandi sul PC senza cavo.

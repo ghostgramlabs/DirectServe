@@ -1,0 +1,34 @@
+Transforme o telemóvel num servidor multimédia privado e num ponto de partilha de ficheiros. Veja os vídeos, fotos e música do telemóvel numa TV, portátil ou tablet, espelhe o ecrã e transfira ficheiros entre telemóvel e PC através do seu Wi-Fi ou hotspot. Sem cabos, sem conta, sem nuvem, e nada para instalar no outro ecrã: basta um navegador.
+
+Porque o usam: é mais rápido do que enviar ficheiros a si próprio por e-mail, não precisa de cabo USB para passar vídeos do telemóvel para o computador, e uma sala inteira pode ver ou transferir a partir de um só telemóvel ao mesmo tempo, mesmo sem internet.
+
+COMO FUNCIONA
+1. Escolha vídeos, fotos, música, documentos ou pastas inteiras.
+2. Toque em Iniciar partilha.
+3. Leia o código QR no outro dispositivo e introduza o PIN.
+
+VEJA VÍDEOS NA TV OU NO PORTÁTIL
+• MP4, MKV, MOV, WebM e outros reproduzem diretamente do telemóvel, incluindo 4K e HEVC.
+• Se um navegador não conseguir reproduzir um vídeo, o DirectServe converte-o no telemóvel quando carrega em Reproduzir.
+• Continue onde parou, com Seguinte e a fila «A seguir».
+
+TRANSFERÊNCIA DE FICHEIROS NOS DOIS SENTIDOS
+• Envie ficheiros do telemóvel para PC, portátil ou outro telemóvel: um a um ou tudo num ZIP.
+• Carregue fotos e documentos de um computador para o telemóvel. Aprova cada transferência.
+
+ESPELHAMENTO DE ECRÃ
+Espelhe o ecrã do telemóvel em direto em qualquer navegador, com o som das apps que o permitem. Ideal para apresentações, aulas e reuniões.
+
+PARTILHE COM UM GRUPO INTEIRO
+Todos no mesmo Wi-Fi ou hotspot leem um só código QR e veem ou transferem no próprio dispositivo, ao mesmo tempo.
+
+SMART TV, VLC E KODI
+Ative o DLNA para que smart TVs e leitores multimédia encontrem o telemóvel como servidor.
+
+PRIVADO E OFFLINE
+• Funciona no Wi-Fi local ou no hotspot, sem internet.
+• Sem conta, nuvem, anúncios ou rastreio.
+• Cada partilha está protegida por PIN por predefinição. Veja, bloqueie ou desligue dispositivos quando quiser.
+
+IDEAL PARA
+Fotos de família em encontros, aulas e formações, reuniões, filmes na TV do hotel, partilhar em viagens sem internet, e passar vídeos grandes para o PC sem cabo.

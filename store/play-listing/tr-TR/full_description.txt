@@ -1,0 +1,34 @@
+Telefonunuzu özel bir medya sunucusuna ve dosya paylaşım merkezine dönüştürün. Telefonunuzdaki videoları, fotoğrafları ve müzikleri TV, dizüstü bilgisayar veya tablette izleyin, ekranınızı yansıtın ve kendi Wi-Fi ağınız ya da hotspot üzerinden telefon ile PC arasında dosya aktarın. Kablo yok, hesap yok, bulut yok ve diğer ekrana hiçbir şey yüklemeniz gerekmez: bir web tarayıcısı yeterli.
+
+Neden DirectServe: Dosyaları kendinize e-postayla göndermekten daha hızlı, telefon videolarını bilgisayara taşımak için USB kablosu gerekmez ve tek bir telefondan bütün oda aynı anda izleyebilir ya da indirebilir, internet olmasa bile.
+
+NASIL ÇALIŞIR
+1. Videoları, fotoğrafları, müzikleri, belgeleri veya tüm klasörleri seçin.
+2. Paylaşmaya başla'ya dokunun.
+3. Diğer cihazda QR kodunu okutun ve PIN'i girin.
+
+VİDEOLARI TV'YE VEYA DİZÜSTÜNE AKTARIN
+• MP4, MKV, MOV, WebM ve daha fazlası doğrudan telefondan oynar, 4K ve HEVC dahil.
+• Tarayıcı bir videoyu oynatamazsa DirectServe, Oynat'a bastığınızda onu telefonda dönüştürür.
+• Kaldığınız yerden devam edin, Sonraki ve "Sıradaki" listesiyle.
+
+İKİ YÖNLÜ DOSYA AKTARIMI
+• Telefondan PC'ye, dizüstüne veya başka bir telefona dosya gönderin: tek tek ya da hepsi ZIP olarak.
+• Bilgisayardan telefona fotoğraf ve belge yükleyin. Her aktarımı siz onaylarsınız.
+
+EKRAN YANSITMA
+Telefon ekranınızı herhangi bir tarayıcıya canlı yansıtın, izin veren uygulamaların sesiyle birlikte. Sunumlar, dersler ve toplantılar için ideal.
+
+TÜM GRUPLA PAYLAŞIN
+Aynı Wi-Fi ya da hotspot'taki herkes tek bir QR kodunu okutur ve kendi cihazında aynı anda izler veya indirir.
+
+AKILLI TV, VLC VE KODI
+DLNA'yı açın, akıllı TV'ler ve medya oynatıcılar telefonunuzu medya sunucusu olarak bulsun.
+
+GİZLİ VE ÇEVRİMDIŞI
+• Yerel Wi-Fi veya hotspot üzerinde çalışır, internet gerekmez.
+• Hesap, bulut, reklam veya izleme yok.
+• Her paylaşım varsayılan olarak PIN ile korunur. Cihazları istediğiniz zaman görün, engelleyin ya da bağlantısını kesin.
+
+ŞUNLAR İÇİN İDEAL
+Aile buluşmalarında fotoğraflar, dersler ve eğitimler, toplantılar, otel TV'sinde film, internetsiz yolculuklarda paylaşım ve büyük videoları kablosuz PC'ye taşımak.

@@ -1,0 +1,34 @@
+Transformez votre téléphone en serveur multimédia privé et en point de partage de fichiers. Regardez les vidéos, photos et musiques de votre téléphone sur une TV, un ordinateur portable ou une tablette, recopiez votre écran et transférez des fichiers entre téléphone et PC via votre propre Wi-Fi ou partage de connexion. Sans câble, sans compte, sans cloud, et rien à installer sur l'autre écran : un navigateur web suffit.
+
+Pourquoi l'utiliser : c'est plus rapide que de s'envoyer des fichiers par e-mail, aucun câble USB n'est nécessaire pour mettre les vidéos du téléphone sur un ordinateur, et toute une pièce peut regarder ou télécharger depuis un seul téléphone en même temps, même sans internet.
+
+COMMENT ÇA MARCHE
+1. Choisissez des vidéos, photos, musiques, documents ou dossiers entiers.
+2. Touchez Démarrer le partage.
+3. Scannez le QR code sur l'autre appareil et saisissez le code PIN.
+
+DIFFUSEZ VOS VIDÉOS SUR LA TV OU LE PC
+• Les fichiers MP4, MKV, MOV, WebM et plus se lisent directement depuis le téléphone, y compris en 4K et HEVC.
+• Si un navigateur ne peut pas lire une vidéo, DirectServe la convertit sur votre téléphone quand vous appuyez sur Lecture.
+• Reprenez là où vous vous étiez arrêté, avec Suivant et une file « À suivre ».
+
+TRANSFERT DE FICHIERS DANS LES DEUX SENS
+• Envoyez des fichiers du téléphone vers un PC, un portable ou un autre téléphone : un par un ou tout en ZIP.
+• Envoyez photos et documents d'un ordinateur vers votre téléphone. Vous approuvez chaque transfert.
+
+RECOPIE D'ÉCRAN
+Recopiez l'écran de votre téléphone en direct dans n'importe quel navigateur, avec le son des applis qui l'autorisent. Idéal pour présentations, cours et réunions.
+
+PARTAGEZ AVEC TOUT UN GROUPE
+Tout le monde sur le même Wi-Fi ou partage de connexion scanne un seul QR code et regarde ou télécharge sur son propre appareil, en même temps.
+
+TV CONNECTÉES, VLC ET KODI
+Activez le DLNA pour que les TV connectées et lecteurs multimédias trouvent votre téléphone comme serveur.
+
+PRIVÉ ET HORS LIGNE
+• Fonctionne sur votre Wi-Fi local ou votre partage de connexion, sans internet.
+• Sans compte, sans cloud, sans publicité, sans pistage.
+• Chaque partage est protégé par un code PIN par défaut. Voyez, bloquez ou déconnectez des appareils à tout moment.
+
+IDÉAL POUR
+Les photos de famille lors des réunions, les cours et formations, les réunions, les films sur la TV de l'hôtel, le partage en voyage sans internet, et transférer de grosses vidéos sur votre PC sans câble.

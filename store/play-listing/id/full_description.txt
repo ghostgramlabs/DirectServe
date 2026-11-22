@@ -1,0 +1,34 @@
+Jadikan HP-mu server media pribadi dan pusat berbagi file. Tonton video, foto, dan musik di HP-mu lewat TV, laptop, atau tablet, mirror layarmu, dan kirim file antara HP dan PC lewat Wi-Fi atau hotspot milikmu sendiri. Tanpa kabel, tanpa akun, tanpa unggah ke cloud, dan tidak perlu memasang apa pun di layar lain: cukup browser.
+
+Kenapa orang memakai DirectServe: lebih cepat daripada mengirim file ke email sendiri, tidak perlu kabel USB untuk memindahkan video HP ke komputer, dan satu ruangan bisa menonton atau mengunduh dari satu HP bersamaan, bahkan tanpa internet.
+
+CARA KERJANYA
+1. Pilih video, foto, musik, dokumen, atau seluruh folder.
+2. Ketuk Mulai berbagi.
+3. Pindai kode QR di perangkat lain lalu masukkan PIN.
+
+CAST VIDEO KE TV ATAU LAPTOP
+• MP4, MKV, MOV, WebM, dan lainnya diputar langsung dari HP, termasuk 4K dan HEVC.
+• Jika browser tidak bisa memutar video, DirectServe mengonversinya di HP saat kamu menekan Putar.
+• Lanjutkan menonton dari posisi terakhir, dengan Berikutnya dan baris Selanjutnya.
+
+KIRIM FILE DUA ARAH
+• Kirim file dari HP ke PC, laptop, atau HP lain: satu per satu atau semuanya sebagai ZIP.
+• Unggah foto dan dokumen dari komputer ke HP. Kamu menyetujui setiap transfer.
+
+MIRROR LAYAR
+Tampilkan layar HP secara langsung di browser mana pun, dengan suara dari aplikasi yang mengizinkan. Pas untuk presentasi, kelas, dan rapat.
+
+BAGIKAN KE SATU GRUP
+Semua orang di Wi-Fi atau hotspot yang sama memindai satu kode QR lalu menonton atau mengunduh di perangkat masing-masing, bersamaan.
+
+SMART TV, VLC, DAN KODI
+Aktifkan DLNA agar smart TV dan pemutar media menemukan HP-mu sebagai server media.
+
+PRIBADI DAN OFFLINE
+• Bekerja di Wi-Fi lokal atau hotspot, tanpa internet.
+• Tanpa akun, cloud, iklan, atau pelacakan.
+• Setiap sesi berbagi dilindungi PIN secara default. Lihat, blokir, atau putuskan perangkat kapan saja.
+
+COCOK UNTUK
+Foto keluarga saat kumpul, kelas dan pelatihan, rapat, film di TV hotel, berbagi saat traveling tanpa internet, dan memindahkan video besar ke PC tanpa kabel.

@@ -1,0 +1,34 @@
+Gör mobilen till en privat mediaserver och filhubb. Titta på mobilens videor, foton och musik på en TV, laptop eller surfplatta, spegla skärmen och flytta filer mellan mobil och dator via ditt eget wifi eller din hotspot. Inga kablar, inget konto, inget moln och inget att installera på den andra skärmen: en webbläsare räcker.
+
+Därför använder folk DirectServe: det går snabbare än att mejla filer till sig själv, du behöver ingen USB-kabel för att flytta videor till datorn, och ett helt rum kan titta eller ladda ner från en enda mobil samtidigt, även utan internet.
+
+SÅ FUNGERAR DET
+1. Välj videor, foton, musik, dokument eller hela mappar.
+2. Tryck på Börja dela.
+3. Skanna QR-koden på den andra enheten och ange PIN-koden.
+
+CASTA VIDEOR TILL TV ELLER LAPTOP
+• MP4, MKV, MOV, WebM med flera spelas direkt från mobilen, även 4K och HEVC.
+• Om en webbläsare inte kan spela en video konverterar DirectServe den på mobilen när du trycker på Spela.
+• Fortsätt där du slutade, med Nästa och raden Härnäst.
+
+FILÖVERFÖRING ÅT BÅDA HÅLL
+• Skicka filer från mobilen till dator, laptop eller en annan mobil: en i taget eller allt som ZIP.
+• Ladda upp foton och dokument från en dator till mobilen. Du godkänner varje överföring.
+
+SKÄRMSPEGLING
+Spegla mobilskärmen live i valfri webbläsare, med ljud från appar som tillåter det. Perfekt för presentationer, lektioner och möten.
+
+DELA MED EN HEL GRUPP
+Alla på samma wifi eller hotspot skannar en QR-kod och tittar eller laddar ner på sin egen enhet, samtidigt.
+
+SMART-TV, VLC OCH KODI
+Slå på DLNA så hittar smart-TV och mediaspelare mobilen som mediaserver.
+
+PRIVAT OCH OFFLINE
+• Fungerar på lokalt wifi eller hotspot, utan internet.
+• Inget konto, inget moln, ingen reklam, ingen spårning.
+• Varje delning skyddas av en PIN-kod som standard. Se, blockera eller koppla från enheter när du vill.
+
+PERFEKT FÖR
+Familjefoton vid träffar, lektioner och utbildning, möten, filmer på hotell-TV:n, delning på resor utan internet och att flytta stora videor till datorn utan kabel.

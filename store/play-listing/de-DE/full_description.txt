@@ -1,0 +1,34 @@
+Mach dein Handy zum privaten Medienserver und zur Drehscheibe für Dateien. Schau die Videos, Fotos und Musik deines Handys auf Fernseher, Laptop oder Tablet, spiegle deinen Bildschirm und übertrage Dateien zwischen Handy und PC über dein eigenes WLAN oder deinen Hotspot. Ohne Kabel, ohne Konto, ohne Cloud, und auf dem anderen Bildschirm muss nichts installiert werden: Ein Webbrowser genügt.
+
+Warum DirectServe: Es ist schneller, als dir Dateien selbst zu mailen, du brauchst kein USB-Kabel, um Handyvideos auf den Computer zu bringen, und ein ganzer Raum kann gleichzeitig von einem Handy schauen oder herunterladen, sogar ohne Internet.
+
+SO FUNKTIONIERT'S
+1. Wähle Videos, Fotos, Musik, Dokumente oder ganze Ordner.
+2. Tippe auf Teilen starten.
+3. Scanne den QR-Code auf dem anderen Gerät und gib die PIN ein.
+
+VIDEOS AUF FERNSEHER ODER LAPTOP STREAMEN
+• MP4, MKV, MOV, WebM und mehr laufen direkt vom Handy, auch 4K und HEVC.
+• Kann ein Browser ein Video nicht abspielen, wandelt DirectServe es beim Tippen auf Abspielen auf deinem Handy um.
+• Weiterschauen, wo du aufgehört hast, mit Weiter und einer Leiste „Als Nächstes".
+
+DATEIÜBERTRAGUNG IN BEIDE RICHTUNGEN
+• Sende Dateien vom Handy an PC, Laptop oder ein anderes Handy: einzeln oder alles als ZIP.
+• Lade Fotos und Dokumente vom Computer aufs Handy. Du bestätigst jede Übertragung.
+
+BILDSCHIRM SPIEGELN
+Spiegle deinen Handybildschirm live in jeden Browser, mit Ton von Apps, die es erlauben. Ideal für Präsentationen, Unterricht und Meetings.
+
+MIT EINER GANZEN GRUPPE TEILEN
+Alle im selben WLAN oder Hotspot scannen einen QR-Code und schauen oder laden auf ihrem eigenen Gerät herunter, gleichzeitig.
+
+SMART-TVS, VLC UND KODI
+Schalte DLNA ein, damit Smart-TVs und Mediaplayer dein Handy als Medienserver finden.
+
+PRIVAT UND OFFLINE
+• Funktioniert im lokalen WLAN oder Hotspot, ohne Internet.
+• Kein Konto, keine Cloud, keine Werbung, kein Tracking.
+• Jede Freigabe ist standardmäßig mit einer PIN geschützt. Geräte jederzeit sehen, sperren oder trennen.
+
+IDEAL FÜR
+Familienfotos beim Treffen, Unterricht und Schulungen, Meetings, Filme auf dem Hotelfernseher, Teilen auf Reisen ohne Internet und große Videos ohne Kabel auf den Computer bringen.

@@ -1,0 +1,34 @@
+Maak van je telefoon een privé-mediaserver en plek om bestanden te delen. Bekijk de video's, foto's en muziek van je telefoon op een tv, laptop of tablet, spiegel je scherm en zet bestanden over tussen telefoon en pc via je eigen wifi of hotspot. Geen kabels, geen account, geen cloud, en niets te installeren op het andere scherm: een webbrowser is genoeg.
+
+Waarom mensen DirectServe gebruiken: het is sneller dan bestanden naar jezelf mailen, je hebt geen USB-kabel nodig om video's naar je computer te zetten, en een hele kamer kan tegelijk kijken of downloaden vanaf één telefoon, zelfs zonder internet.
+
+ZO WERKT HET
+1. Kies video's, foto's, muziek, documenten of hele mappen.
+2. Tik op Delen starten.
+3. Scan de QR-code op het andere apparaat en voer de pincode in.
+
+CAST VIDEO'S NAAR JE TV OF LAPTOP
+• MP4, MKV, MOV, WebM en meer spelen direct af vanaf je telefoon, ook 4K en HEVC.
+• Kan een browser een video niet afspelen, dan zet DirectServe hem om op je telefoon zodra je op Afspelen drukt.
+• Verder kijken waar je was, met Volgende en een rij Hierna.
+
+BESTANDEN OVERZETTEN, BEIDE KANTEN OP
+• Stuur bestanden van telefoon naar pc, laptop of een andere telefoon: één voor één of alles als ZIP.
+• Upload foto's en documenten van een computer naar je telefoon. Jij keurt elke overdracht goed.
+
+SCHERM SPIEGELEN
+Spiegel je telefoonscherm live naar elke browser, met geluid van apps die dat toestaan. Ideaal voor presentaties, lessen en vergaderingen.
+
+DELEN MET EEN HELE GROEP
+Iedereen op hetzelfde wifi-netwerk of dezelfde hotspot scant één QR-code en kijkt of downloadt op het eigen apparaat, tegelijk.
+
+SMART-TV'S, VLC EN KODI
+Zet DLNA aan, dan vinden smart-tv's en mediaspelers je telefoon als mediaserver.
+
+PRIVÉ EN OFFLINE
+• Werkt op je lokale wifi of hotspot, zonder internet.
+• Geen account, geen cloud, geen advertenties, geen tracking.
+• Elke deelsessie is standaard beveiligd met een pincode. Bekijk, blokkeer of ontkoppel apparaten wanneer je wilt.
+
+IDEAAL VOOR
+Familiefoto's op een verjaardag, lessen en trainingen, vergaderingen, films op de hoteltelevisie, delen op reis zonder internet, en grote video's zonder kabel naar je computer zetten.

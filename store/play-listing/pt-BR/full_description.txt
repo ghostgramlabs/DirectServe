@@ -1,0 +1,34 @@
+Transforme o celular em um servidor de mídia privado e em uma central para compartilhar arquivos. Assista aos vídeos, fotos e músicas do celular na TV, notebook ou tablet, espelhe a tela e transfira arquivos entre celular e PC pelo seu Wi-Fi ou roteador do celular. Sem cabo, sem conta, sem nuvem, e nada para instalar na outra tela: basta um navegador.
+
+Por que usar: é mais rápido que mandar arquivos para o próprio e-mail, não precisa de cabo USB para passar vídeos do celular para o computador, e uma sala inteira pode assistir ou baixar de um só celular ao mesmo tempo, mesmo sem internet.
+
+COMO FUNCIONA
+1. Escolha vídeos, fotos, músicas, documentos ou pastas inteiras.
+2. Toque em Começar a compartilhar.
+3. Leia o QR code no outro aparelho e digite o PIN.
+
+VEJA VÍDEOS NA TV OU NO NOTEBOOK
+• MP4, MKV, MOV, WebM e outros tocam direto do celular, inclusive 4K e HEVC.
+• Se o navegador não conseguir tocar um vídeo, o DirectServe converte no celular quando você aperta Play.
+• Continue de onde parou, com Próximo e a fila "A seguir".
+
+TRANSFERÊNCIA DE ARQUIVOS NOS DOIS SENTIDOS
+• Envie arquivos do celular para PC, notebook ou outro celular: um por um ou tudo em ZIP.
+• Envie fotos e documentos do computador para o celular. Você aprova cada transferência.
+
+ESPELHAMENTO DE TELA
+Espelhe a tela do celular ao vivo em qualquer navegador, com o som dos apps que permitem. Ótimo para apresentações, aulas e reuniões.
+
+COMPARTILHE COM O GRUPO TODO
+Todo mundo no mesmo Wi-Fi ou roteador lê um único QR code e assiste ou baixa no próprio aparelho, ao mesmo tempo.
+
+SMART TV, VLC E KODI
+Ative o DLNA para que smart TVs e players encontrem seu celular como servidor de mídia.
+
+PRIVADO E OFFLINE
+• Funciona no Wi-Fi local ou no roteador do celular, sem internet.
+• Sem conta, nuvem, anúncios ou rastreamento.
+• Todo compartilhamento é protegido por PIN por padrão. Veja, bloqueie ou desconecte aparelhos quando quiser.
+
+PERFEITO PARA
+Fotos da família em encontros, aulas e treinamentos, reuniões, filmes na TV do hotel, compartilhar em viagens sem internet, e passar vídeos grandes para o PC sem cabo.

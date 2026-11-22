@@ -1,0 +1,34 @@
+Biến điện thoại thành máy chủ đa phương tiện riêng và trung tâm chia sẻ tệp. Xem video, ảnh và nhạc trong điện thoại trên TV, laptop hoặc máy tính bảng, phản chiếu màn hình và truyền tệp giữa điện thoại và PC qua Wi-Fi hoặc điểm phát sóng của bạn. Không dây cáp, không tài khoản, không tải lên đám mây, và không cần cài gì trên màn hình kia: chỉ cần trình duyệt.
+
+Vì sao nên dùng DirectServe: nhanh hơn việc tự gửi email tệp cho mình, không cần cáp USB để chuyển video điện thoại sang máy tính, và cả phòng có thể cùng xem hoặc tải từ một điện thoại, kể cả khi không có internet.
+
+CÁCH HOẠT ĐỘNG
+1. Chọn video, ảnh, nhạc, tài liệu hoặc cả thư mục.
+2. Chạm Bắt đầu chia sẻ.
+3. Quét mã QR trên thiết bị kia và nhập mã PIN.
+
+CAST VIDEO LÊN TV HOẶC LAPTOP
+• MP4, MKV, MOV, WebM và nhiều định dạng khác phát trực tiếp từ điện thoại, kể cả 4K và HEVC.
+• Nếu trình duyệt không phát được video, DirectServe sẽ chuyển đổi ngay trên điện thoại khi bạn bấm Phát.
+• Xem tiếp từ chỗ đã dừng, có nút Tiếp theo và danh sách "Sắp phát".
+
+TRUYỀN TỆP HAI CHIỀU
+• Gửi tệp từ điện thoại sang PC, laptop hoặc điện thoại khác: từng tệp hoặc tất cả dưới dạng ZIP.
+• Tải ảnh và tài liệu từ máy tính lên điện thoại. Bạn duyệt từng lần truyền.
+
+PHẢN CHIẾU MÀN HÌNH
+Phản chiếu màn hình điện thoại trực tiếp lên bất kỳ trình duyệt nào, kèm âm thanh của ứng dụng cho phép. Lý tưởng cho thuyết trình, lớp học và cuộc họp.
+
+CHIA SẺ CHO CẢ NHÓM
+Mọi người trong cùng Wi-Fi hoặc điểm phát sóng quét một mã QR và cùng xem hoặc tải xuống trên thiết bị của mình.
+
+SMART TV, VLC VÀ KODI
+Bật DLNA để smart TV và trình phát đa phương tiện tìm thấy điện thoại của bạn như một máy chủ.
+
+RIÊNG TƯ VÀ NGOẠI TUYẾN
+• Hoạt động trên Wi-Fi nội bộ hoặc điểm phát sóng, không cần internet.
+• Không tài khoản, không đám mây, không quảng cáo, không theo dõi.
+• Mọi lần chia sẻ đều được bảo vệ bằng mã PIN theo mặc định. Xem, chặn hoặc ngắt kết nối thiết bị bất cứ lúc nào.
+
+PHÙ HỢP CHO
+Ảnh gia đình trong buổi họp mặt, lớp học và đào tạo, cuộc họp, xem phim trên TV khách sạn, chia sẻ khi đi du lịch không có internet, và chuyển video lớn sang PC không cần dây cáp.
